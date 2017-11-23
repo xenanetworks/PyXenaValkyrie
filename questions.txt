@@ -1,0 +1,9 @@
+1. BaseSocket default port = 5025 while XenaSocket default port = 22611
+
+Chassis:
+176.22.65.114 - populated
+176.22.65.116 - empty?
+
+Management:
+176.22.65.115 - do I need it for automation?
+
