@@ -1,138 +1,54 @@
 
-import re
 import time
 import logging
 
-from trafficgenerator.tgn_object import TgnObject
-
+from xenalib.xena_object import XenaObject
 from XenaStream import XenaStream
 
 logger = logging.getLogger(__name__)
 
 
-class XenaObject(TgnObject):
-
-    def __init__(self, **data):
-        data['objRef'] = str(data['index'])
-        super(XenaObject, self).__init__(**data)
-        self._data['name'] = self.type + ' ' + self.ref.replace(' ', '/')
-
-    def build_index_command(self, cmd):
-        return '{} {}'.format(self.ref, cmd)
-
-    def send_command(self, command):
-        index_command = self.build_index_command(command)
-        return self.api.sendQueryVerify(index_command)
-
-    def get_attribute(self, attribute):
-        index_command = self.build_index_command(attribute)
-        index_command_value = self.api.sendQuery(index_command + ' ?')
-        return re.sub('{}\s*{}\s*'.format(self.ref, attribute.upper()), '', index_command_value)
-
-    def get_attributes(self, attribute):
-        index_command = self.build_index_command(attribute)
-        index_commands_values = self.api.sendQuery(index_command + ' ?', True)
-        li = len(self.ref.split())
-        attributes = {}
-        for index_command_value in index_commands_values:
-            command = index_command_value.split()[li].lower()
-            if len(index_command_value.split()) > li + 1:
-                value = ' '.join(index_command_value.split()[li+1:]).replace('"', '')
-            else:
-                value = None
-            attributes[command] = value
-        return attributes
-
-
-class XenaChassis(XenaObject):
-
-    def __init__(self, xsocket, logger):
-        self.api = xsocket
-        self.logger = logger
-        super(self.__class__, self).__init__(objType='chassis', index='', parent=None)
-
-    def inventory(self):
-        self.c_info = self.get_attributes('c_info')
-        for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
-            if int(m_portcounts):
-                XenaModule(index=m_index, parent=self).inventory()
-        return self.modules
-
-    @property
-    def modules(self):
-        """
-        :return: dictionary {index: object} of all modules.
-        """
-
-        return {int(c.ref): c for c in self.get_objects_by_type('module')}
-
-
-class XenaModule(XenaObject):
-
-    def __init__(self, index, parent):
-        super(self.__class__, self).__init__(objType='module', index=index, parent=parent)
-
-    def inventory(self):
-        self.m_info = self.get_attributes('m_info')
-        if 'NOTCFP' in self.m_info['m_cfptype']:
-            m_portcount = int(self.get_attribute('m_portcount'))
-        else:
-            m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
-            print m_portcount
-        for p_index in range(m_portcount):
-            XenaPort(index=p_index, parent=self).inventory()
-        return self.ports
-
-    @property
-    def ports(self):
-        """
-        :return: dictionary {index: object} of all ports.
-        """
-
-        return {int(p.ref.split('/')[1]): p for p in self.get_objects_by_type('port')}
-
-
 class XenaPort(XenaObject):
+
     def __init__(self, index, parent):
-        super(self.__class__, self).__init__(objType='port', index='{}/{}'.format(parent.ref, index), parent=parent)
+        super(self.__class__, self).__init__(objType='port', index=index, parent=parent)
         self.pt_stats = {}
         self.pr_stats = {}
 
     def inventory(self):
         self.p_info = self.get_attributes('p_info')
 
-    def __del__(self):
-        pass
-
-    def port_str(self):
-        return "%s/%s" % (self.module, self.port)
-
-    def __build_cmd_str(self, cmd):
-        return "%s %s" % (self.port_str(), cmd)
-
-    def __sendCommand(self, cmd):
-        cmd_str = self.__build_cmd_str(cmd)
-        return self.xsocket.sendQueryVerify(cmd_str)
-
     def __sendQuery(self, cmd):
         cmd_str = self.__build_cmd_str(cmd)
         return self.xsocket.sendQuery(cmd_str)
 
-    def __sendQueryReplies(self, cmd):
-        cmd_str = self.__build_cmd_str(cmd)
-        return self.xsocket.sendQuery(cmd_str, True)
-
-    def reserve(self):
-        return self.__sendCommand('p_reservation reserve')
+    def reserve(self, force):
+        if force:
+            self.relinquish()
+        return self.send_command('p_reservation reserve')
 
     def relinquish(self):
-        return self.__sendCommand('p_reservation relinquish')
+        if self.get_attribute('p_reservation') != 'RELEASED':
+            return self.send_command('p_reservation relinquish')
 
     def release(self):
-        return self.__sendCommand('p_reservation release')
+        return self.send_command('p_reservation release')
 
     def reset(self):
-        return self.__sendCommand('p_reset')
+        return self.send_command('p_reset')
+
+    def load_config(self, config_file_name):
+        """ Load configuration file from xpc file.
+
+        :param config_file_name: full path to the configuration file.
+        """
+
+        with open(config_file_name) as f:
+            commands = f.read().splitlines()
+
+        for command in commands:
+            if not command.startswith(';'):
+                self.send_command(command)
 
     def start_traffic(self):
         logger.info("Port(%s): Starting traffic", self.port_str())

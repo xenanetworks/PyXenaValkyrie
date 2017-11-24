@@ -1,42 +1,40 @@
-import os
 import sys
 import time
 import logging
 import threading
+import socket
 
-import BaseSocket
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+from xenalib.api.BaseSocket import BaseSocket
 
 
-class XenaSocket:
+class XenaSocket(object):
     reply_ok = '<OK>'
 
-    def __init__(self, hostname, port=22611, timeout=5):
+    def __init__(self, logger, hostname, port=22611, timeout=5):
+        self.logger = logger
         logger.debug("Initializing")
-        self.bsocket = BaseSocket.BaseSocket(hostname, port, timeout)
+        self.bsocket = BaseSocket(hostname, port, timeout)
         self.access_semaphor = threading.Semaphore(1)
 
-    def set_dummymode(self, enable = True):
-        logger.debug("Enabling dummymode")
+    def set_dummymode(self, enable=True):
+        self.logger.debug("Enabling dummymode")
         self.bsocket.set_dummymode(enable)
 
     def is_connected(self):
         return self.bsocket.is_connected()
 
     def connect(self):
-        logger.debug("Connect()")
+        self.logger.debug("Connect()")
         self.access_semaphor.acquire()
         self.bsocket.connect()
         self.bsocket.set_keepalives()
         self.access_semaphor.release()
         if not self.is_connected():
             raise Exception("Fail to connect")
-        logger.info("Connected")
+        self.logger.info("Connected")
 
     def disconnect(self):
-        logger.debug("Disconnect()")
+        self.logger.debug("Disconnect()")
         self.access_semaphor.acquire()
         self.bsocket.disconnect()
         self.access_semaphor.release()
@@ -47,15 +45,14 @@ class XenaSocket:
         self.access_semaphor.release()
 
     def sendCommand(self, cmd):
-        logger.debug("sendCommand(%s)", cmd)
+        self.logger.debug("sendCommand(%s)", cmd)
         if not self.is_connected():
-            logger.warning("sendCommand on a disconnected socket")
-            return
+            raise socket.error("sendCommand on a disconnected socket")
 
         self.access_semaphor.acquire()
         self.bsocket.sendCommand(cmd)
         self.access_semaphor.release()
-        logger.debug("sendCommand(%s) returning", cmd)
+        self.logger.debug("sendCommand(%s) returning", cmd)
 
     def __sendQueryReplies(self, cmd):
         # send the command followed by cmd SYNC to find out
@@ -70,16 +67,16 @@ class XenaSocket:
                 (reply, msgleft) = msg.split('\n', 1)
                 # check for syntax problems
                 if reply.rfind('Syntax') != -1:
-                    logger.warning("Multiline: syntax error")
+                    self.logger.warning("Multiline: syntax error")
                     self.access_semaphor.release()
                     return []
 
                 if reply.rfind('<SYNC>') == 0:
-                    logger.debug("Multiline EOL SYNC message")
+                    self.logger.debug("Multiline EOL SYNC message")
                     self.access_semaphor.release()
                     return replies
 
-                logger.debug("Multiline reply: %s", reply)
+                self.logger.debug("Multiline reply: %s", reply)
                 replies.append(reply + '\n')
                 msg = msgleft
             else:
@@ -94,35 +91,33 @@ class XenaSocket:
         return reply
 
     def sendQuery(self, cmd, multilines=False):
-        logger.debug("sendQuery(%s)", cmd)
+        self.logger.debug("sendQuery(%s)", cmd)
         if not self.is_connected():
-            logger.warning("sendQuery on a disconnected socket")
+            self.logger.warning("sendQuery on a disconnected socket")
             return
 
         if multilines:
             replies = self.__sendQueryReplies(cmd)
-            logger.debug("sendQuery(%s) -- Begin", cmd)
+            self.logger.debug("sendQuery(%s) -- Begin", cmd)
             for l in replies:
-                logger.debug("%s", l)
-            logger.debug("sendQuery(%s) -- End", cmd)
+                self.logger.debug("%s", l)
+            self.logger.debug("sendQuery(%s) -- End", cmd)
             return replies
 
         reply = self.__sendQueryReply(cmd)
-        logger.debug("sendQuery(%s) reply(%s)", cmd, reply)
+        self.logger.debug("sendQuery(%s) reply(%s)", cmd, reply)
         return reply
 
     def sendQueryVerify(self, cmd):
-        logger.debug("sendQueryVerify(%s)", cmd)
+        cmd = cmd.strip()
+        self.logger.debug("sendQueryVerify(%s)", cmd)
         if not self.is_connected():
-            logger.warning("sendQueryVerify on a disconnected socket")
-            return False
+            raise socket.error("sendQueryVerify on a disconnected socket")
 
         resp = self.__sendQueryReply(cmd)
-        if resp == self.reply_ok:
-            logger.debug("SendQueryVerify(%s) Succeed", cmd)
-            return True
-        logger.debug("SendQueryVerify(%s) Fail", cmd)
-        return False
+        if resp != self.reply_ok:
+            raise Exception('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
+        self.logger.debug("SendQueryVerify(%s) Succeed", cmd)
 
 
 def testsuite():
