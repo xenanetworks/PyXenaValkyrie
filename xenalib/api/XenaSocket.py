@@ -122,7 +122,6 @@ class XenaSocket(object):
 
 def testsuite():
     import KeepAliveThread
-    import XenaSocket
 
     hostname = "10.16.46.156"
     port = 22611

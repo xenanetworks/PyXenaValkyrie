@@ -10,8 +10,11 @@ logger = logging.getLogger(__name__)
 
 class XenaPort(XenaObject):
 
-    def __init__(self, index, parent):
-        super(self.__class__, self).__init__(objType='port', index=index, parent=parent)
+    def __init__(self, location, parent, api):
+        _, module, port = location.split('/')
+        super(self.__class__, self).__init__(objType='port', index='{}/{}'.format(module, port), parent=parent)
+        self.api = api
+        self._data['name'] = location
         self.pt_stats = {}
         self.pr_stats = {}
 

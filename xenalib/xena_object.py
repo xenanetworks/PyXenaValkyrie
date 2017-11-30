@@ -16,8 +16,9 @@ class XenaObject(TgnObject):
 
     def __init__(self, **data):
         data['objRef'] = str(data['index'])
+        if 'name' not in data:
+            data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
-        self._data['name'] = self.type + ' ' + self.ref.replace(' ', '/')
 
     def build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)
