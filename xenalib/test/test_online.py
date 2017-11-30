@@ -5,6 +5,7 @@ Base class for all Xena package tests.
 """
 
 from os import path
+import time
 
 from trafficgenerator.test.test_tgn import TgnTest
 from xenalib.xena_app import init_xena
@@ -36,13 +37,22 @@ class XenaTestBase(TgnTest):
         print '+++'
 
     def test_load_config(self):
-        self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
         self._load_config(path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'))
 
-    def test_port_online(self):
-        pass
+    def test_online(self):
+        self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
+        self.ports[self.port1].wait_for_up(16)
+        self.ports[self.port2].wait_for_up(16)
+
+    def test_traffic(self):
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'))
+        self.xm.session.start_traffic()
+        time.sleep(4)
+        self.xm.session.stop_traffic()
 
     def _load_config(self, cfg0, cfg1):
+        self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
         self.ports[self.port1].load_config(cfg0)
         self.ports[self.port2].load_config(cfg1)

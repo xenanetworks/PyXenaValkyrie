@@ -10,11 +10,9 @@ logger = logging.getLogger(__name__)
 
 class XenaPort(XenaObject):
 
-    def __init__(self, location, parent, api):
-        _, module, port = location.split('/')
-        super(self.__class__, self).__init__(objType='port', index='{}/{}'.format(module, port), parent=parent)
-        self.api = api
-        self._data['name'] = location
+    def __init__(self, location, parent):
+        super(self.__class__, self).__init__(objType='port', index=location, parent=parent)
+        self._data['name'] = '{}/{}'.format(parent.name, location)
         self.pt_stats = {}
         self.pr_stats = {}
 
@@ -26,19 +24,24 @@ class XenaPort(XenaObject):
         return self.xsocket.sendQuery(cmd_str)
 
     def reserve(self, force):
+        if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
+            return
         if force:
             self.relinquish()
-        return self.send_command('p_reservation reserve')
+        self.send_command('p_reservation reserve')
 
     def relinquish(self):
         if self.get_attribute('p_reservation') != 'RELEASED':
-            return self.send_command('p_reservation relinquish')
+            self.send_command('p_reservation relinquish')
 
     def release(self):
         return self.send_command('p_reservation release')
 
     def reset(self):
         return self.send_command('p_reset')
+
+    def wait_for_up(self, timeout=40):
+        self.wait_for_states('P_RECEIVESYNC', timeout, 'IN_SYNC')
 
     def load_config(self, config_file_name):
         """ Load configuration file from xpc file.
@@ -69,8 +72,7 @@ class XenaPort(XenaObject):
             status = False
         return status
 
-    def __pack_stats(self, parms, start, fields = [ 'bps', 'pps', 'bytes',
-                     'packets' ]):
+    def __pack_stats(self, parms, start, fields=['bps', 'pps', 'bytes', 'packets']):
         data = {}
         i = 0
         for column in fields:
@@ -80,14 +82,14 @@ class XenaPort(XenaObject):
         return data
 
     def __pack_txextra_stats(self, parms, start):
-        fields = [ 'arprequests', 'arpreplies', 'pingrequests', 'pingreplies',
-                   'injectedfcs', 'injectedseq', 'injectedmis', 'injectedint',
-                   'injectedtid', 'training' ]
+        fields = ['arprequests', 'arpreplies', 'pingrequests', 'pingreplies',
+                  'injectedfcs', 'injectedseq', 'injectedmis', 'injectedint',
+                  'injectedtid', 'training']
         return self.__pack_stats(parms, start, fields)
 
     def __pack_rxextra_stats(self, parms, start):
-        fields = [ 'fcserrors', 'pauseframes', 'arprequests', 'arpreplies',
-                   'pingrequests', 'pingreplies', 'gapcount', 'gapduration' ]
+        fields = ['fcserrors', 'pauseframes', 'arprequests', 'arpreplies',
+                  'pingrequests', 'pingreplies', 'gapcount', 'gapduration']
         return self.__pack_stats(parms, start, fields)
 
     def __pack_tplds_stats(self, parms, start):
@@ -99,15 +101,15 @@ class XenaPort(XenaObject):
         return data
 
     def __pack_tplderrors_stats(self, parms, start):
-        fields = [ 'dummy', 'seq', 'mis', 'pld' ]
+        fields = ['dummy', 'seq', 'mis', 'pld']
         return self.__pack_stats(parms, start, fields)
 
     def __pack_tpldlatency_stats(self, parms, start):
-        fields = [ 'min', 'avg', 'max', '1sec' ]
+        fields = ['min', 'avg', 'max', '1sec']
         return self.__pack_stats(parms, start, fields)
 
     def __pack_tpldjitter_stats(self, parms, start):
-        fields = [ 'min', 'avg', 'max', '1sec' ]
+        fields = ['min', 'avg', 'max', '1sec']
         return self.__pack_stats(parms, start, fields)
 
     def __parse_stats(self, stats_list):
@@ -237,12 +239,6 @@ class XenaPort(XenaObject):
 
         logger.debug("Port(%s): Setting port speed: %s",
                       self.port_str(), bitspersec)
-
-    def get_speed(self):
-        reply = self.__sendQuery('p_speed ?')
-        speed = reply.split()[-1]
-        logger.debug("Port(%s): Got port speed: %s", self.port_str(), speed)
-        return speed
 
     def set_autoneg_on(self):
         return self.__sendCommand('p_autonegselection on')

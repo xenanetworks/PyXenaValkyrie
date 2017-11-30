@@ -4,9 +4,11 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 :author: yoram@ignissoft.com
 """
 
+import time
 import re
 import logging
 
+from trafficgenerator.tgn_utils import TgnError
 from trafficgenerator.tgn_object import TgnObject
 
 logger = logging.getLogger(__name__)
@@ -48,3 +50,11 @@ class XenaObject(TgnObject):
                 value = None
             attributes[command] = value
         return attributes
+
+    def wait_for_states(self, attribute, timeout=40, *states):
+        for _ in range(timeout):
+            if self.get_attribute(attribute).lower() in [s.lower() for s in states]:
+                return
+            time.sleep(1)
+        raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
+                       format(attribute, states, self.activephy.get_attribute(attribute), timeout))
