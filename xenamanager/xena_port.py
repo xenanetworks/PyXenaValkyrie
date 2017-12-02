@@ -62,14 +62,20 @@ class XenaPort(XenaObject):
         self.send_command('pt_clear')
         self.send_command('pr_clear')
 
-    def read_port_stats(self, stat):
+    def read_stats(self, stat):
         return dict(zip(self.stats_captions[stat], [int(v) for v in self.get_attribute(stat).split()]))
 
-    def read_all_port_stats(self):
+    def read_port_stats(self):
         stats_with_captions = {}
         for stat_name in self.stats_captions.keys():
-            stats_with_captions[stat_name] = self.read_port_stats(stat_name)
+            stats_with_captions[stat_name] = self.read_stats(stat_name)
         return stats_with_captions
+
+    def read_stream_stats(self):
+        stream_stats = {}
+        for stream in self.streams.values():
+            stream_stats[stream] = stream.read_stats()
+        return stream_stats
 
     @property
     def streams(self):

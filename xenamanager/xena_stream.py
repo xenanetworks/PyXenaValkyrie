@@ -25,6 +25,9 @@ class XenaStream(XenaObject):
     def get_command_len(self):
         return 1
 
+    def read_stats(self):
+        return dict(zip(['bps', 'pps', 'bytes', 'packets'], [int(v) for v in self.get_attribute('pt_stream').split()]))
+
     def set_stream_on(self):
         return self.__sendCommand('ps_enable', 'on')
 
