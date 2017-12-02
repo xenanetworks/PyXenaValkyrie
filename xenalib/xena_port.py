@@ -72,6 +72,33 @@ class XenaPort(XenaObject):
             status = False
         return status
 
+    def clear_all_tx_stats(self):
+        self.pt_stats = {}
+        return self.__sendCommand('pt_clear')
+
+    def clear_all_rx_stats(self):
+        self.pr_stats = {}
+        return self.__sendCommand('pr_clear')
+
+    stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
+                      'pr_total': ['bps', 'pps', 'bytes', 'packets'],
+                      'pr_notpld': ['bps', 'pps', 'bytes', 'packets'],
+                      'pr_extra': ['fcserrors', 'pauseframes', 'arprequests', 'arpreplies', 'pingrequests',
+                                   'pingreplies', 'gapcount', 'gapduration'],
+                      'pt_total': ['bps', 'pps', 'bytes', 'packets'],
+                      'pt_extra': ['arprequests', 'arpreplies', 'pingrequests', 'pingreplies', 'injectedfcs',
+                                   'injectedseq', 'injectedmis', 'injectedint', 'injectedtid', 'training'],
+                      'pt_notpld': ['bps', 'pps', 'bytes', 'packets']}
+
+    def read_port_stats(self, stat):
+        return dict(zip(self.stats_captions[stat], [int(v) for v in self.get_attribute(stat).split()]))
+
+    def read_all_port_stats(self):
+        stats_with_captions = {}
+        for stat_name in self.stats_captions.keys():
+            stats_with_captions[stat_name] = self.read_port_stats(stat_name)
+        return stats_with_captions
+
     def __pack_stats(self, parms, start, fields=['bps', 'pps', 'bytes', 'packets']):
         data = {}
         i = 0
@@ -186,34 +213,6 @@ class XenaPort(XenaObject):
                 logger.warning("Received unknown stats: %s", parms[1])
 
         return storage
-
-    def clear_all_tx_stats(self):
-        self.pt_stats = {}
-        return self.__sendCommand('pt_clear')
-
-    def dump_all_tx_stats(self):
-        return self.pt_stats
-
-    def grab_all_tx_stats(self):
-        txstats_list = self.__sendQueryReplies('pt_all ?')
-        if txstats_list:
-            timestamp = time.time()
-            txdata = self.__parse_stats(txstats_list)
-        self.pt_stats[timestamp] = txdata
-
-    def clear_all_rx_stats(self):
-        self.pr_stats = {}
-        return self.__sendCommand('pr_clear')
-
-    def dump_all_rx_stats(self):
-        return self.pr_stats
-
-    def grab_all_rx_stats(self):
-        rxstats_list = self.__sendQueryReplies('pr_all ?')
-        if rxstats_list:
-            timestamp = time.time()
-            rxdata = self.__parse_stats(rxstats_list)
-        self.pr_stats[timestamp] = rxdata
 
     def get_tpld_latency_stats(self, tid):
         tpldlat_tid = {}
