@@ -1,27 +1,26 @@
 
-import time
-import logging
-
-from xenalib.xena_object import XenaObject
-from XenaStream import XenaStream
-
-logger = logging.getLogger(__name__)
+from xenamanager.xena_object import XenaObject
+from xenamanager.xena_stream import XenaStream
 
 
 class XenaPort(XenaObject):
 
+    stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
+                      'pr_total': ['bps', 'pps', 'bytes', 'packets'],
+                      'pr_notpld': ['bps', 'pps', 'bytes', 'packets'],
+                      'pr_extra': ['fcserrors', 'pauseframes', 'arprequests', 'arpreplies', 'pingrequests',
+                                   'pingreplies', 'gapcount', 'gapduration'],
+                      'pt_total': ['bps', 'pps', 'bytes', 'packets'],
+                      'pt_extra': ['arprequests', 'arpreplies', 'pingrequests', 'pingreplies', 'injectedfcs',
+                                   'injectedseq', 'injectedmis', 'injectedint', 'injectedtid', 'training'],
+                      'pt_notpld': ['bps', 'pps', 'bytes', 'packets']}
+
     def __init__(self, location, parent):
         super(self.__class__, self).__init__(objType='port', index=location, parent=parent)
         self._data['name'] = '{}/{}'.format(parent.name, location)
-        self.pt_stats = {}
-        self.pr_stats = {}
 
     def inventory(self):
         self.p_info = self.get_attributes('p_info')
-
-    def __sendQuery(self, cmd):
-        cmd_str = self.__build_cmd_str(cmd)
-        return self.xsocket.sendQuery(cmd_str)
 
     def reserve(self, force):
         if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
@@ -56,39 +55,12 @@ class XenaPort(XenaObject):
             if not command.startswith(';'):
                 self.send_command(command)
 
-    def start_traffic(self):
-        logger.info("Port(%s): Starting traffic", self.port_str())
-        return self.__sendCommand('p_traffic on')
+        for index in self.send_command_return('ps_indices', '?').split():
+            XenaStream(location='{}/{}'.format(self.ref, index), parent=self)
 
-    def stop_traffic(self):
-        logger.info("Port(%s): Stopping traffic", self.port_str())
-        return self.__sendCommand('p_traffic off')
-
-    def get_traffic_status(self):
-        reply = self.__sendQuery('p_traffic ?')
-        if reply.split()[-1] == 'ON':
-            status = True
-        else:
-            status = False
-        return status
-
-    def clear_all_tx_stats(self):
-        self.pt_stats = {}
-        return self.__sendCommand('pt_clear')
-
-    def clear_all_rx_stats(self):
-        self.pr_stats = {}
-        return self.__sendCommand('pr_clear')
-
-    stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
-                      'pr_total': ['bps', 'pps', 'bytes', 'packets'],
-                      'pr_notpld': ['bps', 'pps', 'bytes', 'packets'],
-                      'pr_extra': ['fcserrors', 'pauseframes', 'arprequests', 'arpreplies', 'pingrequests',
-                                   'pingreplies', 'gapcount', 'gapduration'],
-                      'pt_total': ['bps', 'pps', 'bytes', 'packets'],
-                      'pt_extra': ['arprequests', 'arpreplies', 'pingrequests', 'pingreplies', 'injectedfcs',
-                                   'injectedseq', 'injectedmis', 'injectedint', 'injectedtid', 'training'],
-                      'pt_notpld': ['bps', 'pps', 'bytes', 'packets']}
+    def clear_stats(self):
+        self.send_command('pt_clear')
+        self.send_command('pr_clear')
 
     def read_port_stats(self, stat):
         return dict(zip(self.stats_captions[stat], [int(v) for v in self.get_attribute(stat).split()]))
@@ -98,6 +70,18 @@ class XenaPort(XenaObject):
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_port_stats(stat_name)
         return stats_with_captions
+
+    @property
+    def streams(self):
+        """
+        :return: dictionary {index: object} of all streams.
+        """
+
+        return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('stream')}
+
+    #
+    # Old code.
+    #
 
     def __pack_stats(self, parms, start, fields=['bps', 'pps', 'bytes', 'packets']):
         data = {}

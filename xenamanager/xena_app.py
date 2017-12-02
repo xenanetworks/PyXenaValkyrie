@@ -1,9 +1,9 @@
 
 from trafficgenerator.tgn_app import TgnApp
-from xenalib.api.XenaSocket import XenaSocket
-from xenalib.api.KeepAliveThread import KeepAliveThread
-from xenalib.xena_object import XenaObject
-from xenalib.xena_port import XenaPort
+from xenamanager.api.XenaSocket import XenaSocket
+from xenamanager.api.KeepAliveThread import KeepAliveThread
+from xenamanager.xena_object import XenaObject
+from xenamanager.xena_port import XenaPort
 
 
 def init_xena(logger):

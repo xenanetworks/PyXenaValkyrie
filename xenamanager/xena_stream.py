@@ -1,32 +1,29 @@
-import logging
+
+import re
 
 import XenaModifier
 
-logger = logging.getLogger(__name__)
+from xenamanager.xena_object import XenaObject
 
-class XenaStream:
-    def __init__(self, xsocket, port, stream_id):
-        self.xsocket = xsocket
-        self.port = port
-        self.sid = stream_id
-        self.modifiers = {}
 
-    def __del__(self):
-        pass
+class XenaStream(XenaObject):
 
-    def stream_str(self):
-        return "%d" % self.sid
+    def __init__(self, location, parent):
+        super(self.__class__, self).__init__(objType='stream', index=location, parent=parent)
 
-    def __build_cmd_str(self, cmd, arg):
-        return "%s %s [%d] %s" % (self.port.port_str(), cmd, self.sid, arg)
+    def build_index_command(self, command, *arguments):
+        module, port, sid = self.ref.split('/')
+        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
 
-    def __sendCommand(self, cmd, arg):
-        cmd_str = self.__build_cmd_str(cmd, arg)
-        return self.xsocket.sendQueryVerify(cmd_str)
+    def extract_return(self, command, index_command_value):
+        module, port, sid = self.ref.split('/')
+        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
 
-    def __sendQuery(self, cmd, arg):
-        cmd_str = self.__build_cmd_str(cmd, arg)
-        return self.xsocket.sendQuery(cmd_str)
+    def get_index_len(self):
+        return 2
+
+    def get_command_len(self):
+        return 1
 
     def set_stream_on(self):
         return self.__sendCommand('ps_enable', 'on')

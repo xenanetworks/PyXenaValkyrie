@@ -4,7 +4,7 @@ import logging
 import threading
 import socket
 
-from xenalib.api.BaseSocket import BaseSocket
+from xenamanager.api.BaseSocket import BaseSocket
 
 
 class XenaSocket(object):
@@ -106,6 +106,8 @@ class XenaSocket(object):
 
         reply = self.__sendQueryReply(cmd)
         self.logger.debug("sendQuery(%s) reply(%s)", cmd, reply)
+        if reply.startswith('#Syntax error'):
+            raise Exception(reply)
         return reply
 
     def sendQueryVerify(self, cmd):

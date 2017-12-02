@@ -8,7 +8,7 @@ from os import path
 import time
 
 from trafficgenerator.test.test_tgn import TgnTest
-from xenalib.xena_app import init_xena
+from xenamanager.xena_app import init_xena
 
 
 class XenaTestBase(TgnTest):
@@ -32,13 +32,15 @@ class XenaTestBase(TgnTest):
             print c_name
             for m_name, module in chassis.modules.items():
                 print m_name
-                for p_name, port in module.ports.items():
+                for p_name, _ in module.ports.items():
                     print p_name
         print '+++'
 
     def test_load_config(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'))
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        aaa = self.ports[self.port1].streams[0].get_attributes('ps_config')
+        print aaa
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
@@ -46,12 +48,12 @@ class XenaTestBase(TgnTest):
         self.ports[self.port2].wait_for_up(16)
 
     def test_traffic(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'XB live demo-6-0.xpc'))
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        self.ports[self.port1].clear_stats()
         self.xm.session.start_traffic()
         time.sleep(4)
         self.xm.session.stop_traffic()
-        print self.ports[self.port1].read_port_stats('pr_notpld')
         print self.ports[self.port1].read_all_port_stats()
 
     def _load_config(self, cfg0, cfg1):

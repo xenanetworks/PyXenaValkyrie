@@ -25,25 +25,38 @@ class XenaObject(TgnObject):
     def build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)
 
+    def extract_return(self, command, index_command_value):
+        return re.sub('{}\s*{}\s*'.format(self.ref, command.upper()), '', index_command_value)
+
+    def get_index_len(self):
+        return len(self.ref.split())
+
+    def get_command_len(self):
+        return len(self.ref.split())
+
     def send_command(self, command, *arguments):
         index_command = self.build_index_command(command, *arguments)
-        return self.api.sendQueryVerify(index_command)
+        self.api.sendQueryVerify(index_command)
+
+    def send_command_return(self, command, *arguments):
+        index_command = self.build_index_command(command, *arguments)
+        return self.extract_return(command, self.api.sendQuery(index_command))
 
     def set_attribute(self, attribute, value):
         return self.send_command(attribute, value)
 
     def get_attribute(self, attribute):
-        index_command = self.build_index_command(attribute, '?')
-        index_command_value = self.api.sendQuery(index_command)
-        return re.sub('{}\s*{}\s*'.format(self.ref, attribute.upper()), '', index_command_value)
+        return self.send_command_return(attribute, '?')
 
     def get_attributes(self, attribute):
         index_command = self.build_index_command(attribute, '?')
         index_commands_values = self.api.sendQuery(index_command, True)
-        li = len(self.ref.split())
+        # poor implementation
+        li = self.get_index_len()
+        ci = self.get_command_len()
         attributes = {}
         for index_command_value in index_commands_values:
-            command = index_command_value.split()[li].lower()
+            command = index_command_value.split()[ci].lower()
             if len(index_command_value.split()) > li + 1:
                 value = ' '.join(index_command_value.split()[li+1:]).replace('"', '')
             else:
