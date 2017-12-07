@@ -71,3 +71,6 @@ class XenaObject(TgnObject):
             time.sleep(1)
         raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
                        format(attribute, states, self.activephy.get_attribute(attribute), timeout))
+
+    def read_stat(self, captions, stat_name):
+        return dict(zip(captions, [int(v) for v in self.get_attribute(stat_name).split()]))

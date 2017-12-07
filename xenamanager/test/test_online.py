@@ -56,6 +56,7 @@ class XenaTestBase(TgnTest):
         self.xm.session.stop_traffic()
         print self.ports[self.port1].read_port_stats()
         print self.ports[self.port1].read_stream_stats()
+        print self.ports[self.port1].read_tpld_stats()
 
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)

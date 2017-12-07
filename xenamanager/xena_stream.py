@@ -26,7 +26,7 @@ class XenaStream(XenaObject):
         return 1
 
     def read_stats(self):
-        return dict(zip(['bps', 'pps', 'bytes', 'packets'], [int(v) for v in self.get_attribute('pt_stream').split()]))
+        return self.read_stat(['bps', 'pps', 'bytes', 'packets'], 'pt_stream')
 
     def set_stream_on(self):
         return self.__sendCommand('ps_enable', 'on')
@@ -120,7 +120,7 @@ class XenaStream(XenaObject):
         mid = len(self.modifiers.keys())
         tmids = mid + 1
         if not self.__sendCommand('ps_modifiercount', "%d" % tmids):
-            logger.error("Failed to create a modifier")
+            self.logger.error("Failed to create a modifier")
             return -1
 
         modnew = XenaModifier.XenaModifier(self.xsocket, self.port, self, mid)
@@ -128,12 +128,10 @@ class XenaStream(XenaObject):
         return modnew
 
     def get_modifier(self, module, modifier_id):
-        if self.modifiers.has_key(modifier_id):
+        if modifier_id in self.modifiers:
             return self.modifiers[modifier_id]
         return None
 
     def remove_modifier(self, modifier_id):
-        logger.error("Operation not supported")
+        self.logger.error("Operation not supported")
         return -1
-
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
