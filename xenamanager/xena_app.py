@@ -37,7 +37,8 @@ class XenaSession(XenaObject):
         super(self.__class__, self).__init__(objType='session', index='', parent=None)
 
     def add_chassis(self, chassis, owner, password='xena'):
-        XenaChassis(chassis, self).logon(owner, password)
+        if chassis not in self.chassis_list:
+            XenaChassis(chassis, self).logon(owner, password)
 
     def disconnect(self):
         self.release_ports()
@@ -66,9 +67,16 @@ class XenaSession(XenaObject):
         for port in self.ports.values():
             port.release()
 
-    def start_traffic(self, *ports):
+    def clear_stats(self, *ports):
         for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
-            chassis.start_traffic(*chassis_ports)
+            chassis.clear_stats(*chassis_ports)
+
+    def start_traffic(self, blocking=False, *ports):
+        for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
+            chassis.start_traffic(False, *chassis_ports)
+        if blocking:
+            for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
+                chassis.wait_traffic(*chassis_ports)
 
     def stop_traffic(self, *ports):
         for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
@@ -144,18 +152,28 @@ class XenaChassis(XenaObject):
 
         return self.ports
 
-    def start_traffic(self, *ports):
-        self._traffic_command('on')
-
-    def stop_traffic(self, *ports):
-        self._traffic_command('off')
-
     def _traffic_command(self, command, *ports):
         ports = self._get_operation_ports(*ports)
         ports_str = ' '.join([p.ref.replace('/', ' ') for p in ports])
         self.send_command('c_traffic', command, ports_str)
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
+
+    def start_traffic(self, blocking=False, *ports):
+        self._traffic_command('on', *ports)
+        if blocking:
+            self.wait_traffic(*ports)
+
+    def wait_traffic(self, *ports):
+        for port in ports:
+            port.wait_for_states('p_traffic', int(2.628e+6), 'off')
+
+    def stop_traffic(self, *ports):
+        self._traffic_command('off', *ports)
+
+    def clear_stats(self, *ports):
+        for port in ports:
+            port.clear_stats()
 
     def _get_operation_ports(self, *ports):
         return ports if ports else self.ports.values()

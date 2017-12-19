@@ -105,9 +105,9 @@ class XenaSocket(object):
             return replies
 
         reply = self.__sendQueryReply(cmd)
-        self.logger.debug("sendQuery(%s) reply(%s)", cmd, reply)
-        if reply.startswith('#Syntax error'):
-            raise Exception(reply)
+        self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
+        if reply.startswith(('#Syntax error', '<BADPARAMETER>')):
+            raise Exception('sendQuery(%s) reply(%s)', cmd, reply)
         return reply
 
     def sendQueryVerify(self, cmd):
