@@ -1,5 +1,6 @@
 
 import re
+from collections import OrderedDict
 
 from xenamanager.xena_object import XenaObject
 from xenamanager.xena_stream import XenaStream
@@ -65,20 +66,20 @@ class XenaPort(XenaObject):
         self.send_command('pr_clear')
 
     def read_port_stats(self):
-        stats_with_captions = {}
+        stats_with_captions = OrderedDict()
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
         return stats_with_captions
 
     def read_stream_stats(self):
-        stream_stats = {}
+        stream_stats = OrderedDict()
         for stream in self.streams.values():
             stream_stats[stream] = stream.read_stats()
         return stream_stats
 
     def read_tpld_stats(self):
         pr_tplds = self.get_attribute('pr_tplds')
-        payloads_stats = {}
+        payloads_stats = OrderedDict()
         for tpld in pr_tplds.split():
             payloads_stats[tpld] = XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self).read_stats()
         return payloads_stats
@@ -314,7 +315,7 @@ class XenaTpld(XenaObject):
         return 1
 
     def read_stats(self):
-        stats_with_captions = {}
+        stats_with_captions = OrderedDict()
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
         return stats_with_captions

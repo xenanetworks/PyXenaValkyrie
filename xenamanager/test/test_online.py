@@ -9,6 +9,7 @@ import time
 
 from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_app import init_xena
+from xenamanager.xena_statistics_view import XenaPortsStats
 
 
 class XenaTestBase(TgnTest):
@@ -53,11 +54,16 @@ class XenaTestBase(TgnTest):
         self.xm.session.start_traffic()
         time.sleep(4)
         self.xm.session.stop_traffic()
-        print self.ports[self.port1].read_port_stats()
+        port1_stats = self.ports[self.port1].read_port_stats()
+        port2_stats = self.ports[self.port2].read_port_stats()
+        assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 100)
         print self.ports[self.port1].read_stream_stats()
         print self.ports[self.port1].read_tpld_stats()
         self.xm.session.clear_stats()
         self.xm.session.start_traffic(blocking=True)
+        port_stats = XenaPortsStats(self.xm.session)
+        port_stats.read_stats()
+        print port_stats.statistics
 
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
