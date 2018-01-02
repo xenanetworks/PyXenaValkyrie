@@ -1,2 +1,6 @@
 future
 scapy
+pytest
+pytest-runner
+
+pytrafficgen>=1.2.0

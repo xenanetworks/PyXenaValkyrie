@@ -78,10 +78,9 @@ class XenaPort(XenaObject):
         return stream_stats
 
     def read_tpld_stats(self):
-        pr_tplds = self.get_attribute('pr_tplds')
         payloads_stats = OrderedDict()
-        for tpld in pr_tplds.split():
-            payloads_stats[tpld] = XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self).read_stats()
+        for tpld in self.tplds.values():
+            payloads_stats[tpld] = tpld.read_stats()
         return payloads_stats
 
     @property
@@ -91,6 +90,16 @@ class XenaPort(XenaObject):
         """
 
         return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('stream')}
+
+    @property
+    def tplds(self):
+        """
+        :return: dictionary {index: object} of all current tplds.
+        """
+
+        for tpld in self.get_attribute('pr_tplds').split():
+            XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self).read_stats()
+        return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('tpld')}
 
     #
     # Old code.

@@ -1,12 +1,49 @@
-from setuptools import setup
+#!/usr/bin/env python
+# encoding: utf-8
 
-setup(name='xenalib-python',
-      version='0.4',
-      description='Python Interface To Xena Traffic Generator',
-      url='http://github.com/fleitner/XenaPythonLib',
-      author='Flavio Leitner',
-      author_email='fbl@redhat.com',
-      license='MIT',
-      packages=['xenalib'],
-      zip_safe=False)
+from __future__ import print_function
+from setuptools import setup, find_packages
+import io
 
+import xenamanager
+
+
+def read(*filenames, **kwargs):
+    encoding = kwargs.get('encoding', 'utf-8')
+    sep = kwargs.get('sep', '\n')
+    buf = []
+    for filename in filenames:
+        with io.open(filename, encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
+
+
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+install_requires = [r for r in required if r and r[0] != '#' and not r.startswith('git')]
+
+long_description = read('README.txt')
+
+setup(
+    name='pyxenamanager',
+    version=xenamanager.__version__,
+    url='https://github.com/shmir/PyXenaManager/',
+    license='Apache Software License',
+    author='Yoram Shamir',
+    install_requires=install_requires,
+    author_email='yoram@ignissoft.com',
+    description='Python OO API package to automate Xena traffic generator',
+    long_description=long_description,
+    packages=find_packages(),
+    include_package_data=True,
+    platforms='any',
+    tests_require=['pytest'],
+    classifiers=[
+        'Programming Language :: Python',
+        'Development Status :: 4 - Beta',
+        'Natural Language :: English',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
+        'Topic :: Software Development :: Testing :: Traffic Generation'],
+)
