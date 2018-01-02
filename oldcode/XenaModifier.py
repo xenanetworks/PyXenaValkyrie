@@ -1,7 +1,14 @@
+
+#
+# Old code.
+#
+
 import logging
 
 logger = logging.getLogger(__name__)
-class XenaModifier:
+
+
+class XenaModifier(object):
     def __init__(self, xsocket, port, stream, modifier_id):
         self.xsocket = xsocket
         self.port = port
@@ -39,5 +46,3 @@ class XenaModifier:
     def set_modifier_range(self, start, step, stop):
         arg_str = "%d %d %d" % (start, step, stop)
         return self.__sendCommand('ps_modifierrange', arg_str)
-
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
