@@ -20,7 +20,7 @@ class XenaTestBase(TgnTest):
     def setUp(self):
         super(XenaTestBase, self).setUp()
         self.xm = init_xena(self.logger)
-        self.xm.add_chassis(self.config.get('Xena', 'chassis'), 'yoram-s')
+        self.xm.add_chassis(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'chassis'))
         self.port1 = self.config.get('Xena', 'port1')
         self.port2 = self.config.get('Xena', 'port2')
 
@@ -56,7 +56,7 @@ class XenaTestBase(TgnTest):
         time.sleep(4)
         port1_stats = self.ports[self.port1].read_port_stats()
         port2_stats = self.ports[self.port2].read_port_stats()
-        assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 1000)
+        assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 2000)
         assert(abs(1000 - self.ports[self.port1].streams[0].read_stats()['pps']) < 10)
         assert(abs(1000 - self.ports[self.port1].tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 10)
         self.xm.session.stop_traffic()

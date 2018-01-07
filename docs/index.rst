@@ -6,7 +6,7 @@
 Welcome to PyXenaManager's documentation!
 =========================================
 
-.. include:: ../README.txt
+.. include:: ../README.rst
 
 Contents
 ========
