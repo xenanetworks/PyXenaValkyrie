@@ -6,39 +6,54 @@ from xenamanager.xena_object import XenaObject
 from xenamanager.xena_port import XenaPort
 
 
-def init_xena(logger):
-    """ Create Xena manager object.
+def init_xena(logger, owner):
+    """ Create XenaManager object.
 
-    :param logger: python logger object
+    :param logger: python logger
+    :param owner: owner of the scripting session
     :return: Xena object
     """
 
-    return XenaApp(logger)
+    return XenaApp(logger, owner)
 
 
 class XenaApp(TgnApp):
+    """ XenaManager object, equivalent to XenaManager-2G application. """
 
-    def __init__(self, logger):
+    def __init__(self, logger, owner):
+        """ Create scripting session.
+
+        :param logger: python logger
+        :param owner: owner of the scripting session
+        """
+
         self.logger = logger
-        self.session = XenaSession(self.logger)
+        self.session = XenaSession(self.logger, owner)
 
-    def add_chassis(self, chassis, owner, password='xena'):
-        self.session.add_chassis(chassis, owner, password)
-
-    def disconnect(self):
+    def logoff(self):
         self.session.disconnect()
 
 
 class XenaSession(XenaObject):
+    """ Xena scripting object. """
 
-    def __init__(self, logger):
+    def __init__(self, logger, owner):
         self.logger = logger
+        self.owner = owner
         self.api = None
         super(self.__class__, self).__init__(objType='session', index='', parent=None)
 
-    def add_chassis(self, chassis, owner, password='xena'):
+    def add_chassis(self, chassis, password='xena'):
+        """ Add chassis.
+
+        XenaManager-2G -> Add Chassis.
+
+        :param chassis: chassis IP address
+        :param password: chassis password
+        """
+
         if chassis not in self.chassis_list:
-            XenaChassis(chassis, self).logon(owner, password)
+            XenaChassis(chassis, self).logon(password, self.owner)
 
     def disconnect(self):
         self.release_ports()
@@ -124,7 +139,7 @@ class XenaChassis(XenaObject):
         self.keep_alive_thread = KeepAliveThread(self.api)
         self.keep_alive_thread.start()
 
-    def logon(self, owner, password):
+    def logon(self, password, owner):
         self.send_command('c_logon', '"{}"'.format(password))
         self.send_command('c_owner', '"{}"'.format(owner))
 

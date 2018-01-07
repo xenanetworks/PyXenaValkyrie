@@ -32,14 +32,14 @@ def connect():
     logger = logging.getLogger('log')
     logger.setLevel('DEBUG')
     logger.addHandler(logging.StreamHandler(sys.stdout))
-    xm = init_xena(logger)
-    xm.add_chassis(chassis, owner)
+    xm = init_xena(logger, owner)
+    xm.session.add_chassis(chassis)
 
 
 def disconnect():
     """ Disconnect from chassis. """
 
-    xm.disconnect()
+    xm.logoff()
 
 
 def inventory():

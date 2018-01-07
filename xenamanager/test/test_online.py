@@ -19,13 +19,13 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
-        self.xm = init_xena(self.logger)
-        self.xm.add_chassis(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'chassis'))
+        self.xm = init_xena(self.logger, self.config.get('Xena', 'owner'))
+        self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = self.config.get('Xena', 'port1')
         self.port2 = self.config.get('Xena', 'port2')
 
     def tearDown(self):
-        self.xm.disconnect()
+        self.xm.logoff()
 
     def test_inventory(self):
         self.xm.session.inventory()
@@ -41,8 +41,6 @@ class XenaTestBase(TgnTest):
     def test_load_config(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
-        aaa = self.ports[self.port1].streams[0].get_attributes('ps_config')
-        print aaa
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
