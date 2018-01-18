@@ -25,6 +25,10 @@ Getting started
 Under xenamanager.test.xena_samples you will find some basic samples.
 See inside for more info.
 
+Documentation
+"""""""""""""
+http://pyxenamanager.readthedocs.io/en/latest/
+
 Related works
 """""""""""""
 The package is partially based on https://github.com/fleitner/XenaPythonLib
