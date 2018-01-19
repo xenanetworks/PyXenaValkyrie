@@ -26,6 +26,13 @@ class XenaPort(XenaObject):
         self.p_info = self.get_attributes('p_info')
 
     def reserve(self, force):
+        """ Reserve port.
+
+        XenaManager-2G -> Reserve/Relinquish Port.
+
+        :param force: True - take forcefully, False - fail if port is reserved by other user
+        """
+
         if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
             return
         if force:

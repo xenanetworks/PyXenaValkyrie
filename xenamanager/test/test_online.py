@@ -27,16 +27,19 @@ class XenaTestBase(TgnTest):
     def tearDown(self):
         self.xm.logoff()
 
+    def test_hello_world(self):
+        pass
+
     def test_inventory(self):
         self.xm.session.inventory()
-        print '+++'
+        print('+++')
         for c_name, chassis in self.xm.session.chassis_list.items():
-            print c_name
+            print(c_name)
             for m_name, module in chassis.modules.items():
-                print m_name
+                print(m_name)
                 for p_name, _ in module.ports.items():
-                    print p_name
-        print '+++'
+                    print(p_name)
+        print('+++')
 
     def test_load_config(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),

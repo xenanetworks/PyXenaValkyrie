@@ -74,3 +74,13 @@ class XenaObject(TgnObject):
 
     def read_stat(self, captions, stat_name):
         return dict(zip(captions, [int(v) for v in self.get_attribute(stat_name).split()]))
+
+    #
+    # Implement abstract API methods.
+    #
+
+    def get_children(self, *types):
+        pass
+
+    def get_objects_from_attribute(self, attribute):
+        pass

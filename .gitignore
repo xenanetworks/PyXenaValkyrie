@@ -10,3 +10,5 @@ docs/_*
 .project
 .pydevproject
 .settings
+.cache
+.idea
