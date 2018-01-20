@@ -20,6 +20,17 @@ class XenaStats(object):
         """
         self.session = session
 
+    def get_flat_stats(self):
+        flat_stats = OrderedDict()
+        for obj_name, port_stats in self.statistics.items():
+            flat_obj_stats = OrderedDict()
+            for group_name, group_values in port_stats.items():
+                for stat_name, stat_value in group_values.items():
+                    full_stat_name = group_name + '_' + stat_name
+                    flat_obj_stats[full_stat_name] = stat_value
+            flat_stats[obj_name] = flat_obj_stats
+        return flat_stats
+
 
 class XenaPortsStats(XenaStats):
     """ Ports statistics view.
@@ -40,12 +51,7 @@ class XenaPortsStats(XenaStats):
 
         self.statistics = OrderedDict()
         for name, port in self.session.ports.items():
-            port_stats = OrderedDict()
-            for group_name, group in port.read_port_stats().items():
-                for stat_name, value in group.items():
-                    full_stat_name = group_name + '_' + stat_name
-                    port_stats[full_stat_name] = value
-            self.statistics[name] = port_stats
+            self.statistics[name] = port.read_port_stats()
         return self.statistics
 
 

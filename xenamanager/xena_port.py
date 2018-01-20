@@ -68,6 +68,42 @@ class XenaPort(XenaObject):
         for index in self.send_command_return('ps_indices', '?').split():
             XenaStream(location='{}/{}'.format(self.ref, index), parent=self)
 
+    #
+    # Operations.
+    #
+
+    def start_traffic(self):
+        """
+
+        Capture -> Start Capture
+        """
+        self.send_command('p_capture', 'on')
+
+    def stop_traffic(self):
+        """
+
+        Capture -> Stop Capture
+        """
+        self.send_command('p_capture', 'on')
+
+    def start_capture(self):
+        """
+
+        Capture -> Start Capture
+        """
+        self.send_command('p_capture', 'on')
+
+    def stop_capture(self):
+        """
+
+        Capture -> Stop Capture
+        """
+        self.send_command('p_capture', 'on')
+
+    #
+    # Statistics.
+    #
+
     def clear_stats(self):
         self.send_command('pt_clear')
         self.send_command('pr_clear')
@@ -90,6 +126,10 @@ class XenaPort(XenaObject):
             payloads_stats[tpld] = tpld.read_stats()
         return payloads_stats
 
+    #
+    # Properties.
+    #
+
     @property
     def streams(self):
         """
@@ -107,6 +147,17 @@ class XenaPort(XenaObject):
         for tpld in self.get_attribute('pr_tplds').split():
             XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self).read_stats()
         return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('tpld')}
+
+    @property
+    def capture(self):
+        """
+        :return: capture object.
+        :rtype: XenaCapture
+        """
+
+        if not self.get_object_by_type('capture'):
+            XenaCapture(parent=self)
+        return self.get_object_by_type('capture')
 
 
 class XenaTpld(XenaObject):
@@ -138,3 +189,12 @@ class XenaTpld(XenaObject):
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
         return stats_with_captions
+
+
+class XenaCapture(XenaObject):
+    """ Represents cappture parameters, correspond to the Capture panel of the XenaManager, and deal with configuration
+        of the capture criteria and inspection of the captured data from a port.
+    """
+
+    def __init__(self, parent):
+        super(self.__class__, self).__init__(objType='capture', index=parent.ref.split('/'), parent=parent)

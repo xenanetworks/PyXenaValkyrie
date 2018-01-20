@@ -7,6 +7,7 @@ Two Xena ports connected back to back.
 @author yoram@ignissoft.com
 """
 
+from os import path
 import sys
 import logging
 import json
@@ -15,11 +16,11 @@ from xenamanager.xena_app import init_xena
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 
 chassis = '176.22.65.114'
-port1 = chassis + '/' + '8/0'
-port2 = chassis + '/' + '8/1'
+port1 = chassis + '/' + '6/4'
+port2 = chassis + '/' + '6/5'
 owner = 'yoram-s'
-config1 = 'E:/workspace/python/PyXenaManager/xenamanager/test/configs/test_config.xpc'
-config2 = 'E:/workspace/python/PyXenaManager/xenamanager/test/configs/test_config.xpc'
+config1 = path.join(path.dirname(__file__), 'configs', 'test_config.xpc')
+config2 = path.join(path.dirname(__file__), 'configs', 'test_config.xpc')
 
 xm = None
 

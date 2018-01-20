@@ -54,10 +54,10 @@ class XenaTestBase(TgnTest):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
         self.xm.session.start_traffic()
-        time.sleep(4)
+        time.sleep(2)
         port1_stats = self.ports[self.port1].read_port_stats()
         port2_stats = self.ports[self.port2].read_port_stats()
-        assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 2000)
+        assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 3000)
         assert(abs(1000 - self.ports[self.port1].streams[0].read_stats()['pps']) < 10)
         assert(abs(1000 - self.ports[self.port1].tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 10)
         self.xm.session.stop_traffic()
@@ -66,12 +66,14 @@ class XenaTestBase(TgnTest):
         ports_stats = XenaPortsStats(self.xm.session)
         ports_stats.read_stats()
         print json.dumps(ports_stats.statistics, indent=1)
+        print json.dumps(ports_stats.get_flat_stats(), indent=1)
         streams_stats = XenaStreamsStats(self.xm.session)
         streams_stats.read_stats()
         print json.dumps(streams_stats.statistics, indent=1)
         tplds_stats = XenaTpldsStats(self.xm.session)
         tplds_stats.read_stats()
         print json.dumps(tplds_stats.statistics, indent=1)
+        print json.dumps(tplds_stats.get_flat_stats(), indent=1)
 
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
