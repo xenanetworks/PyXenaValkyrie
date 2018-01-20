@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 class XenaObject(TgnObject):
 
     def __init__(self, **data):
+        if data['parent']:
+            self.session = data['parent'].session
         data['objRef'] = str(data['index'])
         if 'name' not in data:
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')

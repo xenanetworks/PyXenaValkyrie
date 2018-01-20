@@ -34,6 +34,7 @@ class XenaApp(TgnApp):
 
         self.logger = logger
         self.session = XenaSession(self.logger, owner)
+        self.session.session = self.session
 
     def logoff(self):
         """ Exit the application. """

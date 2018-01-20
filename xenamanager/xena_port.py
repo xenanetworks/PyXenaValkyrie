@@ -144,9 +144,13 @@ class XenaPort(XenaObject):
         :return: dictionary {index: object} of all current tplds.
         """
 
+        # TPLD has the same index as stream. Since we don't want to override the streams and as TPLDs are temporary and
+        # dynamic we create them under port parent (chassis) and erase them before we read them again.
+        for tpld in self.parent.get_objects_by_type('tpld'):
+            tpld.del_object_from_parent()
         for tpld in self.get_attribute('pr_tplds').split():
-            XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self).read_stats()
-        return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('tpld')}
+            XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self.parent).read_stats()
+        return {int(s.ref.split('/')[-1]): s for s in self.parent.get_objects_by_type('tpld')}
 
     @property
     def capture(self):
