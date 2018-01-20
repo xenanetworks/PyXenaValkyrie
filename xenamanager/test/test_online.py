@@ -70,6 +70,7 @@ class XenaTestBase(TgnTest):
         streams_stats = XenaStreamsStats(self.xm.session)
         streams_stats.read_stats()
         print json.dumps(streams_stats.statistics, indent=1)
+        print json.dumps(streams_stats.get_flat_stats(), indent=1)
         tplds_stats = XenaTpldsStats(self.xm.session)
         tplds_stats.read_stats()
         print json.dumps(tplds_stats.statistics, indent=1)

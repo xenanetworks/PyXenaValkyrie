@@ -78,6 +78,9 @@ class XenaStreamsStats(XenaStats):
                 self.statistics[stream.ref] = stream.read_stats()
         return self.statistics
 
+    def get_flat_stats(self):
+        return self.statistics
+
 
 class XenaTpldsStats(XenaStats):
     """ TPLDs statistics view.
