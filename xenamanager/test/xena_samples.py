@@ -91,6 +91,7 @@ def traffic():
 
 def run_all():
     connect()
+    inventory()
     load_config()
     traffic()
     disconnect()

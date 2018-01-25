@@ -1,3 +1,8 @@
+"""
+Classes and utilities that represents Xena XenaManager-2G port.
+
+:author: yoram@ignissoft.com
+"""
 
 import re
 from collections import OrderedDict
@@ -7,6 +12,7 @@ from xenamanager.xena_stream import XenaStream
 
 
 class XenaPort(XenaObject):
+    """ Represents Xena port. """
 
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
                       'pr_total': ['bps', 'pps', 'bytes', 'packets'],
@@ -18,9 +24,14 @@ class XenaPort(XenaObject):
                                    'injectedseq', 'injectedmis', 'injectedint', 'injectedtid', 'training'],
                       'pt_notpld': ['bps', 'pps', 'bytes', 'packets']}
 
-    def __init__(self, location, parent):
-        super(self.__class__, self).__init__(objType='port', index=location, parent=parent)
-        self._data['name'] = '{}/{}'.format(parent.name, location)
+    def __init__(self, parent, index):
+        """
+        :param parent: parent module or session object.
+        :param index: port index in format module/port (both 0 based)
+        """
+
+        super(self.__class__, self).__init__(objType='port', index=index, parent=parent)
+        self._data['name'] = '{}/{}'.format(parent.name, index)
 
     def inventory(self):
         self.p_info = self.get_attributes('p_info')
@@ -66,7 +77,7 @@ class XenaPort(XenaObject):
                 self.send_command(command)
 
         for index in self.send_command_return('ps_indices', '?').split():
-            XenaStream(location='{}/{}'.format(self.ref, index), parent=self)
+            XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
 
     #
     # Operations.
@@ -149,7 +160,7 @@ class XenaPort(XenaObject):
         for tpld in self.parent.get_objects_by_type('tpld'):
             tpld.del_object_from_parent()
         for tpld in self.get_attribute('pr_tplds').split():
-            XenaTpld(location='{}/{}'.format(self.ref, tpld), parent=self.parent).read_stats()
+            XenaTpld(parent=self.parent, index='{}/{}'.format(self.ref, tpld)).read_stats()
         return {int(s.ref.split('/')[-1]): s for s in self.parent.get_objects_by_type('tpld')}
 
     @property
@@ -171,8 +182,12 @@ class XenaTpld(XenaObject):
                       'pr_tpldlatency': ['min', 'avg', 'max', 'avg1sec', 'min1sec', 'max1sec'],
                       'pr_tpldjitter': ['min', 'avg', 'max', 'avg1sec', 'min1sec', 'max1sec']}
 
-    def __init__(self, location, parent):
-        super(self.__class__, self).__init__(objType='tpld', index=location, parent=parent)
+    def __init__(self, parent, index):
+        """
+        :param parent: parent port object.
+        :param index: TPLD index in format module/port/tpld.
+        """
+        super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
 
     def build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')

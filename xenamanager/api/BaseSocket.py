@@ -8,7 +8,7 @@ logger.setLevel(logging.DEBUG)
 
 class BaseSocket:
 
-    def __init__(self, hostname, port=5025, timeout=5):
+    def __init__(self, hostname, port=22611, timeout=5):
         self.hostname = hostname
         self.port = port
         self.timeout = timeout

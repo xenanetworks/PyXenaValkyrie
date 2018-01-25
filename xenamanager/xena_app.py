@@ -56,17 +56,18 @@ class XenaSession(XenaObject):
         self.api = None
         super(self.__class__, self).__init__(objType='session', index='', parent=None)
 
-    def add_chassis(self, chassis, password='xena'):
+    def add_chassis(self, chassis, port=22611, password='xena'):
         """ Add chassis.
 
         XenaManager-2G -> Add Chassis.
 
         :param chassis: chassis IP address
+        :param port: chassis port number
         :param password: chassis password
         """
 
         if chassis not in self.chassis_list:
-            XenaChassis(chassis, self).logon(password, self.owner)
+            XenaChassis(self, chassis, port).logon(password, self.owner)
 
     def disconnect(self):
         """ Disconnect from all chassis. """
@@ -181,28 +182,38 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
-    def __init__(self, ip, parent):
+    def __init__(self, parent, ip, port=22611):
+        """
+        :param parent: parent session object
+        :param ip: chassis IP address
+        :param port: chassis port number
+        """
+
         super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip)
 
-        self.api = XenaSocket(self.logger, ip)
+        self.api = XenaSocket(self.logger, ip, port=port)
         self.api.connect()
         self.keep_alive_thread = KeepAliveThread(self.api)
         self.keep_alive_thread.start()
+
+        self.c_info = None
 
     def logon(self, password, owner):
         self.send_command('c_logon', '"{}"'.format(password))
         self.send_command('c_owner', '"{}"'.format(owner))
 
     def disconnect(self):
+        """ Disconnect from chassis. """
+
         self.api.disconnect()
 
     def inventory(self):
         """ Get chassis inventory. """
 
-        c_info = self.get_attributes('c_info')
-        for m_index, m_portcounts in enumerate(c_info['c_portcounts'].split()):
+        self.c_info = self.get_attributes('c_info')
+        for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
             if int(m_portcounts):
-                XenaModule(index=m_index, parent=self).inventory()
+                XenaModule(parent=self, index=m_index).inventory()
 
     def reserve_ports(self, locations, force=False):
         """ Reserve ports and reset factory defaults.
@@ -216,7 +227,7 @@ class XenaChassis(XenaObject):
         """
 
         for location in locations:
-            port = XenaPort(location=location, parent=self)
+            port = XenaPort(parent=self, index=location)
             port.reserve(force)
             port.reset()
 
@@ -232,6 +243,12 @@ class XenaChassis(XenaObject):
             port.release()
 
     def start_traffic(self, blocking=False, *ports):
+        """ Start traffic on list of ports.
+
+        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return immediately.
+        :param ports: list of ports to start traffic on. Default - all session ports.
+        """
+
         self._traffic_command('on', *ports)
         if blocking:
             self.wait_traffic(*ports)
@@ -241,14 +258,21 @@ class XenaChassis(XenaObject):
             port.wait_for_states('p_traffic', int(2.628e+6), 'off')
 
     def stop_traffic(self, *ports):
+        """ Stop traffic on list of ports.
+
+        :param ports: list of ports to stop traffic on. Default - all session ports.
+        """
+
         self._traffic_command('off', *ports)
 
     def clear_stats(self, *ports):
+        """ Clear stats (TX and RX) for list of ports.
+
+        :param ports: list of ports to clear stats on. Default - all session ports.
+        """
+
         for port in ports:
             port.clear_stats()
-
-    def _get_operation_ports(self, *ports):
-        return ports if ports else self.ports.values()
 
     #
     # Properties.
@@ -281,29 +305,33 @@ class XenaChassis(XenaObject):
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
 
+    def _get_operation_ports(self, *ports):
+        return ports if ports else self.ports.values()
+
 
 class XenaModule(XenaObject):
     """ Represents Xena module. """
 
-    def __init__(self, index, parent):
+    def __init__(self, parent, index):
         """
-        :param index: module index, 0 based.
         :param parent: chassis object.
+        :param index: module index, 0 based.
         """
 
         super(self.__class__, self).__init__(objType='module', index=index, parent=parent)
+        self.m_info = None
 
     def inventory(self):
         """ Get module inventory. """
 
-        m_info = self.get_attributes('m_info')
-        if 'NOTCFP' in m_info['m_cfptype']:
+        self.m_info = self.get_attributes('m_info')
+        if 'NOTCFP' in self.m_info['m_cfptype']:
             a = self.get_attribute('m_portcount')
             m_portcount = int(a)
         else:
             m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
         for p_index in range(m_portcount):
-            XenaPort(location='{}/{}'.format(self.ref, p_index), parent=self).inventory()
+            XenaPort(parent=self, index='{}/{}'.format(self.ref, p_index)).inventory()
 
     #
     # Properties.

@@ -1,3 +1,8 @@
+"""
+Classes and utilities that represents Xena XenaManager-2G stream.
+
+:author: yoram@ignissoft.com
+"""
 
 import re
 
@@ -6,8 +11,13 @@ from xenamanager.xena_object import XenaObject
 
 class XenaStream(XenaObject):
 
-    def __init__(self, location, parent):
-        super(self.__class__, self).__init__(objType='stream', index=location, parent=parent)
+    def __init__(self, parent, index):
+        """
+        :param parent: parent port object.
+        :param index: stream index in format module/port/stream.
+        """
+
+        super(self.__class__, self).__init__(objType='stream', index=index, parent=parent)
 
     def build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')
