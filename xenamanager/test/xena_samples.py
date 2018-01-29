@@ -83,10 +83,10 @@ def traffic():
     print(json.dumps(ports_stats.statistics, indent=1))
     streams_stats = XenaStreamsStats(xm.session)
     streams_stats.read_stats()
-    print json.dumps(streams_stats.statistics, indent=1)
+    print(json.dumps(streams_stats.statistics, indent=1))
     tplds_stats = XenaTpldsStats(xm.session)
     tplds_stats.read_stats()
-    print json.dumps(tplds_stats.statistics, indent=1)
+    print(json.dumps(tplds_stats.statistics, indent=1))
 
 
 def run_all():

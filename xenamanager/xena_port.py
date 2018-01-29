@@ -32,6 +32,7 @@ class XenaPort(XenaObject):
 
         super(self.__class__, self).__init__(objType='port', index=index, parent=parent)
         self._data['name'] = '{}/{}'.format(parent.name, index)
+        self.p_info = None
 
     def inventory(self):
         self.p_info = self.get_attributes('p_info')
@@ -84,28 +85,28 @@ class XenaPort(XenaObject):
     #
 
     def start_traffic(self):
-        """
+        """ Start port traffic.
 
-        Capture -> Start Capture
+        Port -> Start Traffic
         """
         self.send_command('p_capture', 'on')
 
     def stop_traffic(self):
-        """
+        """ Stop port traffic.
 
-        Capture -> Stop Capture
+        Port -> Stop Traffic
         """
         self.send_command('p_capture', 'on')
 
     def start_capture(self):
-        """
+        """ Not implemented yet.
 
         Capture -> Start Capture
         """
         self.send_command('p_capture', 'on')
 
     def stop_capture(self):
-        """
+        """ Not implemented yet.
 
         Capture -> Stop Capture
         """
@@ -116,22 +117,38 @@ class XenaPort(XenaObject):
     #
 
     def clear_stats(self):
+        """ Clear att TX and RX statistics counter.
+
+        Port Statistics -> Clear TX Counters, Clear RX Counters
+        """
         self.send_command('pt_clear')
         self.send_command('pr_clear')
 
     def read_port_stats(self):
+        """
+        :return: dictionary {group name {stat name: value}}.
+            Sea XenaPort.stats_captions.
+        """
         stats_with_captions = OrderedDict()
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
         return stats_with_captions
 
     def read_stream_stats(self):
+        """
+        :return: dictionary {stream index {stat name: value}}.
+            Sea XenaStream.stats_captions.
+        """
         stream_stats = OrderedDict()
         for stream in self.streams.values():
             stream_stats[stream] = stream.read_stats()
         return stream_stats
 
     def read_tpld_stats(self):
+        """
+        :return: dictionary {tpld index {group name {stat name: value}}}.
+            Sea XenaTpld.stats_captions.
+        """
         payloads_stats = OrderedDict()
         for tpld in self.tplds.values():
             payloads_stats[tpld] = tpld.read_stats()
@@ -204,6 +221,11 @@ class XenaTpld(XenaObject):
         return 1
 
     def read_stats(self):
+        """
+        :return: dictionary {group name {stat name: value}}.
+            Sea XenaTpld.stats_captions.
+        """
+
         stats_with_captions = OrderedDict()
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)

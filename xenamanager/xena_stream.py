@@ -11,6 +11,8 @@ from xenamanager.xena_object import XenaObject
 
 class XenaStream(XenaObject):
 
+    stats_captions = ['bps', 'pps', 'bytes', 'packets']
+
     def __init__(self, parent, index):
         """
         :param parent: parent port object.
@@ -34,4 +36,8 @@ class XenaStream(XenaObject):
         return 1
 
     def read_stats(self):
-        return self.read_stat(['bps', 'pps', 'bytes', 'packets'], 'pt_stream')
+        """
+        :return: dictionary {stat name: value}
+            Sea XenaStream.stats_captions
+        """
+        return self.read_stat(self.stats_captions, 'pt_stream')

@@ -18,9 +18,14 @@ class XenaStats(object):
         :param session: current session
         :type session: xenamanager.xena_app.XenaSession
         """
+
         self.session = session
+        self.statistics = None
 
     def get_flat_stats(self):
+        """
+        :return: statistics as flat table {port/strea,/tpld name {group_stat name: value}}
+        """
         flat_stats = OrderedDict()
         for obj_name, port_stats in self.statistics.items():
             flat_obj_stats = OrderedDict()
@@ -35,18 +40,23 @@ class XenaStats(object):
 class XenaPortsStats(XenaStats):
     """ Ports statistics view.
 
-    Represents all ports statistics as table:
+    Represents all ports statistics as multi table:
 
-    Port Name      | pt_total_pps | pt_total_packets | ...
-    ---------------+--------------+------------------+----
-    IP/Module/Port | value        | value            | ...
-    IP/Module/Port | value        | value            | ...
+    +----------------+-------+-------+-----+-------+-------+-----+-----+
+    | Port Name      | Group |       |     | Group |       |     | ... |
+    +----------------+-------+-------+-----+-------+-------+-----+-----+
+    |                | Name  | Name  | ... | Name  | Name  | ... | ... |
+    +================+=======+=======+=====+=======+=======+=====+=====+
+    | IP/Module/Port | value | value | ... | Name  | Name  | ... | ... |
+    +----------------+-------+-------+-----+-------+-------+-----+-----+
+    | IP/Module/Port | value | value | ... | Name  | Name  | ... | ... |
+    +----------------+-------+-------+-----+-------+-------+-----+-----+
     """
 
     def read_stats(self):
         """ Read current ports statistics from chassis.
 
-        :return: dictionary <port name, <stat name, stat value>>
+        :return: dictionary {port name {group name, {stat name: stat value}}}
         """
 
         self.statistics = OrderedDict()
@@ -60,16 +70,19 @@ class XenaStreamsStats(XenaStats):
 
     Represents all streams statistics as table:
 
-    Stream Full Index | pps   | packets | ...
-    ------------------+-------+---------+----
-    Module/Port/Index | value | value   | ...
-    Module/Port/Index | value | value   | ...
+    +-------------------+--------+-------+-----+
+    | Stream Full Index | Name   | Name  | ... |
+    +===================+========+=======+=====+
+    | Module/Port/Index | value  | value | ... |
+    +-------------------+--------+-------+-----+
+    | Module/Port/Index | value  | value | ... |
+    +-------------------+--------+-------+-----+
     """
 
     def read_stats(self):
         """ Read current statistics from chassis.
 
-        :return: dictionary <stream full index, <stat name, stat value>>
+        :return: dictionary {stream full index {stat name: stat value}}
         """
 
         self.statistics = OrderedDict()
@@ -85,18 +98,23 @@ class XenaStreamsStats(XenaStats):
 class XenaTpldsStats(XenaStats):
     """ TPLDs statistics view.
 
-    Represents all TPLDs statistics as table:
+    Represents all TPLDs statistics as multi column table:
 
-    TPLD Full   Index | pr_tplderrors   | pr_tpldtraffic | ...
-    ------------------+-----------------+----------------+----
-    Module/Port/Index | value           | value          | ...
-    Module/Port/Index | value           | value          | ...
+    +-------------------+-------+-------+-----+-------+-------+-----+-----+
+    | TPLD Full Index   | Group |       |     | Group |       |     | ... |
+    +-------------------+-------+-------+-----+-------+-------+-----+-----+
+    |                   | Name  | Name  | ... | Name  | Name  | ... | ... |
+    +===================+=======+=======+=====+=======+=======+=====+=====+
+    | Module/Port/Index | value | value | ... | Name  | Name  | ... | ... |
+    +-------------------+-------+-------+-----+-------+-------+-----+-----+
+    | Module/Port/Index | value | value | ... | Name  | Name  | ... | ... |
+    +-------------------+-------+-------+-----+-------+-------+-----+-----+
     """
 
     def read_stats(self):
         """ Read current statistics from chassis.
 
-        :return: dictionary <tpld full index, <stat name, stat value>>
+        :return: dictionary {tpld full index {group name {stat name: stat value}}}
         """
 
         self.statistics = OrderedDict()
