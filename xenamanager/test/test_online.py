@@ -76,6 +76,16 @@ class XenaTestBase(TgnTest):
         print json.dumps(tplds_stats.statistics, indent=1)
         print json.dumps(tplds_stats.get_flat_stats(), indent=1)
 
+    def test_traffic(self):
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        self.ports[self.port1].start_capture()
+        self.ports[self.port1].start_traffic(blocking=True)
+        self.ports[self.port1].stop_capture()
+        packets = self.ports[self.port1].capture.get_packets(1, 2)
+        print packets[0]
+        print packets[1]
+
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
         self.ports[self.port1].load_config(cfg0)
