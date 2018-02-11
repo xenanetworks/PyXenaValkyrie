@@ -12,3 +12,5 @@ docs/_*
 .settings
 .cache
 .idea
+
+.pytest_cache

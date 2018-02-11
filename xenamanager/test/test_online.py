@@ -44,6 +44,9 @@ class XenaTestOnline(TgnTest):
     def test_load_config(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        print self.ports[self.port1].streams[0].get_attribute('ps_packetheader')
+        print self.ports[self.port1].streams[0].get_attribute('ps_payload')
+        print self.ports[self.port1].streams[0].get_attribute('ps_headerprotocol')
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)

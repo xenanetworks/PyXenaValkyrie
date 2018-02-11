@@ -1,5 +1,5 @@
 """
-Stand alone samples demonstrating Xena package functionality.
+Sample showing how Xena can integrate with CloudShell and Jenkins.
 
 Setup:
 Two Xena ports connected back to back.
@@ -55,7 +55,7 @@ def connect():
     if 'SANDBOX_ID' in environ:
         sandbox_id = environ['SANDBOX_ID']
     else:
-        context = create_command_context(session, ['xena 2g/Module6/Port4', 'xena 2g/Module6/Port5'],
+        context = create_command_context(session, ['xena 2g/Module6/Port0', 'xena 2g/Module6/Port1'],
                                          'Xena Controller', {})
         sandbox_id = context.reservation.reservation_id
 
@@ -77,22 +77,8 @@ def disconnect():
     """ Disconnect from chassis. """
 
     xm.logoff()
-    if not 'SANDBOX_ID' in environ:
+    if 'SANDBOX_ID' not in environ:
         end_reservation(session, sandbox_id)
-
-
-def inventory():
-    """ Get inventory of all chassis. """
-
-    xm.session.inventory()
-    print('+++')
-    for c_name, chassis in xm.session.chassis_list.items():
-        print('chassis ' + c_name)
-        for m_name, module in chassis.modules.items():
-            print('\tmodule ' + str(m_name))
-            for p_name, _ in module.ports.items():
-                print('\t\tport ' + str(p_name))
-    print('+++')
 
 
 def load_config():
