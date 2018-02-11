@@ -13,12 +13,12 @@ from xenamanager.xena_app import init_xena
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 
 
-class XenaTestBase(TgnTest):
+class XenaTestOnline(TgnTest):
 
     TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
 
     def setUp(self):
-        super(XenaTestBase, self).setUp()
+        super(XenaTestOnline, self).setUp()
         self.xm = init_xena(self.logger, self.config.get('Xena', 'owner'))
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = self.config.get('Xena', 'port1')
