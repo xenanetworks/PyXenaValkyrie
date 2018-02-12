@@ -89,7 +89,7 @@ class XenaPort(XenaObject):
 
         Port -> Start Traffic
 
-        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return immediately.
+        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
         """
         self.session.start_traffic(blocking)
 
@@ -253,7 +253,7 @@ class XenaCapture(XenaObject):
             pcap_packet = ''
             for c, b in zip(range(len(packet)), packet):
                 if c % 32 == 0:
-                    pcap_packet += '\n{:06x} '.format(c / 2)
+                    pcap_packet += '\n{:06x} '.format(int(c / 2))
                 elif c % 2 == 0:
                     pcap_packet += ' '
                 pcap_packet += b

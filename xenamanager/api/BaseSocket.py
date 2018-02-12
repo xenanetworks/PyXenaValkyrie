@@ -1,9 +1,15 @@
-import socket
+
 import sys
+import socket
 import logging
 
+# :todo: get logger from Xena socket and manage from user level.
+# Change logging level to DEBUG to get low low level logging...
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setFormatter(logging.Formatter('BaseSocket - %(message)s'))
+logger.addHandler(stdout_handler)
 
 
 class BaseSocket:
@@ -29,7 +35,7 @@ class BaseSocket:
 
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error, msg:
+        except socket.error as msg:
             logger.error("Fail to create a socket: host %s:%d, error:%s",
                          self.hostname, self.port, msg[0])
             return False
@@ -38,7 +44,7 @@ class BaseSocket:
 
         try:
             self.sock.connect((self.hostname, self.port))
-        except socket.error, msg:
+        except socket.error as msg:
             logger.error("Fail to connect to host %s:%d, error:%s",
                          self.hostname, self.port, msg[0])
             return False
@@ -72,9 +78,9 @@ class BaseSocket:
             return 0
 
         try:
-            if not self.sock.send(cmd + '\n'):
+            if not self.sock.send(bytearray(cmd + '\n', 'utf-8')):
                 return -1
-        except socket.error, msg:
+        except socket.error as msg:
             logger.error("Fail to send a cmd, error:%s\n", msg[0])
             self.disconnect()
             return -1
@@ -90,13 +96,14 @@ class BaseSocket:
             return '<OK>'
 
         reply = self.sock.recv(1024)
-        if reply.find("---^") != -1:
+        if reply.find(b'---^') != -1:
             logger.debug("Receiving a syntax error message")
             # read again the syntax error msg
             reply = self.sock.recv(1024)
 
-        logger.debug("Reply message(%s)", reply.strip('\n'))
-        return reply
+        str_reply = reply.decode("utf-8")
+        logger.debug('Reply message({})'.format(str_reply))
+        return str_reply
 
     def sendQuery(self, query):
         logger.debug("sendQuery(%s)", query)
@@ -126,58 +133,3 @@ class BaseSocket:
 
         if was_connected:
             self.connect()
-
-
-def testsuite(hostname='localhost', port=22611):
-
-    test_result = False
-    dummy_test_result = False
-    logging.basicConfig(level=logging.DEBUG)
-    s = BaseSocket(hostname, port, 1)
-    print "Connecting to %s port %d" % (hostname, port)
-    s.connect()
-    if s.is_connected():
-        print "Internal Status: connected"
-        s.set_keepalives()
-        print "keepalive set"
-        s.disconnect()
-        print "disconnected"
-        print "BasicSocket test succeed"
-        test_result = True
-    else:
-        print "Error: not connected"
-
-    print "Setting dummy mode"
-    s.set_dummymode(True)
-    print "Connecting to %s port %d" % (hostname, port)
-    s.connect()
-    if s.is_connected():
-        print "Connected, sending query"
-        reply = s.sendQuery("any string")
-        if reply == '<OK>':
-            print "Reply is correct, sending command"
-            s.sendCommand("SYNC")
-            reply = s.readReply()
-            if reply == '<OK>':
-                print "Reply is correct, disconnecting"
-                dummy_test_result = True
-                print "Dummy test succeed"
-            s.disconnect()
-        else:
-            print "Error: reply is wrong"
-    else:
-        print "Error: not connected"
-
-    del s
-    if test_result and dummy_test_result:
-        print "All tests succeed"
-        sys.exit(0)
-    else:
-        print "Fail, please review the output"
-        sys.exit(-1)
-
-
-if __name__ == '__main__':
-    testsuite('176.22.65.116')
-
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

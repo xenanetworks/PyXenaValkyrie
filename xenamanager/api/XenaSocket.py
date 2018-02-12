@@ -1,6 +1,4 @@
-import sys
-import time
-import logging
+
 import threading
 import socket
 
@@ -100,14 +98,14 @@ class XenaSocket(object):
             replies = self.__sendQueryReplies(cmd)
             self.logger.debug("sendQuery(%s) -- Begin", cmd)
             for l in replies:
-                self.logger.debug("%s", l)
+                self.logger.debug("%s", l.strip())
             self.logger.debug("sendQuery(%s) -- End", cmd)
             return replies
 
         reply = self.__sendQueryReply(cmd)
         self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
         if reply.startswith(('#Syntax error', '<BADPARAMETER>')):
-            raise Exception('sendQuery(%s) reply(%s)', cmd, reply)
+            raise Exception('sendQuery({}) reply({})'.format(cmd, reply))
         return reply
 
     def sendQueryVerify(self, cmd):
@@ -120,52 +118,3 @@ class XenaSocket(object):
         if resp != self.reply_ok:
             raise Exception('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
         self.logger.debug("SendQueryVerify(%s) Succeed", cmd)
-
-
-def testsuite():
-    import KeepAliveThread
-
-    hostname = "10.16.46.156"
-    port = 22611
-    interval = 2
-    test_result = False
-    logging.basicConfig(level=logging.DEBUG)
-    s = XenaSocket.XenaSocket(hostname, port)
-    s.set_dummymode(True)
-    s.connect()
-    if s.is_connected():
-        print "Connected"
-        keep_alive_thread = KeepAliveThread.KeepAliveThread(s, interval)
-        print "Starting Keep Alive Thread"
-        keep_alive_thread.start()
-        time.sleep(1)
-        print "Sending a command"
-        s.sendCommand("Hello World!")
-        print "Sending a query"
-        reply = s.sendQuery("Xena Command")
-        if reply != '<OK>':
-            print "sendQuery failed"
-            sys.exit(-1)
-
-        print "Sending a query with check enabled"
-        if not s.sendQueryVerify("Xena Command"):
-            print "sendQuery failed"
-            sys.exit(-1)
-
-        keep_alive_thread.stop()
-        del keep_alive_thread
-        del s
-        test_result = True
-
-    if test_result:
-        print "All tests succeed"
-        sys.exit(0)
-    else:
-        print "Fail, please review the output"
-        sys.exit(-1)
-
-
-if __name__ == '__main__':
-    testsuite()
-
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

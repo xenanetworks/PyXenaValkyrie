@@ -120,7 +120,7 @@ class XenaSession(XenaObject):
     def start_traffic(self, blocking=False, *ports):
         """ Start traffic on list of ports.
 
-        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return immediately.
+        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
         :param ports: list of ports to start traffic on. Default - all session ports.
         """
 
@@ -245,7 +245,7 @@ class XenaChassis(XenaObject):
     def start_traffic(self, blocking=False, *ports):
         """ Start traffic on list of ports.
 
-        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return immediately.
+        :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
         :param ports: list of ports to start traffic on. Default - all session ports.
         """
 

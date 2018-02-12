@@ -1,6 +1,5 @@
 future
 requests
-scapy
 pytest
 pytest-runner
 

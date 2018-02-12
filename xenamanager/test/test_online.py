@@ -44,9 +44,9 @@ class XenaTestOnline(TgnTest):
     def test_load_config(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
-        print self.ports[self.port1].streams[0].get_attribute('ps_packetheader')
-        print self.ports[self.port1].streams[0].get_attribute('ps_payload')
-        print self.ports[self.port1].streams[0].get_attribute('ps_headerprotocol')
+        print(self.ports[self.port1].streams[0].get_attribute('ps_packetheader'))
+        print(self.ports[self.port1].streams[0].get_attribute('ps_payload'))
+        print(self.ports[self.port1].streams[0].get_attribute('ps_headerprotocol'))
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
@@ -68,26 +68,26 @@ class XenaTestOnline(TgnTest):
         self.xm.session.start_traffic(blocking=True)
         ports_stats = XenaPortsStats(self.xm.session)
         ports_stats.read_stats()
-        print json.dumps(ports_stats.statistics, indent=1)
-        print json.dumps(ports_stats.get_flat_stats(), indent=1)
+        print(json.dumps(ports_stats.statistics, indent=1))
+        print(json.dumps(ports_stats.get_flat_stats(), indent=1))
         streams_stats = XenaStreamsStats(self.xm.session)
         streams_stats.read_stats()
-        print json.dumps(streams_stats.statistics, indent=1)
-        print json.dumps(streams_stats.get_flat_stats(), indent=1)
+        print(json.dumps(streams_stats.statistics, indent=1))
+        print(json.dumps(streams_stats.get_flat_stats(), indent=1))
         tplds_stats = XenaTpldsStats(self.xm.session)
         tplds_stats.read_stats()
-        print json.dumps(tplds_stats.statistics, indent=1)
-        print json.dumps(tplds_stats.get_flat_stats(), indent=1)
+        print(json.dumps(tplds_stats.statistics, indent=1))
+        print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
 
-    def test_traffic(self):
+    def test_capture(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
                           path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
         self.ports[self.port1].start_capture()
         self.ports[self.port1].start_traffic(blocking=True)
         self.ports[self.port1].stop_capture()
         packets = self.ports[self.port1].capture.get_packets(1, 2)
-        print packets[0]
-        print packets[1]
+        print(packets[0])
+        print(packets[1])
 
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
