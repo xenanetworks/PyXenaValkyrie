@@ -1,6 +1,6 @@
 future
-requests
 pytest
 pytest-runner
+pypacker27
 
 pytrafficgen>=1.2.0

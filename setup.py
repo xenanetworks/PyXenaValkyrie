@@ -27,7 +27,7 @@ long_description = read('README.rst')
 setup(
     name='pyxenamanager',
     version=xenamanager.__version__,
-    url='https://github.com/shmir/PyXenaManager/',
+    url='https://github.com/xenadevel/PyXenaManager/',
     license='Apache Software License',
     author='Yoram Shamir',
     install_requires=install_requires,

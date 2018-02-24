@@ -5,6 +5,9 @@ Classes and utilities that represents Xena XenaManager-2G stream.
 """
 
 import re
+import binascii
+
+from pypacker.layer12 import ethernet
 
 from xenamanager.xena_object import XenaObject
 
@@ -41,3 +44,21 @@ class XenaStream(XenaObject):
             Sea XenaStream.stats_captions
         """
         return self.read_stat(self.stats_captions, 'pt_stream')
+
+    def get_packet_headers(self):
+        """
+        :return: current packet headers
+        :rtype: pypacker.layer12.ethernet
+        """
+
+        bin_headers = self.get_attribute('ps_packetheader')
+        return ethernet.Ethernet(binascii.unhexlify(bin_headers[2:]))
+
+    def set_packet_headers(self, headers):
+        """
+        :param headers: current packet headers
+        :type headers: pypacker.layer12.ethernet
+        """
+
+        bin_headers = '0x' + binascii.hexlify(headers.bin()).decode('utf-8')
+        self.set_attribute('ps_packetheader', bin_headers)
