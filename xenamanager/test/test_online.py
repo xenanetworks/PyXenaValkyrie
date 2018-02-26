@@ -42,20 +42,26 @@ class XenaTestOnline(TgnTest):
         print('+++')
 
     def test_load_config(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
 
         packet = self.ports[self.port1].streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '00:00:00:00:00:00')
-        print(packet.ip.dst_s == '1.1.2.1')
+        assert(packet.ip.dst_s == '1.1.2.1')
         packet.dst_s = '22:22:22:22:22:22'
         packet.ip.dst_s = '2.2.2.2'
         self.ports[self.port1].streams[0].set_packet_headers(packet)
         packet = self.ports[self.port1].streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '22:22:22:22:22:22')
-        print(packet.ip.dst_s == '2.2.2.2')
+        assert(packet.ip.dst_s == '2.2.2.2')
+
+        modifier = self.ports[self.port1].streams[0].modifiers[0].get()
+        print(modifier)
+        self.ports[self.port1].streams[0].add_modifier().set(12)
+        modifier = self.ports[self.port1].streams[0].modifiers[1].get()
+        assert(modifier['position'] == 12)
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
@@ -63,15 +69,15 @@ class XenaTestOnline(TgnTest):
         self.ports[self.port2].wait_for_up(16)
 
     def test_traffic(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
         self.xm.session.start_traffic()
         time.sleep(2)
         port1_stats = self.ports[self.port1].read_port_stats()
         port2_stats = self.ports[self.port2].read_port_stats()
         assert(abs(port1_stats['pt_total']['packets'] - port2_stats['pr_total']['packets']) < 3000)
-        assert(abs(1000 - self.ports[self.port1].streams[0].read_stats()['pps']) < 10)
-        assert(abs(1000 - self.ports[self.port1].tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 10)
+        assert(abs(1000 - self.ports[self.port1].streams[0].read_stats()['pps']) < 300)
+        assert(abs(1000 - self.ports[self.port1].tplds[10].read_stats()['pr_tpldtraffic']['pps']) < 300)
         self.xm.session.stop_traffic()
         self.xm.session.clear_stats()
         self.xm.session.start_traffic(blocking=True)
@@ -89,8 +95,8 @@ class XenaTestOnline(TgnTest):
         print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
 
     def test_capture(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
         self.ports[self.port1].start_capture()
         self.ports[self.port1].start_traffic(blocking=True)
         self.ports[self.port1].stop_capture()
