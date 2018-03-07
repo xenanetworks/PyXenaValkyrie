@@ -64,6 +64,10 @@ class XenaPort(XenaObject):
     def wait_for_up(self, timeout=40):
         self.wait_for_states('P_RECEIVESYNC', timeout, 'IN_SYNC')
 
+    #
+    # Configurations.
+    #
+
     def load_config(self, config_file_name):
         """ Load configuration file from xpc file.
 
@@ -79,6 +83,23 @@ class XenaPort(XenaObject):
 
         for index in self.send_command_return('ps_indices', '?').split():
             XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
+
+    def add_stream(self):
+        """ Add stream.
+
+        :return: newly created stream.
+        :rtype: xenamanager.xena_stream.XenaStream
+        """
+
+        return XenaStream(self, index='{}/{}'.format(self.ref, len(self.streams)))
+
+    def remove_stream(self, index):
+        """ Remove stream.
+
+        :param index: index of stream to remove.
+        """
+
+        self.streams[index].del_object_from_parent()
 
     #
     # Operations.

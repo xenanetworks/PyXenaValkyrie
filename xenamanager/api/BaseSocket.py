@@ -33,22 +33,9 @@ class BaseSocket:
         if self.dummymode:
             return True
 
-        try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error as msg:
-            logger.error("Fail to create a socket: host %s:%d, error:%s",
-                         self.hostname, self.port, msg[0])
-            return False
-
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
-
-        try:
-            self.sock.connect((self.hostname, self.port))
-        except socket.error as msg:
-            logger.error("Fail to connect to host %s:%d, error:%s",
-                         self.hostname, self.port, msg[0])
-            return False
-
+        self.sock.connect((self.hostname, self.port))
         return True
 
     def connect(self):

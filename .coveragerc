@@ -1,0 +1,3 @@
+[run]
+omit =
+    xenamanager/test/*_samples.py

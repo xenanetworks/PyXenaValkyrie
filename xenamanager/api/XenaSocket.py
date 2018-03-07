@@ -104,7 +104,7 @@ class XenaSocket(object):
 
         reply = self.__sendQueryReply(cmd)
         self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
-        if reply.startswith(('#Syntax error', '<BADPARAMETER>')):
+        if reply.startswith(('#Syntax error', '<BADPARAMETER>', '<BADINDEX>')):
             raise Exception('sendQuery({}) reply({})'.format(cmd, reply))
         return reply
 

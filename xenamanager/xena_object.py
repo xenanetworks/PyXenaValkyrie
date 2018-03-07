@@ -19,7 +19,8 @@ class XenaObject(TgnObject):
     def __init__(self, **data):
         if data['parent']:
             self.session = data['parent'].session
-        data['objRef'] = str(data['index'])
+        if 'objRef' not in data:
+            data['objRef'] = str(data['index'])
         if 'name' not in data:
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
