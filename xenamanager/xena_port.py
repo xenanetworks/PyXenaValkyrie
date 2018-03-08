@@ -7,8 +7,11 @@ Classes and utilities that represents Xena XenaManager-2G port.
 import re
 from collections import OrderedDict
 
+from trafficgenerator.tgn_utils import TgnError
+
 from xenamanager.xena_object import XenaObject
 from xenamanager.xena_stream import XenaStream
+from xenamanager.api.XenaSocket import XenaCommandException
 
 
 class XenaPort(XenaObject):
@@ -45,10 +48,12 @@ class XenaPort(XenaObject):
         :param force: True - take forcefully, False - fail if port is reserved by other user
         """
 
-        if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
+        p_reservation = self.get_attribute('p_reservation')
+        if p_reservation == 'RESERVED_BY_YOU':
             return
-        if force:
-            self.relinquish()
+        elif p_reservation == 'RESERVED_BY_OTHER' and not force:
+            raise TgnError('Port {} reserved by {}'.format(self, self.get_attribute('p_reservedby')))
+        self.relinquish()
         self.send_command('p_reservation reserve')
 
     def relinquish(self):
@@ -56,7 +61,8 @@ class XenaPort(XenaObject):
             self.send_command('p_reservation relinquish')
 
     def release(self):
-        return self.send_command('p_reservation release')
+        if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
+            self.send_command('p_reservation release')
 
     def reset(self):
         return self.send_command('p_reset')
@@ -79,7 +85,10 @@ class XenaPort(XenaObject):
 
         for command in commands:
             if not command.startswith(';'):
-                self.send_command(command)
+                try:
+                    self.send_command(command)
+                except XenaCommandException as e:
+                    self.logger.warning(e.message)
 
         for index in self.send_command_return('ps_indices', '?').split():
             XenaStream(parent=self, index='{}/{}'.format(self.ref, index))

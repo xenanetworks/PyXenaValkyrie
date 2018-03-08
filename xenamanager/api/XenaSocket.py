@@ -5,6 +5,10 @@ import socket
 from xenamanager.api.BaseSocket import BaseSocket
 
 
+class XenaCommandException(Exception):
+    pass
+
+
 class XenaSocket(object):
     reply_ok = '<OK>'
 
@@ -116,5 +120,5 @@ class XenaSocket(object):
 
         resp = self.__sendQueryReply(cmd)
         if resp != self.reply_ok:
-            raise Exception('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
+            raise XenaCommandException('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
         self.logger.debug("SendQueryVerify(%s) Succeed", cmd)

@@ -7,13 +7,12 @@ Base class for all Xena package tests.
 from os import path
 import time
 import json
-import pytest
-import unittest
 
 from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_app import init_xena
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenamanager.xena_stream import XenaModifierType
+from trafficgenerator.tgn_utils import TgnError
 
 
 class XenaTestOnline(TgnTest):
@@ -76,27 +75,28 @@ class XenaTestOnline(TgnTest):
         self.ports[self.port1].streams[0].remove_modifier(4)
         assert(self.ports[self.port1].streams[0].modifiers[12].max_val == 65535)
 
-    @unittest.skip("requires special card")
-    @pytest.mark.skip(reason="requires special card")
     def test_extended_modifiers(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
+        try:
+            port = self.xm.session.reserve_ports([self.config.get('Xena', 'port3')])[self.config.get('Xena', 'port3')]
+        except TgnError as e:
+            self.skipTest('Skip test - ' + e.message)
+        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_3.xpc'))
 
-        assert(len(self.ports[self.port1].streams[0].modifiers) == 1)
+        assert(len(port.streams[0].modifiers) == 1)
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
-        modifier1 = self.ports[self.port1].streams[0].modifiers[4]
+        modifier1 = port.streams[0].modifiers[4]
         assert(modifier1.min_val == 0)
         print(modifier1)
         #: :type modifier2: xenamanager.xena_strea.XenaModifier
-        modifier2 = self.ports[self.port1].streams[0].add_modifier(position=12, m_type=XenaModifierType.extended)
-        assert(len(self.ports[self.port1].streams[0].modifiers) == 2)
+        modifier2 = port.streams[0].add_modifier(position=12, m_type=XenaModifierType.extended)
+        assert(len(port.streams[0].modifiers) == 2)
         modifier2.get()
         assert(modifier2.position == 12)
         print(modifier2)
-        print(self.ports[self.port1].streams[0].modifiers)
+        print(port.streams[0].modifiers)
 
-        self.ports[self.port1].streams[0].remove_modifier(4)
-        assert(self.ports[self.port1].streams[0].modifiers[12].max_val == 65535)
+        port.streams[0].remove_modifier(4)
+        assert(port.streams[0].modifiers[12].max_val == 65535)
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
