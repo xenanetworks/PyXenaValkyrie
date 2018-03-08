@@ -3,4 +3,4 @@ pytest
 pytest-runner
 pypacker27
 
-pytrafficgen>=1.2.0
+pytrafficgen==1.2.3

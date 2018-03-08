@@ -36,6 +36,10 @@ class XenaStream(XenaObject):
         """
 
         super(self.__class__, self).__init__(objType='stream', index=index, parent=parent)
+        self.send_command('ps_create')
+
+    def __del__(self):
+        self.send_command('ps_delete')
 
     def build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')
@@ -114,7 +118,7 @@ class XenaStream(XenaObject):
             self.set_attribute('ps_modifierextcount', 0)
         except Exception as _:
             pass
-        self.del_objects_from_parent('modifier')
+        self.del_objects_by_type('modifier')
 
         for modifier in current_modifiers.values():
             self.add_modifier(modifier.m_type, position=modifier.position).set(mask=modifier.mask,

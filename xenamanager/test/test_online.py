@@ -44,36 +44,38 @@ class XenaTestOnline(TgnTest):
         print('+++')
 
     def test_load_config(self):
-        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
-                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
+        port = self.xm.session.reserve_ports([self.port1])[self.port1]
+        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
 
-        packet = self.ports[self.port1].streams[0].get_packet_headers()
+        assert(len(port.streams) == 2)
+
+        packet = port.streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '00:00:00:00:00:00')
         assert(packet.ip.dst_s == '1.1.2.1')
         packet.dst_s = '22:22:22:22:22:22'
         packet.ip.dst_s = '2.2.2.2'
-        self.ports[self.port1].streams[0].set_packet_headers(packet)
-        packet = self.ports[self.port1].streams[0].get_packet_headers()
+        port.streams[0].set_packet_headers(packet)
+        packet = port.streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '22:22:22:22:22:22')
         assert(packet.ip.dst_s == '2.2.2.2')
 
-        assert(len(self.ports[self.port1].streams[0].modifiers) == 1)
+        assert(len(port.streams[0].modifiers) == 1)
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
-        modifier1 = self.ports[self.port1].streams[0].modifiers[4]
+        modifier1 = port.streams[0].modifiers[4]
         assert(modifier1.min_val == 0)
         print(modifier1)
         #: :type modifier2: xenamanager.xena_strea.XenaModifier
-        modifier2 = self.ports[self.port1].streams[0].add_modifier(position=12)
-        assert(len(self.ports[self.port1].streams[0].modifiers) == 2)
+        modifier2 = port.streams[0].add_modifier(position=12)
+        assert(len(port.streams[0].modifiers) == 2)
         modifier2.get()
         assert(modifier2.position == 12)
         print(modifier2)
-        print(self.ports[self.port1].streams[0].modifiers)
+        print(port.streams[0].modifiers)
 
-        self.ports[self.port1].streams[0].remove_modifier(4)
-        assert(self.ports[self.port1].streams[0].modifiers[12].max_val == 65535)
+        port.streams[0].remove_modifier(4)
+        assert(port.streams[0].modifiers[12].max_val == 65535)
 
     def test_extended_modifiers(self):
         try:
@@ -140,7 +142,17 @@ class XenaTestOnline(TgnTest):
         print(packets[1])
 
     def test_build_config(self):
-        pass
+        #: :type port: xenamanager.xena_port.XenaPort
+        port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
+
+        assert(len(port.streams) == 0)
+        port.add_stream()
+        assert(len(port.streams) == 1)
+        port.add_stream()
+        assert(len(port.streams) == 2)
+        port.remove_stream(0)
+        assert(len(port.streams) == 1)
+        assert(port.get_attribute('ps_indices').split()[0] == '1')
 
     def _load_config(self, cfg0, cfg1):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)

@@ -90,7 +90,7 @@ class XenaPort(XenaObject):
                 except XenaCommandException as e:
                     self.logger.warning(e.message)
 
-        for index in self.send_command_return('ps_indices', '?').split():
+        for index in self.get_attribute('ps_indices').split():
             XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
 
     def add_stream(self):
