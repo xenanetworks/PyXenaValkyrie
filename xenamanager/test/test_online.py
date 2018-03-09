@@ -118,18 +118,35 @@ class XenaTestOnline(TgnTest):
         self.xm.session.stop_traffic()
         self.xm.session.clear_stats()
         self.xm.session.start_traffic(blocking=True)
+
         ports_stats = XenaPortsStats(self.xm.session)
         ports_stats.read_stats()
-        print(json.dumps(ports_stats.statistics, indent=1))
+        print(ports_stats.statistics.dumps())
         print(json.dumps(ports_stats.get_flat_stats(), indent=1))
+
         streams_stats = XenaStreamsStats(self.xm.session)
         streams_stats.read_stats()
-        print(json.dumps(streams_stats.statistics, indent=1))
+        print(streams_stats.statistics.dumps())
         print(json.dumps(streams_stats.get_flat_stats(), indent=1))
+
         tplds_stats = XenaTpldsStats(self.xm.session)
         tplds_stats.read_stats()
-        print(json.dumps(tplds_stats.statistics, indent=1))
+        print(tplds_stats.statistics.dumps())
         print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
+
+    def test_stream_stats(self):
+        self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),
+                          path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
+
+        self.xm.session.start_traffic(blocking=True)
+
+        tpld_stats = XenaTpldsStats(self.xm.session)
+        print(tpld_stats.read_stats().dumps())
+
+        streams_stats = XenaStreamsStats(self.xm.session)
+        statistics = streams_stats.read_stats()
+        print(streams_stats.tx_statistics.dumps())
+        print(statistics.dumps())
 
     def test_capture(self):
         self._load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'),

@@ -39,21 +39,8 @@ class XenaStream(XenaObject):
         self.send_command('ps_create')
 
     def __del__(self):
-        self.send_command('ps_delete')
-
-    def build_index_command(self, command, *arguments):
-        module, port, sid = self.ref.split('/')
-        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
-
-    def extract_return(self, command, index_command_value):
-        module, port, sid = self.ref.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
-
-    def get_index_len(self):
-        return 2
-
-    def get_command_len(self):
-        return 1
+        if self.api.is_connected():
+            self.send_command('ps_delete')
 
     def read_stats(self):
         """
@@ -162,6 +149,24 @@ class XenaStream(XenaObject):
         """
         return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.standard}
 
+    #
+    # Private methods.
+    #
+
+    def _build_index_command(self, command, *arguments):
+        module, port, sid = self.ref.split('/')
+        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
+
+    def _extract_return(self, command, index_command_value):
+        module, port, sid = self.ref.split('/')
+        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
+
+    def _get_index_len(self):
+        return 2
+
+    def _get_command_len(self):
+        return 1
+
 
 class XenaModifier(XenaObject):
 
@@ -182,25 +187,6 @@ class XenaModifier(XenaObject):
         super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)
         self.m_type = m_type
         self.get()
-
-    def to_dict(self):
-        return str({v: getattr(self, v) for v in
-                    ['m_type', 'position', 'action', 'repeat', 'min_val', 'step', 'max_val', 'mask']})
-
-    def build_index_command(self, command, *arguments):
-        module, port, sid, _ = self.ref.split('/')
-        return ('{}/{} {} [{},{}]' + len(arguments) * ' {}').format(module, port, command, sid, self.mid, *arguments)
-
-    def extract_return(self, command, index_command_value):
-        module, port, sid, _ = self.ref.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{},{}\]\s*'.
-                      format(module, port, command.upper(), sid, self.mid), '', index_command_value)
-
-    def get_index_len(self):
-        return 2
-
-    def get_command_len(self):
-        return 1
 
     def set(self, **kwargs):
         for k, v in kwargs.items():
@@ -234,3 +220,22 @@ class XenaModifier(XenaObject):
             self.min_val = int(min_val)
             self.step = int(step)
             self.max_val = int(max_val)
+
+    #
+    # Private methods.
+    #
+
+    def _build_index_command(self, command, *arguments):
+        module, port, sid, _ = self.ref.split('/')
+        return ('{}/{} {} [{},{}]' + len(arguments) * ' {}').format(module, port, command, sid, self.mid, *arguments)
+
+    def _extract_return(self, command, index_command_value):
+        module, port, sid, _ = self.ref.split('/')
+        return re.sub('{}/{}\s*{}\s*\[{},{}\]\s*'.
+                      format(module, port, command.upper(), sid, self.mid), '', index_command_value)
+
+    def _get_index_len(self):
+        return 2
+
+    def _get_command_len(self):
+        return 1

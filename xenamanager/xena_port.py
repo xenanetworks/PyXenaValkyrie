@@ -8,10 +8,11 @@ import re
 from collections import OrderedDict
 
 from trafficgenerator.tgn_utils import TgnError
+from trafficgenerator.tgn_object import TgnObjectsDict
 
+from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_object import XenaObject
 from xenamanager.xena_stream import XenaStream
-from xenamanager.api.XenaSocket import XenaCommandException
 
 
 class XenaPort(XenaObject):
@@ -161,6 +162,7 @@ class XenaPort(XenaObject):
         :return: dictionary {group name {stat name: value}}.
             Sea XenaPort.stats_captions.
         """
+
         stats_with_captions = OrderedDict()
         for stat_name in self.stats_captions.keys():
             stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
@@ -206,8 +208,7 @@ class XenaPort(XenaObject):
 
         # TPLD has the same index as stream. Since we don't want to override the streams and as TPLDs are temporary and
         # dynamic we create them under port parent (chassis) and erase them before we read them again.
-        for tpld in self.parent.get_objects_by_type('tpld'):
-            tpld.del_object_from_parent()
+        self.parent.del_objects_by_type('tpld')
         for tpld in self.get_attribute('pr_tplds').split():
             XenaTpld(parent=self.parent, index='{}/{}'.format(self.ref, tpld)).read_stats()
         return {int(s.ref.split('/')[-1]): s for s in self.parent.get_objects_by_type('tpld')}
@@ -238,18 +239,18 @@ class XenaTpld(XenaObject):
         """
         super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
 
-    def build_index_command(self, command, *arguments):
+    def _build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')
         return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
 
-    def extract_return(self, command, index_command_value):
+    def _extract_return(self, command, index_command_value):
         module, port, sid = self.ref.split('/')
         return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
 
-    def get_index_len(self):
+    def _get_index_len(self):
         return 2
 
-    def get_command_len(self):
+    def _get_command_len(self):
         return 1
 
     def read_stats(self):

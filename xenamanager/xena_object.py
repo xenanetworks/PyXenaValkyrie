@@ -25,25 +25,25 @@ class XenaObject(TgnObject):
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
 
-    def build_index_command(self, command, *arguments):
+    def _build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)
 
-    def extract_return(self, command, index_command_value):
+    def _extract_return(self, command, index_command_value):
         return re.sub('{}\s*{}\s*'.format(self.ref, command.upper()), '', index_command_value)
 
-    def get_index_len(self):
+    def _get_index_len(self):
         return len(self.ref.split())
 
-    def get_command_len(self):
+    def _get_command_len(self):
         return len(self.ref.split())
 
     def send_command(self, command, *arguments):
-        index_command = self.build_index_command(command, *arguments)
+        index_command = self._build_index_command(command, *arguments)
         self.api.sendQueryVerify(index_command)
 
     def send_command_return(self, command, *arguments):
-        index_command = self.build_index_command(command, *arguments)
-        return self.extract_return(command, self.api.sendQuery(index_command))
+        index_command = self._build_index_command(command, *arguments)
+        return self._extract_return(command, self.api.sendQuery(index_command))
 
     def set_attribute(self, attribute, value):
         return self.send_command(attribute, value)
@@ -52,11 +52,11 @@ class XenaObject(TgnObject):
         return self.send_command_return(attribute, '?')
 
     def get_attributes(self, attribute):
-        index_command = self.build_index_command(attribute, '?')
+        index_command = self._build_index_command(attribute, '?')
         index_commands_values = self.api.sendQuery(index_command, True)
         # poor implementation
-        li = self.get_index_len()
-        ci = self.get_command_len()
+        li = self._get_index_len()
+        ci = self._get_command_len()
         attributes = {}
         for index_command_value in index_commands_values:
             command = index_command_value.split()[ci].lower()
