@@ -65,7 +65,7 @@ class XenaStream(XenaObject):
         """
 
         bin_headers = '0x' + binascii.hexlify(headers.bin()).decode('utf-8')
-        self.set_attribute('ps_packetheader', bin_headers)
+        self.set_attributes(ps_packetheader=bin_headers)
 
     #
     # Modifiers.
@@ -83,10 +83,10 @@ class XenaStream(XenaObject):
         modifier_index = len(self.modifiers)
         if m_type == XenaModifierType.standard:
             modifier_index = len(self.standard_modifiers)
-            self.set_attribute('ps_modifiercount', modifier_index + 1)
+            self.set_attributes(ps_modifiercount=modifier_index + 1)
         else:
             modifier_index = len(self.extended_modifiers)
-            self.set_attribute('ps_modifierextcount', modifier_index + 1)
+            self.set_attributes(ps_modifierextcount=modifier_index + 1)
         modifier = XenaModifier(self, index='{}/{}'.format(self.ref, modifier_index), m_type=m_type)
         modifier.set(**kwargs)
         return modifier
@@ -100,9 +100,9 @@ class XenaStream(XenaObject):
         current_modifiers = OrderedDict(self.modifiers)
         del current_modifiers[position]
 
-        self.set_attribute('ps_modifiercount', 0)
+        self.set_attributes(ps_modifiercount=0)
         try:
-            self.set_attribute('ps_modifierextcount', 0)
+            self.set_attributes(ps_modifierextcount=0)
         except Exception as _:
             pass
         self.del_objects_by_type('modifier')
@@ -192,16 +192,16 @@ class XenaModifier(XenaObject):
         for k, v in kwargs.items():
             setattr(self, k, v)
         if self.m_type == XenaModifierType.standard:
-            self.set_attribute('ps_modifier', '{} {} {} {}'.format(self.position, self.mask,
-                                                                   self.action.value, self.repeat))
+            self.set_attributes(ps_modifier='{} {} {} {}'.format(self.position, self.mask,
+                                                                 self.action.value, self.repeat))
         else:
-            self.set_attribute('ps_modifierext', '{} {} {} {}'.format(self.position, self.mask,
-                                                                      self.action.value, self.repeat))
+            self.set_attributes(ps_modifierext='{} {} {} {}'.format(self.position, self.mask,
+                                                                    self.action.value, self.repeat))
         if self.action != XenaModifierAction.random:
             if self.m_type == XenaModifierType.standard:
-                self.set_attribute('ps_modifierrange', '{} {} {}'.format(self.min_val, self.step, self.max_val))
+                self.set_attributes(ps_modifierrange='{} {} {}'.format(self.min_val, self.step, self.max_val))
             else:
-                self.set_attribute('ps_modifierextrange', '{} {} {}'.format(self.min_val, self.step, self.max_val))
+                self.set_attributes(ps_modifierextrange='{} {} {}'.format(self.min_val, self.step, self.max_val))
 
     def get(self):
         if self.m_type == XenaModifierType.standard:

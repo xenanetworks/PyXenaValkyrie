@@ -266,21 +266,25 @@ class XenaTpld(XenaObject):
 
 
 class XenaCapture(XenaObject):
-    """ Represents cappture parameters, correspond to the Capture panel of the XenaManager, and deal with configuration
+    """ Represents capture parameters, correspond to the Capture panel of the XenaManager, and deal with configuration
         of the capture criteria and inspection of the captured data from a port.
     """
 
     def __init__(self, parent):
         super(self.__class__, self).__init__(objType='capture', index=parent.ref, parent=parent)
 
-    def get_packet(self, index):
-        return self.get_attribute('pc_packet [{}]'.format(index)).split('0x')[1]
+    def get_packets(self, from_index=0, to_index=None):
+        """ Get captured packets from chassis.
 
-    def get_packets(self, from_index=1, to_index=None):
+        :param from_index: index of first packet to read.
+        :param to_index: index of last packet to read. If None - read all packets.
+        :return: list of requested packets in wireshark format.
+        """
+
         to_index = to_index if to_index else int(self.get_attribute('pc_stats').split()[1])
         packets = []
-        for index in range(from_index, to_index + 1):
-            packet = self.get_packet(index)
+        for index in range(from_index, to_index):
+            packet = self.get_attribute('pc_packet [{}]'.format(index)).split('0x')[1]
             pcap_packet = ''
             for c, b in zip(range(len(packet)), packet):
                 if c % 32 == 0:

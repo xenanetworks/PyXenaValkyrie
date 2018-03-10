@@ -45,8 +45,12 @@ class XenaObject(TgnObject):
         index_command = self._build_index_command(command, *arguments)
         return self._extract_return(command, self.api.sendQuery(index_command))
 
-    def set_attribute(self, attribute, value):
-        return self.send_command(attribute, value)
+    def set_attributes(self, **attributes):
+        """
+        :param attributes: dictionary of {attribute: value} to set
+        """
+        for attribute, value in attributes.items():
+            self.send_command(attribute, value)
 
     def get_attribute(self, attribute):
         return self.send_command_return(attribute, '?')
