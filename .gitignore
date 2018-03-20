@@ -16,3 +16,4 @@ docs/_*
 .pytest_cache
 .tox
 .coverage
+.eggs
