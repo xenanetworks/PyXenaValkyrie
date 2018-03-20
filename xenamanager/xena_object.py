@@ -21,7 +21,7 @@ class XenaObject(TgnObject):
             self.session = data['parent'].session
         if 'objRef' not in data:
             data['objRef'] = str(data['index'])
-        if 'name' not in data:
+        if 'name' not in data or not data['name']:
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
 
@@ -53,12 +53,25 @@ class XenaObject(TgnObject):
             self.send_command(attribute, value)
 
     def get_attribute(self, attribute):
+        """ Sends single-parameter query and returns the result.
+
+        :param attribute: attribute (e.g. p_config, ps_config) to query.
+        :returns: returned value.
+        :rtype: str
+        """
         return self.send_command_return(attribute, '?')
 
     def get_attributes(self, attribute):
+        """ Sends multi-parameter query and returns the result as dictionary.
+
+        :param attribute: multi-parameter attribute (e.g. p_config, ps_config) to query.
+        :returns: dictionary of <attribute, value> of all attributes returned by the query.
+        :rtype: dict of (str, str)
+        """
+
         index_command = self._build_index_command(attribute, '?')
         index_commands_values = self.api.sendQuery(index_command, True)
-        # poor implementation
+        # poor implementation...
         li = self._get_index_len()
         ci = self._get_command_len()
         attributes = {}
@@ -81,13 +94,3 @@ class XenaObject(TgnObject):
 
     def read_stat(self, captions, stat_name):
         return dict(zip(captions, [int(v) for v in self.get_attribute(stat_name).split()]))
-
-    #
-    # Implement abstract API methods.
-    #
-
-    def get_children(self, *types):
-        pass
-
-    def get_objects_from_attribute(self, attribute):
-        pass

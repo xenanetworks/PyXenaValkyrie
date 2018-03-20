@@ -4,17 +4,16 @@ This package implements Python OO API for Xena traffic generator.
 Functionality
 """""""""""""
 The current version supports the following test flow:
-	Build configuration -> Start/Stop traffic -> Get statistics.
+	Load/Build configuration -> Change configuration -> Start/Stop traffic -> Get statistics/capture
 Supported operations:
-	- Load configuration - reserve ports and load configuration (prt or str)
-	- Basic operations - get/set attributes, get/create children
+	- Login, connect to chassis and reserve ports
+	- Load existing configuration file
+	- Build configuration from scratch
+	- Get/set attributes
 	- Start/Stop - transmit, capture
-	- Statistics - ports, streams and packet groups
-	- Save configuration (prt or str)
-	- Disconnect
-The package also support Add/Remove objects so it supports the following test case:
-	- Get/set frame
-	- Capture
+	- Statistics - ports, streams (end to ends) and TPLDs
+	- Capture - get captured packets
+	- Release ports and disconnect
 
 Installation
 """"""""""""

@@ -29,14 +29,14 @@ class XenaStream(XenaObject):
 
     stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
-    def __init__(self, parent, index):
+    def __init__(self, parent, index, name=None):
         """
         :param parent: parent port object.
         :param index: stream index in format module/port/stream.
+        :param: stream description.
         """
 
         super(self.__class__, self).__init__(objType='stream', index=index, parent=parent)
-        self.send_command('ps_create')
 
     def __del__(self):
         if self.api.is_connected():

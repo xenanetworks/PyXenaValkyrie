@@ -8,7 +8,6 @@ import re
 from collections import OrderedDict
 
 from trafficgenerator.tgn_utils import TgnError
-from trafficgenerator.tgn_object import TgnObjectsDict
 
 from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_object import XenaObject
@@ -89,19 +88,23 @@ class XenaPort(XenaObject):
                 try:
                     self.send_command(command)
                 except XenaCommandException as e:
-                    self.logger.warning(e.message)
+                    self.logger.warning(str(e))
 
         for index in self.get_attribute('ps_indices').split():
             XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
 
-    def add_stream(self):
+    def add_stream(self, name=None):
         """ Add stream.
 
+        :param: stream description.
         :return: newly created stream.
         :rtype: xenamanager.xena_stream.XenaStream
         """
 
-        return XenaStream(self, index='{}/{}'.format(self.ref, len(self.streams)))
+        stream = XenaStream(parent=self, index='{}/{}'.format(self.ref, len(self.streams)), name=name)
+        stream.send_command('ps_create')
+        stream.set_attributes(ps_comment='"{}"'.format(stream.name))
+        return stream
 
     def remove_stream(self, index):
         """ Remove stream.

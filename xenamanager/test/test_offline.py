@@ -27,7 +27,7 @@ class XenaTestOffline(XenaTestBase):
     def test_load_config(self):
         #: :type port: xenamanager.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1])[self.port1]
-        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
 
         assert(len(port.streams) == 2)
 
@@ -63,7 +63,7 @@ class XenaTestOffline(XenaTestBase):
         try:
             port = self.xm.session.reserve_ports([self.config.get('Xena', 'port3')])[self.config.get('Xena', 'port3')]
         except TgnError as e:
-            self.skipTest('Skip test - ' + e.message)
+            self.skipTest('Skip test - ' + str(e))
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_100G.xpc'))
 
         assert(len(port.streams[0].modifiers) == 1)

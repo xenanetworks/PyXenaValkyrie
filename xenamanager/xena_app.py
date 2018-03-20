@@ -17,6 +17,7 @@ def init_xena(logger, owner):
     :param logger: python logger
     :param owner: owner of the scripting session
     :return: Xena object
+    :rtype: XenaApp
     """
 
     return XenaApp(logger, owner)
@@ -254,6 +255,11 @@ class XenaChassis(XenaObject):
             self.wait_traffic(*ports)
 
     def wait_traffic(self, *ports):
+        """ Wait until traffic stops on ports.
+
+        :param ports: list of ports to wait for.
+        """
+
         for port in ports:
             port.wait_for_states('p_traffic', int(2.628e+6), 'off')
 

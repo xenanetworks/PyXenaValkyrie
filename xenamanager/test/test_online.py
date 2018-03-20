@@ -33,9 +33,9 @@ class XenaTestOnline(XenaTestBase):
         time.sleep(2)
         port_stats = port.read_port_stats()
         print(json.dumps(port_stats, indent=1))
-        assert(abs(port_stats['pt_total']['packets'] - port_stats['pr_total']['packets']) < 10)
-        assert(abs(1000 - port.streams[0].read_stats()['pps']) < 10)
-        assert(abs(1000 - port.tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 10)
+        assert(abs(port_stats['pt_total']['packets'] - port_stats['pr_total']['packets']) < 1111)
+        assert(abs(1000 - port.streams[0].read_stats()['pps']) < 11)
+        assert(abs(1000 - port.tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 11)
         self.xm.session.stop_traffic()
         self.xm.session.clear_stats()
         self.xm.session.start_traffic(blocking=True)
@@ -56,11 +56,10 @@ class XenaTestOnline(XenaTestBase):
         print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
 
     def test_stream_stats(self):
-        """ For this tst we need back-to-back ports. """
+        """ For this test we need back-to-back ports. """
         ports = self.xm.session.reserve_ports([self.port1, self.port2])
-        ports[self.port1].load_config(path.join(path.dirname(__file__), 'configs', 'test_config_loopback.xpc'))
-        ports[self.port1].set_attributes(p_loopback='NONE')
-        ports[self.port2].load_config(path.join(path.dirname(__file__), 'configs', 'test_config.xpc'))
+        ports[self.port1].load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
+        ports[self.port2].load_config(path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
 
         self.xm.session.start_traffic(blocking=True)
 
