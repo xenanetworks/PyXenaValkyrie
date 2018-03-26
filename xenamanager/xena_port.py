@@ -4,14 +4,22 @@ Classes and utilities that represents Xena XenaManager-2G port.
 :author: yoram@ignissoft.com
 """
 
+import os
 import re
 from collections import OrderedDict
+from enum import Enum
 
 from trafficgenerator.tgn_utils import TgnError
 
 from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_object import XenaObject
 from xenamanager.xena_stream import XenaStream
+
+
+class XenaCaptureBufferType(Enum):
+    raw = 0
+    text = 1
+    pcap = 2
 
 
 class XenaPort(XenaObject):
@@ -276,24 +284,51 @@ class XenaCapture(XenaObject):
     def __init__(self, parent):
         super(self.__class__, self).__init__(objType='capture', index=parent.ref, parent=parent)
 
-    def get_packets(self, from_index=0, to_index=None):
+    def get_packets(self, from_index=0, to_index=None, cap_type=XenaCaptureBufferType.text,
+                    file_name=None, tshark=None):
         """ Get captured packets from chassis.
 
         :param from_index: index of first packet to read.
         :param to_index: index of last packet to read. If None - read all packets.
-        :return: list of requested packets in wireshark format.
+        :param cap_type: returned capture format. If pcap then file name and tshark must be provided.
+        :param file_name: if specified, capture will be saved in file.
+        :param tshark: tshark object for pcap type only.
+        :type: xenamanager.xena_tshark.Tshark
+        :return: list of requested packets, None for pcap type.
         """
 
         to_index = to_index if to_index else int(self.get_attribute('pc_stats').split()[1])
-        packets = []
+
+        raw_packets = []
         for index in range(from_index, to_index):
-            packet = self.get_attribute('pc_packet [{}]'.format(index)).split('0x')[1]
-            pcap_packet = ''
-            for c, b in zip(range(len(packet)), packet):
+            raw_packets.append(self.get_attribute('pc_packet [{}]'.format(index)).split('0x')[1])
+
+        if cap_type == XenaCaptureBufferType.raw:
+            self._save_captue(file_name, raw_packets)
+            return raw_packets
+
+        text_packets = []
+        for raw_packet in raw_packets:
+            text_packet = ''
+            for c, b in zip(range(len(raw_packet)), raw_packet):
                 if c % 32 == 0:
-                    pcap_packet += '\n{:06x} '.format(int(c / 2))
+                    text_packet += '\n{:06x} '.format(int(c / 2))
                 elif c % 2 == 0:
-                    pcap_packet += ' '
-                pcap_packet += b
-            packets.append(pcap_packet)
-        return packets
+                    text_packet += ' '
+                text_packet += b
+            text_packets.append(text_packet)
+
+        if cap_type == XenaCaptureBufferType.text:
+            self._save_captue(file_name, text_packets)
+            return text_packets
+
+        temp_file_name = file_name + '_'
+        self._save_captue(temp_file_name, text_packets)
+        tshark.text_to_pcap(temp_file_name, file_name)
+        os.remove(temp_file_name)
+
+    def _save_captue(self, file_name, packets):
+        if file_name:
+            with open(file_name, 'w+') as f:
+                for packet in packets:
+                    f.write(packet)

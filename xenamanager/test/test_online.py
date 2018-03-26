@@ -10,9 +10,17 @@ Some tests require two back-to-back ports, like stream statistics tests.
 from os import path
 import time
 import json
+import binascii
+
+from pypacker.layer12 import ethernet
 
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenamanager.test.test_base import XenaTestBase
+from xenamanager.xena_port import XenaCaptureBufferType
+from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
+
+
+wireshark_path = 'E:/Program Files/Wireshark'
 
 
 class XenaTestOnline(XenaTestBase):
@@ -81,8 +89,26 @@ class XenaTestOnline(XenaTestBase):
         port.start_capture()
         port.start_traffic(blocking=True)
         port.stop_capture()
-        packets = port.capture.get_packets()
-        print(packets)
+
+        packets = port.capture.get_packets(0, 1, cap_type=XenaCaptureBufferType.raw)
+        assert(len(packets) == 1)
+        packet = ethernet.Ethernet(binascii.unhexlify(packets[0]))
+        assert(packet.ip.dst_s == '1.1.0.0')
+
+        packets = port.capture.get_packets(10, 20, cap_type=XenaCaptureBufferType.raw)
+        print(packets[0])
+        assert(len(packets) == 10)
+
+        packets = port.capture.get_packets(file_name='c:/temp/xena_cap.txt')
+        print(packets[0])
         assert(len(packets) == 80)
-        for packet in packets:
-            print(packet)
+
+        tshark = Tshark(wireshark_path)
+        packets = port.capture.get_packets(cap_type=XenaCaptureBufferType.pcap,
+                                           file_name='c:/temp/xena_cap.pcap', tshark=tshark)
+        analyser = TsharkAnalyzer()
+        analyser.add_field('ip.src')
+        analyser.add_field('ip.dst')
+        fields = tshark.analyze('c:/temp/xena_cap.pcap', analyser)
+        print(fields)
+        assert(len(fields) == 80)
