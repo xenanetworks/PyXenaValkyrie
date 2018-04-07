@@ -68,7 +68,7 @@ class XenaSession(XenaObject):
         """
 
         if chassis not in self.chassis_list:
-            XenaChassis(self, chassis, port).logon(password, self.owner)
+            self.chassis_list[chassis] = XenaChassis(self, chassis, port).logon(password, self.owner)
 
     def disconnect(self):
         """ Disconnect from all chassis. """
@@ -90,7 +90,7 @@ class XenaSession(XenaObject):
         XenaManager-2G -> Reserve Port.
 
         :param locations: list of ports locations in the form <ip/slot/port> to reserve
-        :param force: True - take forcefully, False - fail if port is reserved by other user
+        :param force: True - take forcefully. False - fail if port is reserved by other user
         :return: ports dictionary (index: object)
         """
 
@@ -108,15 +108,6 @@ class XenaSession(XenaObject):
 
         for chassis in self._per_chassis_ports(*self._get_operation_ports()):
             chassis.release_ports()
-
-    def clear_stats(self, *ports):
-        """ Clear stats (TX and RX) for list of ports.
-
-        :param ports: list of ports to clear stats on. Default - all session ports.
-        """
-
-        for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
-            chassis.clear_stats(*chassis_ports)
 
     def start_traffic(self, blocking=False, *ports):
         """ Start traffic on list of ports.
@@ -139,6 +130,33 @@ class XenaSession(XenaObject):
 
         for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
             chassis.stop_traffic(*chassis_ports)
+
+    def clear_stats(self, *ports):
+        """ Clear stats (TX and RX) for list of ports.
+
+        :param ports: list of ports to clear stats on. Default - all session ports.
+        """
+
+        for port in self._get_operation_ports(*ports):
+            port.clear_stats()
+
+    def start_capture(self, *ports):
+        """ Start capture on list of ports.
+
+        :param ports: list of ports to clear stats on. Default - all session ports.
+        """
+
+        for port in self._get_operation_ports(*ports):
+            port.start_capture()
+
+    def stop_capture(self, *ports):
+        """ Start capture on list of ports.
+
+        :param ports: list of ports to clear stats on. Default - all session ports.
+        """
+
+        for port in self._get_operation_ports(*ports):
+            port.start_capture()
 
     #
     # Properties.
@@ -270,15 +288,6 @@ class XenaChassis(XenaObject):
         """
 
         self._traffic_command('off', *ports)
-
-    def clear_stats(self, *ports):
-        """ Clear stats (TX and RX) for list of ports.
-
-        :param ports: list of ports to clear stats on. Default - all session ports.
-        """
-
-        for port in ports:
-            port.clear_stats()
 
     #
     # Properties.

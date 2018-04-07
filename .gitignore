@@ -17,3 +17,5 @@ docs/_*
 .tox
 .coverage
 .eggs
+
+xenamanager/test/configs/save_config.xpc 

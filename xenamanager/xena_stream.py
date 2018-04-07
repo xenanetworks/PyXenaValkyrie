@@ -9,9 +9,15 @@ import binascii
 from enum import Enum
 from collections import OrderedDict
 
-from pypacker.layer12 import ethernet
+from pypacker.layer12.ethernet import Ethernet
 
 from xenamanager.xena_object import XenaObject
+
+
+class XenaStreamState(Enum):
+    enabled = 'ON'
+    disabled = 'OFF'
+    suspended = 'SUPPRESS'
 
 
 class XenaModifierType(Enum):
@@ -29,43 +35,73 @@ class XenaStream(XenaObject):
 
     stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
+    next_tpld_id = 0
+
     def __init__(self, parent, index, name=None):
         """
         :param parent: parent port object.
         :param index: stream index in format module/port/stream.
-        :param: stream description.
+        :param name: stream description.
         """
 
-        super(self.__class__, self).__init__(objType='stream', index=index, parent=parent)
+        super(self.__class__, self).__init__(objType='stream', index=index, parent=parent, name=name)
 
     def __del__(self):
         if self.api.is_connected():
             self.send_command('ps_delete')
 
+    def set_state(self, state):
+        """ Set stream state.
+
+        :param state: new stream state.
+        :type stae: xenamanager.xena_stream.XenaStreamState
+        """
+        self.set_attributes(ps_enable=state.value)
+
     def read_stats(self):
         """
         :return: dictionary {stat name: value}
-            Sea XenaStream.stats_captions
+            See XenaStream.stats_captions
         """
         return self.read_stat(self.stats_captions, 'pt_stream')
 
     def get_packet_headers(self):
         """
         :return: current packet headers
-        :rtype: pypacker.layer12.ethernet
+        :rtype: pypacker.layer12.ethernet.Ethernet
         """
 
         bin_headers = self.get_attribute('ps_packetheader')
-        return ethernet.Ethernet(binascii.unhexlify(bin_headers[2:]))
+        return Ethernet(binascii.unhexlify(bin_headers[2:]))
 
     def set_packet_headers(self, headers):
-        """
+        """ Set packet header.
+
+        The method will try to set ps_headerprotocol to inform the Xena GUI and tester how to interpret the packet
+        header byte sequence specified with PS_PACKETHEADER.
+        This is mainly for information purposes, and the stream will transmit the packet header bytes even if no
+        protocol segments are specified.
+        If the method fails to set some segment it will log a warning and skip setup.
+
         :param headers: current packet headers
-        :type headers: pypacker.layer12.ethernet
+        :type headers: pypacker.layer12.ethernet.Ethernet
         """
 
         bin_headers = '0x' + binascii.hexlify(headers.bin()).decode('utf-8')
         self.set_attributes(ps_packetheader=bin_headers)
+
+        body_handler = headers
+        ps_headerprotocol = []
+        while body_handler:
+            segment = pypacker_2_xena.get(str(body_handler).split('(')[0].lower(), None)
+            if not segment:
+                self.logger.warning('pypacker header {} not in conversion list'.format(segment))
+                return
+            ps_headerprotocol.append(segment)
+            if type(body_handler) is Ethernet and body_handler.vlan:
+                ps_headerprotocol.append('vlan')
+            body_handler = body_handler.body_handler
+        self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
 
     #
     # Modifiers.
@@ -239,3 +275,13 @@ class XenaModifier(XenaObject):
 
     def _get_command_len(self):
         return 1
+
+
+pypacker_2_xena = {'ethernet': 'ethernet',
+                   'arp': 'arp',
+                   'ip': 'ip',
+                   'ip6': 'ipv6',
+                   'udp': 'udp',
+                   'tcp': 'tcp',
+                   'icmp': 'icmp',
+                   }

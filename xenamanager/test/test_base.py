@@ -8,6 +8,7 @@ from os import path
 
 from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_app import init_xena
+from xenamanager.xena_stream import XenaStream
 
 
 class XenaTestBase(TgnTest):
@@ -20,6 +21,7 @@ class XenaTestBase(TgnTest):
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = self.config.get('Xena', 'port1')
         self.port2 = self.config.get('Xena', 'port2')
+        XenaStream.next_tpld_id = 0
 
     def tearDown(self):
         self.xm.logoff()

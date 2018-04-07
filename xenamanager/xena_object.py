@@ -38,12 +38,19 @@ class XenaObject(TgnObject):
         return len(self.ref.split())
 
     def send_command(self, command, *arguments):
+        """ Send command and do not parse output (except for communication errors). """
         index_command = self._build_index_command(command, *arguments)
         self.api.sendQueryVerify(index_command)
 
     def send_command_return(self, command, *arguments):
+        """ Send command and wait for single line output. """
         index_command = self._build_index_command(command, *arguments)
         return self._extract_return(command, self.api.sendQuery(index_command))
+
+    def send_command_return_multilines(self, command, *arguments):
+        """ Send command and wait for multiple lines output. """
+        index_command = self._build_index_command(command, *arguments)
+        return self.api.sendQuery(index_command, True)
 
     def set_attributes(self, **attributes):
         """
@@ -69,8 +76,7 @@ class XenaObject(TgnObject):
         :rtype: dict of (str, str)
         """
 
-        index_command = self._build_index_command(attribute, '?')
-        index_commands_values = self.api.sendQuery(index_command, True)
+        index_commands_values = self.send_command_return_multilines(attribute, '?')
         # poor implementation...
         li = self._get_index_len()
         ci = self._get_command_len()

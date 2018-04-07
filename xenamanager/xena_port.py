@@ -13,7 +13,7 @@ from trafficgenerator.tgn_utils import TgnError
 
 from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_object import XenaObject
-from xenamanager.xena_stream import XenaStream
+from xenamanager.xena_stream import XenaStream, XenaStreamState
 
 
 class XenaCaptureBufferType(Enum):
@@ -98,20 +98,40 @@ class XenaPort(XenaObject):
                 except XenaCommandException as e:
                     self.logger.warning(str(e))
 
+        tpld_ids = []
         for index in self.get_attribute('ps_indices').split():
-            XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
+            stream = XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
+            tpld_ids.append(stream.get_attribute('ps_tpldid'))
+        XenaStream.next_tpld_id = max([XenaStream.next_tpld_id] + [int(t) for t in tpld_ids]) + 1
 
-    def add_stream(self, name=None):
+    def save_config(self, config_file_name):
+        """ Save configuration file to xpc file.
+
+        :param config_file_name: full path to the configuration file.
+        """
+
+        with open(config_file_name, 'w+') as f:
+            f.write('P_RESET\n')
+            for line in self.send_command_return_multilines('p_fullconfig ?'):
+                f.write(line.split(' ', 1)[1].lstrip())
+
+    def add_stream(self, name=None, tpld_id=None, state=XenaStreamState.enabled):
         """ Add stream.
 
-        :param: stream description.
+        :param name: stream description.
+        :param tpld_id: TPLD ID. If None the a unique value will be set.
+        :param state: new stream state.
+        :type state: xenamanager.xena_stream.XenaStreamState
         :return: newly created stream.
         :rtype: xenamanager.xena_stream.XenaStream
         """
 
         stream = XenaStream(parent=self, index='{}/{}'.format(self.ref, len(self.streams)), name=name)
         stream.send_command('ps_create')
-        stream.set_attributes(ps_comment='"{}"'.format(stream.name))
+        tpld_id = tpld_id if tpld_id else XenaStream.next_tpld_id
+        stream.set_attributes(ps_comment='"{}"'.format(stream.name), ps_tpldid=tpld_id)
+        XenaStream.next_tpld_id = max(XenaStream.next_tpld_id + 1, tpld_id + 1)
+        stream.set_state(state)
         return stream
 
     def remove_stream(self, index):
@@ -133,24 +153,24 @@ class XenaPort(XenaObject):
 
         :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
         """
-        self.session.start_traffic(blocking)
+        self.session.start_traffic(blocking, self)
 
     def stop_traffic(self):
         """ Stop port traffic.
 
         Port -> Stop Traffic
         """
-        self.session.stop_traffic()
+        self.session.stop_traffic(self)
 
     def start_capture(self):
-        """ Not implemented yet.
+        """ Start capture on port.
 
         Capture -> Start Capture
         """
         self.send_command('p_capture', 'on')
 
     def stop_capture(self):
-        """ Not implemented yet.
+        """ Stop capture on port.
 
         Capture -> Stop Capture
         """

@@ -8,6 +8,7 @@ from os import path
 
 from trafficgenerator.tgn_utils import TgnError
 from xenamanager.xena_stream import XenaModifierType
+from xenamanager.xena_stream import XenaStream
 from xenamanager.test.test_base import XenaTestBase
 
 
@@ -30,6 +31,7 @@ class XenaTestOffline(XenaTestBase):
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
 
         assert(len(port.streams) == 2)
+        assert(XenaStream.next_tpld_id == 2)
 
         packet = port.streams[0].get_packet_headers()
         print(packet)
@@ -86,11 +88,22 @@ class XenaTestOffline(XenaTestBase):
         #: :type port: xenamanager.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
 
+        assert(XenaStream.next_tpld_id == 0)
         assert(len(port.streams) == 0)
-        port.add_stream()
+
+        stream = port.add_stream('first stream')
+        assert(stream.get_attribute('ps_comment')[1:-1] == 'first stream')
+        assert(stream.get_attribute('ps_tpldid') == '0')
+        assert(XenaStream.next_tpld_id == 1)
         assert(len(port.streams) == 1)
-        port.add_stream()
+
+        stream = port.add_stream(tpld_id=7)
+        assert(stream.get_attribute('ps_tpldid') == '7')
+        assert(XenaStream.next_tpld_id == 8)
         assert(len(port.streams) == 2)
+
         port.remove_stream(0)
         assert(len(port.streams) == 1)
         assert(port.get_attribute('ps_indices').split()[0] == '1')
+
+        port.save_config(path.join(path.dirname(__file__), 'configs', 'save_config.xpc'))
