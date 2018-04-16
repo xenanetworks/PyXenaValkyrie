@@ -13,7 +13,8 @@ import logging
 import json
 import binascii
 from pypacker.layer12.ethernet import Ethernet, Dot1Q
-from pypacker.layer3.ip import IP
+from pypacker.layer3.ip6 import IP6
+from pypacker.layer4.tcp import TCP
 
 from xenamanager.xena_app import init_xena
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
@@ -123,8 +124,9 @@ def configuration():
     vlan = Dot1Q(vid=17)
     eth.vlan.append(vlan)
     # In order to add header simply concatenate it.
-    ip = IP()
-    headers = eth + ip
+    ip6 = IP6()
+    tcp = TCP()
+    headers = eth + ip6 + tcp
     p1_s0.set_packet_headers(headers)
 
     # Add modifier - all parameters can be set with the constructor or by direct access after creation.

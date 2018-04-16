@@ -83,7 +83,7 @@ class XenaSession(XenaObject):
         for chassis in self.get_objects_by_type('chassis'):
             chassis.inventory()
 
-    def reserve_ports(self, locations, force=False):
+    def reserve_ports(self, locations, force=False, reset=True):
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -91,12 +91,13 @@ class XenaSession(XenaObject):
 
         :param locations: list of ports locations in the form <ip/slot/port> to reserve
         :param force: True - take forcefully. False - fail if port is reserved by other user
+        :param reset: True - reset port, False - leave port configuration
         :return: ports dictionary (index: object)
         """
 
         for location in locations:
             ip, module, port = location.split('/')
-            self.chassis_list[ip].reserve_ports(['{}/{}'.format(module, port)], force)
+            self.chassis_list[ip].reserve_ports(['{}/{}'.format(module, port)], force, reset)
 
         return self.ports
 
@@ -234,7 +235,7 @@ class XenaChassis(XenaObject):
             if int(m_portcounts):
                 XenaModule(parent=self, index=m_index).inventory()
 
-    def reserve_ports(self, locations, force=False):
+    def reserve_ports(self, locations, force=False, reset=True):
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -242,13 +243,15 @@ class XenaChassis(XenaObject):
 
         :param locations: list of ports locations in the form <slot/port> to reserve
         :param force: True - take forcefully, False - fail if port is reserved by other user
+        :param reset: True - reset port, False - leave port configuration
         :return: ports dictionary (index: object)
         """
 
         for location in locations:
             port = XenaPort(parent=self, index=location)
             port.reserve(force)
-            port.reset()
+            if reset:
+                port.reset()
 
         return self.ports
 

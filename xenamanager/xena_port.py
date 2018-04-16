@@ -73,6 +73,10 @@ class XenaPort(XenaObject):
             self.send_command('p_reservation release')
 
     def reset(self):
+        """ Reset port-level parameters to standard values, and delete all streams, filters, capture,
+            and dataset definitions.
+        """
+        self.objects = OrderedDict()
         return self.send_command('p_reset')
 
     def wait_for_up(self, timeout=40):
@@ -226,15 +230,17 @@ class XenaPort(XenaObject):
     @property
     def streams(self):
         """
-        :return: dictionary {index: object} of all streams.
+        :return: dictionary {id: object} of all streams.
+        :rtype: dict of (int, xenamanager.xena_stream.XenaStream)
         """
 
-        return {int(s.ref.split('/')[-1]): s for s in self.get_objects_by_type('stream')}
+        return {s.id: s for s in self.get_objects_by_type('stream')}
 
     @property
     def tplds(self):
         """
-        :return: dictionary {index: object} of all current tplds.
+        :return: dictionary {id: object} of all current tplds.
+        :rtype: dict of (int, xenamanager.xena_port.XenaTpld)
         """
 
         # TPLD has the same index as stream. Since we don't want to override the streams and as TPLDs are temporary and
@@ -242,7 +248,7 @@ class XenaPort(XenaObject):
         self.parent.del_objects_by_type('tpld')
         for tpld in self.get_attribute('pr_tplds').split():
             XenaTpld(parent=self.parent, index='{}/{}'.format(self.ref, tpld)).read_stats()
-        return {int(s.ref.split('/')[-1]): s for s in self.parent.get_objects_by_type('tpld')}
+        return {t.id: t for t in self.parent.get_objects_by_type('tpld')}
 
     @property
     def capture(self):
@@ -269,6 +275,7 @@ class XenaTpld(XenaObject):
         :param index: TPLD index in format module/port/tpld.
         """
         super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
+        self.id = int(self.ref.split('/')[-1])
 
     def _build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')

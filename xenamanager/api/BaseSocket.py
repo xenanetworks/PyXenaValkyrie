@@ -20,7 +20,6 @@ class BaseSocket:
         self.timeout = timeout
         self.connected = False
         self.sock = None
-        self.dummymode = False
 
     def __del__(self):
         self.disconnect()
@@ -30,8 +29,6 @@ class BaseSocket:
 
     def __connect(self):
         logger.debug('Connecting {} {}...'.format(self.hostname, self.port))
-        if self.dummymode:
-            return True
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
@@ -40,7 +37,7 @@ class BaseSocket:
 
     def connect(self):
         if self.connected:
-            logger.error("Connect() on a connected socket")
+            logger.warning("Connect() on a connected socket")
             return
 
         if self.__connect():
@@ -52,40 +49,26 @@ class BaseSocket:
             return
 
         self.connected = False
-        if not self.dummymode:
-            self.sock.close()
+        self.sock.close()
 
     def sendCommand(self, cmd):
         logger.debug("sendCommand(%s)", cmd)
         if not self.connected:
-            logger.error("sendCommand() on a disconnected socket")
-            return -1
-
-        if self.dummymode:
-            return 0
+            raise socket.error("sendCommand() on a disconnected socket")
 
         try:
-            if not self.sock.send(bytearray(cmd + '\n', 'utf-8')):
-                return -1
-        except socket.error as msg:
-            logger.error("Fail to send a cmd, error:%s\n", msg[0])
+            self.sock.send(bytearray(cmd + '\n', 'utf-8'))
+        except socket.error as error:
             self.disconnect()
-            return -1
-
-        return 0
+            raise socket.error("Fail to send command: {}, error: {}", cmd, error)
 
     def readReply(self):
         if not self.connected:
-            logger.error("readReply() on a disconnected socket")
-            return -1
-
-        if self.dummymode:
-            return '<OK>'
+            raise socket.error("readReply() on a disconnected socket")
 
         reply = self.sock.recv(1024)
-        if reply.find(b'---^') != -1:
-            logger.debug("Receiving a syntax error message")
-            # read again the syntax error msg
+        if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
+            # read next line for actual message
             reply = self.sock.recv(1024)
 
         str_reply = reply.decode("utf-8")
@@ -100,23 +83,4 @@ class BaseSocket:
 
     def set_keepalives(self):
         logger.debug("Setting socket keepalive")
-        if self.dummymode:
-            return
-
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-
-    def set_dummymode(self, enable=True):
-        logger.debug("Dummy mode was %s, request to %s", self.dummymode, enable)
-        if self.dummymode is enable:
-            return
-
-        was_connected = self.is_connected()
-        logger.warning("BaseSocket: enabling dummy mode")
-        self.disconnect()
-        if enable:
-            self.dummymode = True
-        else:
-            self.dummymode = False
-
-        if was_connected:
-            self.connect()

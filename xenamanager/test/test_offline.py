@@ -7,6 +7,7 @@ Base class for all Xena package tests.
 from os import path
 
 from trafficgenerator.tgn_utils import TgnError
+from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_stream import XenaModifierType
 from xenamanager.xena_stream import XenaStream
 from xenamanager.test.test_base import XenaTestBase
@@ -35,15 +36,25 @@ class XenaTestOffline(XenaTestBase):
 
         packet = port.streams[0].get_packet_headers()
         print(packet)
-        assert(packet.dst_s == '00:00:00:00:00:00')
-        assert(packet.ip.dst_s == '1.1.2.1')
-        packet.dst_s = '22:22:22:22:22:22'
-        packet.ip.dst_s = '2.2.2.2'
+        assert(packet.dst_s == '22:22:22:22:22:11')
+        assert(packet.ip.dst_s == '2.2.2.1')
+        packet.dst_s = '33:33:33:33:33:33'
+        packet.ip.dst_s = '3.3.3.3'
         port.streams[0].set_packet_headers(packet)
         packet = port.streams[0].get_packet_headers()
         print(packet)
+        assert(packet.dst_s == '33:33:33:33:33:33')
+        assert(packet.ip.dst_s == '3.3.3.3')
+
+        packet = port.streams[1].get_packet_headers()
+        print(packet)
         assert(packet.dst_s == '22:22:22:22:22:22')
-        assert(packet.ip.dst_s == '2.2.2.2')
+        assert(packet.ip6.dst_s == '22::22')
+        packet.ip6.dst_s = u'33::33'
+        port.streams[1].set_packet_headers(packet)
+        packet = port.streams[1].get_packet_headers()
+        print(packet)
+        assert(packet.ip6.dst_s == '33::33')
 
         assert(len(port.streams[0].modifiers) == 1)
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
@@ -86,10 +97,11 @@ class XenaTestOffline(XenaTestBase):
 
     def test_build_config(self):
         #: :type port: xenamanager.xena_port.XenaPort
-        port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
+        port = self.xm.session.reserve_ports([self.port1], force=False, reset=True)[self.port1]
 
         assert(XenaStream.next_tpld_id == 0)
         assert(len(port.streams) == 0)
+        assert(port.get_attribute('ps_indices') == '')
 
         stream = port.add_stream('first stream')
         assert(stream.get_attribute('ps_comment')[1:-1] == 'first stream')
@@ -104,6 +116,25 @@ class XenaTestOffline(XenaTestBase):
 
         port.remove_stream(0)
         assert(len(port.streams) == 1)
+        assert(port.streams.get(1))
         assert(port.get_attribute('ps_indices').split()[0] == '1')
 
         port.save_config(path.join(path.dirname(__file__), 'configs', 'save_config.xpc'))
+
+    def test_errors(self):
+        #: :type port: xenamanager.xena_port.XenaPort
+        port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
+
+        #: :type api: xenamanager.api.XenaSocket.XenaSocket
+        api = port.api
+
+        api.connect()
+
+        self.assertRaises(XenaCommandException, port.get_attribute, 'ps_packetlimit')
+        self.assertRaises(XenaCommandException, port.get_attributes, 'ps_packetlimit')
+
+        self.assertRaises(XenaCommandException, port.api.sendQuery, 'p_comment 4/6 ?')
+
+        api.connect()
+
+        # test read only

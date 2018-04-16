@@ -10,17 +10,15 @@ class XenaCommandException(Exception):
 
 
 class XenaSocket(object):
+
     reply_ok = '<OK>'
+    reply_errors = ('#Syntax error', '#Index error', '<BADPARAMETER>', '<BADINDEX>', '<BADPORT>', '<NOTRESERVED>')
 
     def __init__(self, logger, hostname, port=22611, timeout=5):
         self.logger = logger
         logger.debug("Initializing")
         self.bsocket = BaseSocket(hostname, port, timeout)
         self.access_semaphor = threading.Semaphore(1)
-
-    def set_dummymode(self, enable=True):
-        self.logger.debug("Enabling dummymode")
-        self.bsocket.set_dummymode(enable)
 
     def is_connected(self):
         return self.bsocket.is_connected()
@@ -93,26 +91,37 @@ class XenaSocket(object):
         return reply
 
     def sendQuery(self, cmd, multilines=False):
+        """ Send command, wait for response (single or multi lines), test for errors and return the returned code.
+
+        :param cmd: command to send
+        :param multilines: True - multiline response, False - single line response.
+        :return: command return value.
+        """
         self.logger.debug("sendQuery(%s)", cmd)
         if not self.is_connected():
-            self.logger.warning("sendQuery on a disconnected socket")
-            return
+            socket.error("sendQuery on a disconnected socket")
 
         if multilines:
             replies = self.__sendQueryReplies(cmd)
+            if replies[0].startswith(XenaSocket.reply_errors):
+                raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, replies))
             self.logger.debug("sendQuery(%s) -- Begin", cmd)
             for l in replies:
                 self.logger.debug("%s", l.strip())
             self.logger.debug("sendQuery(%s) -- End", cmd)
             return replies
-
-        reply = self.__sendQueryReply(cmd)
-        self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
-        if reply.startswith(('#Syntax error', '<BADPARAMETER>', '<BADINDEX>')):
-            raise Exception('sendQuery({}) reply({})'.format(cmd, reply))
-        return reply
+        else:
+            reply = self.__sendQueryReply(cmd)
+            if reply.startswith(XenaSocket.reply_errors):
+                raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, reply))
+            self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
+            return reply
 
     def sendQueryVerify(self, cmd):
+        """ Send command without return value, wait for completion, verify success.
+
+        :param cmd: command to send
+        """
         cmd = cmd.strip()
         self.logger.debug("sendQueryVerify(%s)", cmd)
         if not self.is_connected():

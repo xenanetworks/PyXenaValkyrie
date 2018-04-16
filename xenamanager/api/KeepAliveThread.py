@@ -1,6 +1,7 @@
 
 import threading
 import logging
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -29,5 +30,8 @@ class KeepAliveThread(threading.Thread):
         while not self.finished.isSet():
             self.finished.wait(self.interval)
             logger.debug("Pinging")
-            self.basesocket.sendQuery(self.message)
+            try:
+                self.basesocket.sendQuery(self.message)
+            except socket.error as _:
+                pass
             self.nr_sent += 1

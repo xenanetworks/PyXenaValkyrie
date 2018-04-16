@@ -45,6 +45,7 @@ class XenaStream(XenaObject):
         """
 
         super(self.__class__, self).__init__(objType='stream', index=index, parent=parent, name=name)
+        self.id = int(self.ref.split('/')[-1])
 
     def __del__(self):
         if self.api.is_connected():
