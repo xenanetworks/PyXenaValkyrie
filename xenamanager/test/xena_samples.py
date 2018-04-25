@@ -178,7 +178,7 @@ def traffic():
     # Get individual stream statistics.
     print(json.dumps(ports[port0].streams[0].read_stats(), indent=1))
 
-    # Get first two captured packets in raw format - note that MAC address chaned due to modifier.
+    # Get first two captured packets in raw format - note that MAC address changed due to modifier.
     packets = ports[port0].capture.get_packets(to_index=2, cap_type=XenaCaptureBufferType.raw)
     for packet in packets:
         packet = Ethernet(binascii.unhexlify(packet))

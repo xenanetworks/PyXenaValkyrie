@@ -144,20 +144,20 @@ class XenaSession(XenaObject):
     def start_capture(self, *ports):
         """ Start capture on list of ports.
 
-        :param ports: list of ports to clear stats on. Default - all session ports.
+        :param ports: list of ports to start capture on. Default - all session ports.
         """
 
         for port in self._get_operation_ports(*ports):
             port.start_capture()
 
     def stop_capture(self, *ports):
-        """ Start capture on list of ports.
+        """ Stop capture on list of ports.
 
-        :param ports: list of ports to clear stats on. Default - all session ports.
+        :param ports: list of ports to stop capture on. Default - all session ports.
         """
 
         for port in self._get_operation_ports(*ports):
-            port.start_capture()
+            port.stop_capture()
 
     #
     # Properties.
