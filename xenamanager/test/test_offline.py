@@ -95,6 +95,7 @@ class XenaTestOffline(XenaTestBase):
         assert(port.streams[0].modifiers[12].max_val == 65535)
 
     def test_build_config(self):
+
         #: :type port: xenamanager.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], force=False, reset=True)[self.port1]
 

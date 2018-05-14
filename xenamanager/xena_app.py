@@ -227,6 +227,16 @@ class XenaChassis(XenaObject):
 
         self.api.disconnect()
 
+    def get_session_id(self):
+        """ Get ID of the current automation session on the chassis.
+
+        Note that this ID can be different for different chassis on the same session.
+
+        :return: chassis ID.
+        """
+
+        raise NotImplementedError('Underlying CLI command c_stats returns internal error.')
+
     def inventory(self):
         """ Get chassis inventory. """
 

@@ -12,7 +12,8 @@ class XenaCommandException(Exception):
 class XenaSocket(object):
 
     reply_ok = '<OK>'
-    reply_errors = ('#Syntax error', '#Index error', '<BADPARAMETER>', '<BADINDEX>', '<BADPORT>', '<NOTRESERVED>')
+    reply_errors = ('#Syntax error', '#Index error', '#Internal deparse error',
+                    '<BADPARAMETER>', '<BADINDEX>', '<BADPORT>', '<NOTRESERVED>')
 
     def __init__(self, logger, hostname, port=22611, timeout=5):
         self.logger = logger
@@ -107,8 +108,9 @@ class XenaSocket(object):
 
         if multilines:
             replies = self.__sendQueryReplies(cmd)
-            if replies[0].startswith(XenaSocket.reply_errors):
-                raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, replies))
+            for reply in replies:
+                if reply.startswith(XenaSocket.reply_errors):
+                    raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, replies))
             self.logger.debug("sendQuery(%s) -- Begin", cmd)
             for l in replies:
                 self.logger.debug("%s", l.strip())

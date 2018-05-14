@@ -29,6 +29,9 @@ class XenaTestBase(TgnTest):
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = self.config.get('Xena', 'port1')
 
+        xm = init_xena(self.logger, self.config.get('Xena', 'owner'))
+        xm.session.add_chassis(self.config.get('Xena', 'chassis'))
+
         #: :type port: xenamanager.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
 
@@ -45,3 +48,6 @@ class XenaTestBase(TgnTest):
         api.connect()
 
         # test read only
+
+        self.assertRaises(NotImplementedError,
+                          self.xm.session.chassis_list[self.config.get('Xena', 'chassis')].get_session_id)
