@@ -19,3 +19,4 @@ docs/_*
 .eggs
 
 xenamanager/test/configs/save_config.xpc 
+xenamanager/test/configs/customers/

@@ -112,3 +112,25 @@ class XenaTestOnline(XenaTestBase):
         fields = tshark.analyze('c:/temp/xena_cap.pcap', analyser)
         print(fields)
         assert(len(fields) == 80)
+
+    def test_phoenix(self):
+        port = self.xm.session.reserve_ports([self.port1])[self.port1]
+        port.load_config(path.join(path.dirname(__file__), 'configs', 'customers/phoenix_port0.xpc'))
+
+        self.xm.session.clear_stats()
+        self.xm.session.start_traffic()
+
+        ports_stats = XenaPortsStats(self.xm.session)
+        ports_stats.read_stats()
+        print(ports_stats.statistics.dumps())
+        print(json.dumps(ports_stats.get_flat_stats(), indent=1))
+
+        streams_stats = XenaStreamsStats(self.xm.session)
+        streams_stats.read_stats()
+        print(streams_stats.statistics.dumps())
+        print(json.dumps(streams_stats.get_flat_stats(), indent=1))
+
+        tplds_stats = XenaTpldsStats(self.xm.session)
+        tplds_stats.read_stats()
+        print(tplds_stats.statistics.dumps())
+        print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
