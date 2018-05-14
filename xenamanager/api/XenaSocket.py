@@ -16,6 +16,8 @@ class XenaSocket(object):
 
     def __init__(self, logger, hostname, port=22611, timeout=5):
         self.logger = logger
+        self.hostname = hostname
+        self.port = port
         logger.debug("Initializing")
         self.bsocket = BaseSocket(hostname, port, timeout)
         self.access_semaphor = threading.Semaphore(1)
@@ -26,11 +28,13 @@ class XenaSocket(object):
     def connect(self):
         self.logger.debug("Connect()")
         self.access_semaphor.acquire()
-        self.bsocket.connect()
+        try:
+            self.bsocket.connect()
+        except Exception as e:
+            self.access_semaphor.release()
+            raise IOError('Failed to connect to {}:{} {}'.format(self.hostname, self.port, e.message))
         self.bsocket.set_keepalives()
         self.access_semaphor.release()
-        if not self.is_connected():
-            raise Exception("Fail to connect")
         self.logger.info("Connected")
 
     def disconnect(self):

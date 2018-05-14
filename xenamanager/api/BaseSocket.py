@@ -28,20 +28,19 @@ class BaseSocket:
         return self.connected
 
     def __connect(self):
-        logger.debug('Connecting {} {}...'.format(self.hostname, self.port))
+        logger.debug('Connecting {}:{}...'.format(self.hostname, self.port))
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
         self.sock.connect((self.hostname, self.port))
-        return True
 
     def connect(self):
         if self.connected:
             logger.warning("Connect() on a connected socket")
             return
 
-        if self.__connect():
-            self.connected = True
+        self.__connect()
+        self.connected = True
 
     def disconnect(self):
         logger.debug("Disconnecting")

@@ -7,7 +7,6 @@ Base class for all Xena package tests.
 from os import path
 
 from trafficgenerator.tgn_utils import TgnError
-from xenamanager.api.XenaSocket import XenaCommandException
 from xenamanager.xena_stream import XenaModifierType
 from xenamanager.xena_stream import XenaStream
 from xenamanager.test.test_base import XenaTestBase
@@ -120,21 +119,3 @@ class XenaTestOffline(XenaTestBase):
         assert(port.get_attribute('ps_indices').split()[0] == '1')
 
         port.save_config(path.join(path.dirname(__file__), 'configs', 'save_config.xpc'))
-
-    def test_errors(self):
-        #: :type port: xenamanager.xena_port.XenaPort
-        port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
-
-        #: :type api: xenamanager.api.XenaSocket.XenaSocket
-        api = port.api
-
-        api.connect()
-
-        self.assertRaises(XenaCommandException, port.get_attribute, 'ps_packetlimit')
-        self.assertRaises(XenaCommandException, port.get_attributes, 'ps_packetlimit')
-
-        self.assertRaises(XenaCommandException, port.api.sendQuery, 'p_comment 4/6 ?')
-
-        api.connect()
-
-        # test read only
