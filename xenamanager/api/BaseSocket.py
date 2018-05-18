@@ -65,10 +65,14 @@ class BaseSocket:
         if not self.connected:
             raise socket.error("readReply() on a disconnected socket")
 
-        reply = self.sock.recv(1024)
-        if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
-            # read next line for actual message
+        try:
             reply = self.sock.recv(1024)
+            if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
+                # read next line for actual message
+                reply = self.sock.recv(1024)
+        except Exception as error:
+            self.disconnect()
+            raise IOError("Fail to read response, error: {}", error)
 
         str_reply = reply.decode("utf-8")
         logger.debug('Reply message({})'.format(str_reply))
