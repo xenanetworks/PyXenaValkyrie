@@ -206,8 +206,8 @@ def traffic():
 def run_all():
     connect()
     inventory()
-    configuration()
-    traffic()
+#     configuration()
+#     traffic()
     disconnect()
 
 

@@ -81,7 +81,7 @@ class XenaSession(XenaObject):
         """ Get inventory for all chassis. """
 
         for chassis in self.get_objects_by_type('chassis'):
-            chassis.inventory()
+            chassis.inventory(modules_inventory=True)
 
     def reserve_ports(self, locations, force=False, reset=True):
         """ Reserve ports and reset factory defaults.
@@ -237,13 +237,18 @@ class XenaChassis(XenaObject):
 
         raise NotImplementedError('Underlying CLI command c_stats returns internal error.')
 
-    def inventory(self):
-        """ Get chassis inventory. """
+    def inventory(self, modules_inventory=False):
+        """ Get chassis inventory.
+
+        :param modules_inventory: True - read modules inventory, false - don't read.
+        """
 
         self.c_info = self.get_attributes('c_info')
         for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
             if int(m_portcounts):
-                XenaModule(parent=self, index=m_index).inventory()
+                module = XenaModule(parent=self, index=m_index)
+                if modules_inventory:
+                    module.inventory()
 
     def reserve_ports(self, locations, force=False, reset=True):
         """ Reserve ports and reset factory defaults.
@@ -312,6 +317,8 @@ class XenaChassis(XenaObject):
         :return: dictionary {index: object} of all modules.
         """
 
+        if not self.get_objects_by_type('module'):
+            self.inventory()
         return {int(c.ref): c for c in self.get_objects_by_type('module')}
 
     @property
@@ -371,4 +378,6 @@ class XenaModule(XenaObject):
         :return: dictionary {index: object} of all ports.
         """
 
+        if not self.get_objects_by_type('port'):
+            self.inventory()
         return {int(p.ref.split('/')[1]): p for p in self.get_objects_by_type('port')}
