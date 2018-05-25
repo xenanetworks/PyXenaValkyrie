@@ -65,10 +65,13 @@ class XenaSession(XenaObject):
         :param chassis: chassis IP address
         :param port: chassis port number
         :param password: chassis password
+        :return: newly created chassis
+        :rtype: xenamanager.xena_app.XenaChassis
         """
 
         if chassis not in self.chassis_list:
             self.chassis_list[chassis] = XenaChassis(self, chassis, port).logon(password, self.owner)
+        return self.chassis_list[chassis]
 
     def disconnect(self):
         """ Disconnect from all chassis. """
