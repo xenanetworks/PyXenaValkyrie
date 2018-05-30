@@ -21,9 +21,11 @@ class XenaObject(TgnObject):
             self.session = data['parent'].session
         if 'objRef' not in data:
             data['objRef'] = str(data['index'])
-        if 'name' not in data or not data['name']:
+        if 'name' not in data or data['name'] is None:
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
+        if self.ref:
+            self.id = int(self.ref.split('/')[-1])
 
     def _build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)

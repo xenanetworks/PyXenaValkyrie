@@ -48,7 +48,7 @@ class XenaPort(XenaObject):
     def inventory(self):
         self.p_info = self.get_attributes('p_info')
 
-    def reserve(self, force):
+    def reserve(self, force=False):
         """ Reserve port.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -275,7 +275,6 @@ class XenaTpld(XenaObject):
         :param index: TPLD index in format module/port/tpld.
         """
         super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
-        self.id = int(self.ref.split('/')[-1])
 
     def _build_index_command(self, command, *arguments):
         module, port, sid = self.ref.split('/')
