@@ -1,4 +1,5 @@
 future
+requests
 pypacker27==4.2.1
 
 pytrafficgen==1.3.1

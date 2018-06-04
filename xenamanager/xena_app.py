@@ -9,32 +9,35 @@ from xenamanager.api.XenaSocket import XenaSocket
 from xenamanager.api.KeepAliveThread import KeepAliveThread
 from xenamanager.xena_object import XenaObject
 from xenamanager.xena_port import XenaPort
+from trafficgenerator.tgn_utils import ApiType
 
 
-def init_xena(logger, owner):
+def init_xena(api, logger, owner):
     """ Create XenaManager object.
 
+    :param api: cli/rest
     :param logger: python logger
     :param owner: owner of the scripting session
     :return: Xena object
     :rtype: XenaApp
     """
 
-    return XenaApp(logger, owner)
+    return XenaApp(api, logger, owner)
 
 
 class XenaApp(TgnApp):
     """ XenaManager object, equivalent to XenaManager-2G application. """
 
-    def __init__(self, logger, owner):
+    def __init__(self, api, logger, owner):
         """ Start XenaManager-2G equivalent application.
 
+        :param api: cli/rest
         :param logger: python logger
         :param owner: owner of the scripting session
         """
 
         self.logger = logger
-        self.session = XenaSession(self.logger, owner)
+        self.session = XenaSession(api, self.logger, owner)
         self.session.session = self.session
 
     def logoff(self):
@@ -46,7 +49,7 @@ class XenaApp(TgnApp):
 class XenaSession(XenaObject):
     """ Xena scripting object. Root object for the Xena objects tree. """
 
-    def __init__(self, logger, owner):
+    def __init__(self, api, logger, owner):
         """
         :param logger: python logger
         :param owner: owner of the scripting session
@@ -56,6 +59,9 @@ class XenaSession(XenaObject):
         self.owner = owner
         self.api = None
         super(self.__class__, self).__init__(objType='session', index='', parent=None)
+
+        if api == ApiType.rest:
+            pass
 
     def add_chassis(self, chassis, port=22611, password='xena'):
         """ Add chassis.

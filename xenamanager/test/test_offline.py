@@ -27,7 +27,7 @@ class XenaTestOffline(XenaTestBase):
 
     def test_load_config(self):
         #: :type port: xenamanager.xena_port.XenaPort
-        port = self.xm.session.reserve_ports([self.port1])[self.port1]
+        port = self.xm.session.reserve_ports([self.port2])[self.port2]
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
 
         assert(len(port.streams) == 2)
