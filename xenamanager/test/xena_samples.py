@@ -24,6 +24,7 @@ from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
 wireshark_path = 'E:/Program Files/Wireshark'
 
 chassis = '176.22.65.114'
+chassis = '192.168.1.170'
 port1 = chassis + '/' + '0/2'
 port0 = chassis + '/' + '0/3'
 owner = 'yoram-s'

@@ -20,8 +20,9 @@ class XenaTestBase(TgnTest):
         super(XenaTestBase, self).setUp()
         self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
-        self.port1 = self.config.get('Xena', 'port1')
-        self.port2 = self.config.get('Xena', 'port2')
+        self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
+        self.port2 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port2'))
+        self.port3 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port3'))
         XenaStream.next_tpld_id = 0
 
     def tearDown(self):

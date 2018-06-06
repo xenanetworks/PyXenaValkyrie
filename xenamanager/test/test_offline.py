@@ -73,7 +73,7 @@ class XenaTestOffline(XenaTestBase):
 
     def test_extended_modifiers(self):
         try:
-            port = self.xm.session.reserve_ports([self.config.get('Xena', 'port3')])[self.config.get('Xena', 'port3')]
+            port = self.xm.session.reserve_ports([self.port3])[self.port3]
         except TgnError as e:
             self.skipTest('Skip test - ' + str(e))
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_100G.xpc'))
