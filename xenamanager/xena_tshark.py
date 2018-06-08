@@ -23,19 +23,18 @@ class Tshark:
         self.temp_folder = temp_folder
 
     def text_to_pcap(self, text_file, pcap_file=None):
-        text2pcap_call = [os.path.join(self.ws_path, 'text2pcap.exe')]
+        text2pcap_call = [os.path.join(self.ws_path, 'text2pcap' + ('.exe' if sys.platform == 'win32' else ''))]
         text2pcap_call.append(text_file)
         if not pcap_file:
             pcap_file = os.path.splitext(text_file)[0] + '.pcap'
         text2pcap_call.append(pcap_file)
-        print(text2pcap_call)
         subprocess.call(text2pcap_call)
 
     def analyze(self, pcap_file, analyser):
-        tshark_call = analyser.build_tshark_call(self.ws_path + '/tshark.exe', pcap_file)
+        tshark_path = os.path.join(self.ws_path, 'tshark' + ('.exe' if sys.platform == 'win32' else ''))
+        tshark_call = analyser.build_tshark_call(tshark_path, pcap_file)
         out_file_name = self.temp_folder + '/' + os.path.basename(pcap_file) + '.txt'
         out_file = open(out_file_name, 'wb')
-        print(tshark_call)
         if subprocess.call(tshark_call, stdout=out_file) > 0:
             raise Exception('{} - failed'.format(' '.join(tshark_call)))
         out_file.close()

@@ -310,6 +310,15 @@ class XenaCapture(XenaObject):
     def __init__(self, parent):
         super(self.__class__, self).__init__(objType='capture', index=parent.ref, parent=parent)
 
+    def get_packet(self, index):
+        """" get captured packet complete information.
+
+        :param index: index of requested packet.
+        :returns: dictionary of <attribute, value> of all attributes returned by the query.
+        :rtype: dict of (str, str)
+        """
+        return {k: v.split(' ', 1)[1] for k, v in self.get_attributes('pc_info [{}]'.format(index)).items()}
+
     def get_packets(self, from_index=0, to_index=None, cap_type=XenaCaptureBufferType.text,
                     file_name=None, tshark=None):
         """ Get captured packets from chassis.

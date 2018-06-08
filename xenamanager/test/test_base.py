@@ -19,6 +19,7 @@ class XenaTestBase(TgnTest):
     def setUp(self):
         super(XenaTestBase, self).setUp()
         self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
+        self.temp_dir = self.config.get('General', 'temp_dir')
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
         self.port2 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port2'))

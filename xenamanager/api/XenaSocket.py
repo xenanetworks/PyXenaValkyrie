@@ -104,7 +104,7 @@ class XenaSocket(object):
         """
         self.logger.debug("sendQuery(%s)", cmd)
         if not self.is_connected():
-            socket.error("sendQuery on a disconnected socket")
+            raise socket.error("sendQuery on a disconnected socket")
 
         if multilines:
             replies = self.__sendQueryReplies(cmd)

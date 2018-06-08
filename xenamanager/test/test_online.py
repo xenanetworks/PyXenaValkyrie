@@ -20,9 +20,6 @@ from xenamanager.xena_port import XenaCaptureBufferType
 from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
 
 
-wireshark_path = 'E:/Program Files/Wireshark'
-
-
 class XenaTestOnline(XenaTestBase):
 
     def test_online(self):
@@ -92,6 +89,7 @@ class XenaTestOnline(XenaTestBase):
 
         packets = port.capture.get_packets(0, 1, cap_type=XenaCaptureBufferType.raw)
         assert(len(packets) == 1)
+        port.capture.get_packet(0)
         packet = ethernet.Ethernet(binascii.unhexlify(packets[0]))
         assert(packet.ip.dst_s == '1.1.0.0')
 
@@ -99,17 +97,17 @@ class XenaTestOnline(XenaTestBase):
         print(packets[0])
         assert(len(packets) == 10)
 
-        packets = port.capture.get_packets(file_name='c:/temp/xena_cap.txt')
+        packets = port.capture.get_packets(file_name=path.join(self.temp_dir, 'xena_cap.txt'))
         print(packets[0])
         assert(len(packets) == 80)
 
-        tshark = Tshark(wireshark_path)
+        tshark = Tshark(self.config.get('General', 'wireshark_dir'))
         packets = port.capture.get_packets(cap_type=XenaCaptureBufferType.pcap,
-                                           file_name='c:/temp/xena_cap.pcap', tshark=tshark)
+                                           file_name=path.join(self.temp_dir, 'xena_cap.pcap'), tshark=tshark)
         analyser = TsharkAnalyzer()
         analyser.add_field('ip.src')
         analyser.add_field('ip.dst')
-        fields = tshark.analyze('c:/temp/xena_cap.pcap', analyser)
+        fields = tshark.analyze(path.join(self.temp_dir, 'xena_cap.pcap'), analyser)
         print(fields)
         assert(len(fields) == 80)
 
