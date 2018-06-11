@@ -183,7 +183,7 @@ class XenaStream(XenaObject):
         """
         :return: dictionary {position: object} of extended modifiers.
         """
-        return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.standard}
+        return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.extended}
 
     #
     # Private methods.
