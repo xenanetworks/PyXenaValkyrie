@@ -13,7 +13,7 @@ class XenaSocket(object):
 
     reply_ok = '<OK>'
     reply_errors = ('#Syntax error', '#Index error', '#Internal deparse error',
-                    '<BADPARAMETER>', '<BADINDEX>', '<BADPORT>', '<NOTRESERVED>')
+                    '<BADPARAMETER>', '<BADINDEX>', '<BADPORT>', '<NOTRESERVED>', '<NOTWRITABLE>')
 
     def __init__(self, logger, hostname, port=22611, timeout=5):
         self.logger = logger
