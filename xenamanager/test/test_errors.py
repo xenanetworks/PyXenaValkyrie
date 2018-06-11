@@ -6,6 +6,7 @@ Test all kinds of errors.
 
 from os import path
 
+from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_app import init_xena
 from xenamanager.api.XenaSocket import XenaCommandException
@@ -17,7 +18,7 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
-        self.xm = init_xena(self.logger, self.config.get('Xena', 'owner'))
+        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
 
     def tearDown(self):
         self.xm.logoff()
@@ -27,9 +28,9 @@ class XenaTestBase(TgnTest):
         self.assertRaises(IOError, self.xm.session.add_chassis, 'invalid IP')
 
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
-        self.port1 = self.config.get('Xena', 'port1')
+        self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
 
-        xm = init_xena(self.logger, self.config.get('Xena', 'owner'))
+        xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
         xm.session.add_chassis(self.config.get('Xena', 'chassis'))
 
         #: :type port: xenamanager.xena_port.XenaPort

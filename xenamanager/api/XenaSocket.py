@@ -33,7 +33,7 @@ class XenaSocket(object):
             self.bsocket.connect()
         except Exception as e:
             self.access_semaphor.release()
-            raise IOError('Failed to connect to {}:{} {}'.format(self.hostname, self.port, e.message))
+            raise IOError('Failed to connect to {}:{} {}'.format(self.hostname, self.port, str(e)))
         self.bsocket.set_keepalives()
         self.access_semaphor.release()
         self.logger.info("Connected")

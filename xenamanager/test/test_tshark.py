@@ -4,19 +4,22 @@ Base class for all Xena package tests.
 @author yoram@ignissoft.com
 """
 
-import unittest
+from os import path
 
+from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
 
-wireshark_path = 'E:/Program Files/Wireshark'
 
+class XenaTestBase(TgnTest):
 
-class XenaTestBase(unittest.TestCase):
+    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
 
-    text_file = 'c:/temp/xena_cap.txt'
+    text_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.txt')
+    pcap_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.pcap')
 
     def setUp(self):
-        self.tshark = Tshark(wireshark_path)
+        self.temp_dir = self.config.get('General', 'temp_dir')
+        self.tshark = Tshark(self.config.get('General', 'wireshark_dir'))
 
     def tearDown(self):
         pass
@@ -28,14 +31,14 @@ class XenaTestBase(unittest.TestCase):
         analyser = TsharkAnalyzer()
         analyser.add_field('ip.src')
         analyser.add_field('ip.dst')
-        fields = self.tshark.analyze('c:/temp/xena_cap.pcap', analyser)
+        fields = self.tshark.analyze(self.pcap_file, analyser)
         print(fields)
         assert(len(fields) == 80)
         analyser.set_read_filter('ip.dst == 1.1.0.1')
-        fields = self.tshark.analyze('c:/temp/xena_cap.pcap', analyser)
+        fields = self.tshark.analyze(self.pcap_file, analyser)
         print(fields)
         assert(len(fields) == 1)
         analyser.set_read_filter('ip.dst == 1.1.0.1 && frame.number >= 10')
-        fields = self.tshark.analyze('c:/temp/xena_cap.pcap', analyser)
+        fields = self.tshark.analyze(self.pcap_file, analyser)
         print(fields)
         assert(len(fields) == 0)

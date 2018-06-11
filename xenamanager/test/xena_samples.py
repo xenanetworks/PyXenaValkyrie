@@ -16,21 +16,23 @@ from pypacker.layer12.ethernet import Ethernet, Dot1Q
 from pypacker.layer3.ip6 import IP6
 from pypacker.layer4.tcp import TCP
 
+from trafficgenerator.tgn_utils import ApiType
 from xenamanager.xena_app import init_xena
 from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenamanager.xena_port import XenaCaptureBufferType
 from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
 
-wireshark_path = 'E:/Program Files/Wireshark'
+wireshark_path = '/usr/bin'
 
+api = ApiType.socket
 chassis = '176.22.65.114'
 chassis = '192.168.1.170'
-port1 = chassis + '/' + '0/2'
-port0 = chassis + '/' + '0/3'
+port1 = chassis + '/' + '0/0'
+port0 = chassis + '/' + '0/1'
 owner = 'yoram-s'
 config0 = path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc')
 save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xpc')
-pcap_file = 'c:/temp/xena_cap.pcap'
+pcap_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.pcap')
 ports = {}
 
 #: :type xm: xenamanager.xena_app.XenaManager
@@ -48,7 +50,7 @@ def connect():
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
     # Create XenaManager object and connect to chassis.
-    xm = init_xena(logger, owner)
+    xm = init_xena(api, logger, owner)
     xm.session.add_chassis(chassis)
 
 
@@ -207,8 +209,8 @@ def traffic():
 def run_all():
     connect()
     inventory()
-#     configuration()
-#     traffic()
+    configuration()
+    traffic()
     disconnect()
 
 
