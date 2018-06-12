@@ -211,6 +211,8 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
+    stats_captions = ['bps', 'pps', 'bytes', 'packets']
+
     def __init__(self, parent, ip, port=22611):
         """
         :param parent: parent session object
@@ -315,6 +317,12 @@ class XenaChassis(XenaObject):
         """
 
         self._traffic_command('off', *ports)
+
+    def read_stats(self):
+        """
+        :return: dictionary {own: {stat name: value}}
+        """
+        raise NotImplementedError('Bug in chassis when trying to read c_statsession')
 
     #
     # Properties.

@@ -16,6 +16,9 @@ class XenaTestOffline(XenaTestBase):
 
     def test_inventory(self):
         self.xm.session.inventory()
+        stats = {}
+        for name, chassis in self.xm.session.chassis_list.items():
+            stats[name] = chassis.read_stats()
         print('+++')
         for c_name, chassis in self.xm.session.chassis_list.items():
             print(c_name)

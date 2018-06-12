@@ -33,7 +33,7 @@ class XenaModifierAction(Enum):
 
 class XenaStream(XenaObject):
 
-    stats_captions = ['bps', 'pps', 'bytes', 'packets']
+    stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
     next_tpld_id = 0
 
