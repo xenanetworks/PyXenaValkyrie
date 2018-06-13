@@ -83,13 +83,13 @@ class XenaSession(XenaObject):
         """ Disconnect from all chassis. """
 
         self.release_ports()
-        for chassis in self.get_objects_by_type('chassis'):
+        for chassis in self.chassis_list.values():
             chassis.disconnect()
 
     def inventory(self):
         """ Get inventory for all chassis. """
 
-        for chassis in self.get_objects_by_type('chassis'):
+        for chassis in self.chassis_list.values():
             chassis.inventory(modules_inventory=True)
 
     def reserve_ports(self, locations, force=False, reset=True):
@@ -211,7 +211,7 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
-    stats_captions = ['bps', 'pps', 'bytes', 'packets']
+    stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
     def __init__(self, parent, ip, port=22611):
         """
@@ -220,7 +220,7 @@ class XenaChassis(XenaObject):
         :param port: chassis port number
         """
 
-        super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip)
+        super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip, objRef=ip)
 
         self.api = XenaSocket(self.logger, ip, port=port)
         self.api.connect()
@@ -336,7 +336,7 @@ class XenaChassis(XenaObject):
 
         if not self.get_objects_by_type('module'):
             self.inventory()
-        return {int(c.ref): c for c in self.get_objects_by_type('module')}
+        return {int(c.index): c for c in self.get_objects_by_type('module')}
 
     @property
     def ports(self):
@@ -352,7 +352,7 @@ class XenaChassis(XenaObject):
 
     def _traffic_command(self, command, *ports):
         ports = self._get_operation_ports(*ports)
-        ports_str = ' '.join([p.ref.replace('/', ' ') for p in ports])
+        ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
         self.send_command('c_traffic', command, ports_str)
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
@@ -383,7 +383,7 @@ class XenaModule(XenaObject):
         else:
             m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
         for p_index in range(m_portcount):
-            XenaPort(parent=self, index='{}/{}'.format(self.ref, p_index)).inventory()
+            XenaPort(parent=self, index='{}/{}'.format(self.index, p_index)).inventory()
 
     #
     # Properties.
@@ -397,4 +397,4 @@ class XenaModule(XenaObject):
 
         if not self.get_objects_by_type('port'):
             self.inventory()
-        return {int(p.ref.split('/')[1]): p for p in self.get_objects_by_type('port')}
+        return {int(p.index.split('/')[1]): p for p in self.get_objects_by_type('port')}

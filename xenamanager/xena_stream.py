@@ -33,7 +33,7 @@ class XenaModifierAction(Enum):
 
 class XenaStream(XenaObject):
 
-    stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
+    stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
     next_tpld_id = 0
 
@@ -123,7 +123,7 @@ class XenaStream(XenaObject):
         else:
             modifier_index = len(self.extended_modifiers)
             self.set_attributes(ps_modifierextcount=modifier_index + 1)
-        modifier = XenaModifier(self, index='{}/{}'.format(self.ref, modifier_index), m_type=m_type)
+        modifier = XenaModifier(self, index='{}/{}'.format(self.index, modifier_index), m_type=m_type)
         modifier.set(**kwargs)
         return modifier
 
@@ -163,10 +163,10 @@ class XenaStream(XenaObject):
 
         if not self.get_objects_by_type('modifier'):
             for index in range(int(self.get_attribute('ps_modifiercount'))):
-                XenaModifier(self, index='{}/{}'.format(self.ref, index), m_type=XenaModifierType.standard)
+                XenaModifier(self, index='{}/{}'.format(self.index, index), m_type=XenaModifierType.standard)
             try:
                 for index in range(int(self.get_attribute('ps_modifierextcount'))):
-                    XenaModifier(self, index='{}/{}'.format(self.ref, index), m_type=XenaModifierType.extended)
+                    XenaModifier(self, index='{}/{}'.format(self.index, index), m_type=XenaModifierType.extended)
             except Exception as _:
                 pass
         return {m.position: m for m in self.get_objects_by_type('modifier')}
@@ -190,11 +190,11 @@ class XenaStream(XenaObject):
     #
 
     def _build_index_command(self, command, *arguments):
-        module, port, sid = self.ref.split('/')
+        module, port, sid = self.index.split('/')
         return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        module, port, sid = self.ref.split('/')
+        module, port, sid = self.index.split('/')
         return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
 
     def _get_index_len(self):
@@ -214,7 +214,7 @@ class XenaModifier(XenaObject):
         :type: xenamanager.xena_stram.ModifierType
         """
 
-        module, port, sid = parent.ref.split('/')
+        module, port, sid = parent.index.split('/')
         self.mid = index.split('/')[-1]
         command = 'ps_modifier' if m_type == XenaModifierType.standard else 'ps_modifierext'
         reply = parent.api.sendQuery('{}/{} {} [{},{}] ?'.format(module, port, command, sid, self.mid))
@@ -262,11 +262,11 @@ class XenaModifier(XenaObject):
     #
 
     def _build_index_command(self, command, *arguments):
-        module, port, sid, _ = self.ref.split('/')
+        module, port, sid, _ = self.index.split('/')
         return ('{}/{} {} [{},{}]' + len(arguments) * ' {}').format(module, port, command, sid, self.mid, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        module, port, sid, _ = self.ref.split('/')
+        module, port, sid, _ = self.index.split('/')
         return re.sub('{}/{}\s*{}\s*\[{},{}\]\s*'.
                       format(module, port, command.upper(), sid, self.mid), '', index_command_value)
 

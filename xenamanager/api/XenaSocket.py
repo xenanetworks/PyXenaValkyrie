@@ -27,7 +27,7 @@ class XenaSocket(object):
         return self.bsocket.is_connected()
 
     def connect(self):
-        self.logger.debug("Connect()")
+        self.logger.debug('Try to connect to {}:{}'.format(self.hostname, self.port))
         self.access_semaphor.acquire()
         try:
             self.bsocket.connect()
@@ -36,10 +36,10 @@ class XenaSocket(object):
             raise IOError('Failed to connect to {}:{} {}'.format(self.hostname, self.port, str(e)))
         self.bsocket.set_keepalives()
         self.access_semaphor.release()
-        self.logger.info("Connected")
+        self.logger.info('Connected to {}:{}'.format(self.hostname, self.port))
 
     def disconnect(self):
-        self.logger.debug("Disconnect()")
+        self.logger.info('Disconnect from {}:{}'.format(self.hostname, self.port))
         self.access_semaphor.acquire()
         self.bsocket.disconnect()
         self.access_semaphor.release()
@@ -72,9 +72,8 @@ class XenaSocket(object):
                 (reply, msgleft) = msg.split('\n', 1)
                 # check for syntax problems
                 if reply.rfind('Syntax') != -1:
-                    self.logger.warning("Multiline: syntax error")
                     self.access_semaphor.release()
-                    return []
+                    raise XenaCommandException("Multiline: syntax error - {}".format(reply))
 
                 if reply.rfind('<SYNC>') == 0:
                     self.logger.debug("Multiline EOL SYNC message")

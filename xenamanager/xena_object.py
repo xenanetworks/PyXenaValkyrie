@@ -20,24 +20,36 @@ class XenaObject(TgnObject):
         if data['parent']:
             self.session = data['parent'].session
         if 'objRef' not in data:
-            data['objRef'] = str(data['index'])
+            data['objRef'] = '{}-{}'.format(data['objType'], data['index'])
         if 'name' not in data or data['name'] is None:
             data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
         super(XenaObject, self).__init__(**data)
-        if self.ref:
-            self.id = int(self.ref.split('/')[-1])
+
+    def obj_index(self):
+        """
+        :return: object index.
+        """
+        return str(self._data['index'])
+    index = property(obj_index)
+
+    def obj_id(self):
+        """
+        :return: object ID.
+        """
+        return int(self.index.split('/')[-1]) if self.index else None
+    id = property(obj_id)
 
     def _build_index_command(self, command, *arguments):
-        return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)
+        return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        return re.sub('{}\s*{}\s*'.format(self.ref, command.upper()), '', index_command_value)
+        return re.sub('{}\s*{}\s*'.format(self.index, command.upper()), '', index_command_value)
 
     def _get_index_len(self):
-        return len(self.ref.split())
+        return len(self.index.split())
 
     def _get_command_len(self):
-        return len(self.ref.split())
+        return len(self.index.split())
 
     def send_command(self, command, *arguments):
         """ Send command and do not parse output (except for communication errors). """

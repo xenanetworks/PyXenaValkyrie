@@ -25,16 +25,16 @@ class XenaCliWrapper(object):
         self.logger = logger
 
     def _build_index_command(self, command, *arguments):
-        return ('{} {}' + len(arguments) * ' {}').format(self.ref, command, *arguments)
+        return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        return re.sub('{}\s*{}\s*'.format(self.ref, command.upper()), '', index_command_value)
+        return re.sub('{}\s*{}\s*'.format(self.index, command.upper()), '', index_command_value)
 
     def _get_index_len(self):
-        return len(self.ref.split())
+        return len(self.index.split())
 
     def _get_command_len(self):
-        return len(self.ref.split())
+        return len(self.index.split())
 
     def send_command(self, command, *arguments):
         """ Send command and do not parse output (except for communication errors). """

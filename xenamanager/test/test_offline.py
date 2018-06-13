@@ -16,16 +16,13 @@ class XenaTestOffline(XenaTestBase):
 
     def test_inventory(self):
         self.xm.session.inventory()
-        stats = {}
-        for name, chassis in self.xm.session.chassis_list.items():
-            stats[name] = chassis.read_stats()
         print('+++')
         for c_name, chassis in self.xm.session.chassis_list.items():
             print(c_name)
             for m_name, module in chassis.modules.items():
-                print(m_name)
+                print('\tmodule {}'.format(m_name))
                 for p_name, _ in module.ports.items():
-                    print(p_name)
+                    print('\t\tport {}'.format(p_name))
         print('+++')
 
     def test_load_config(self):

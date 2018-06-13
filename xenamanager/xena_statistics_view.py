@@ -107,7 +107,7 @@ class XenaStreamsStats(XenaStats):
             self.statistics[stream]['rx'] = OrderedDict()
             stream_tpld = stream.get_attribute('ps_tpldid')
             for tpld, tpld_stats in tpld_statistics.items():
-                if tpld.ref.split('/')[-1] == stream_tpld:
+                if tpld.id == stream_tpld:
                     self.statistics[stream]['rx'][tpld] = tpld_stats
         return self.statistics
 

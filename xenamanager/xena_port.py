@@ -104,7 +104,7 @@ class XenaPort(XenaObject):
 
         tpld_ids = []
         for index in self.get_attribute('ps_indices').split():
-            stream = XenaStream(parent=self, index='{}/{}'.format(self.ref, index))
+            stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index))
             tpld_ids.append(stream.get_attribute('ps_tpldid'))
         XenaStream.next_tpld_id = max([XenaStream.next_tpld_id] + [int(t) for t in tpld_ids]) + 1
 
@@ -130,7 +130,7 @@ class XenaPort(XenaObject):
         :rtype: xenamanager.xena_stream.XenaStream
         """
 
-        stream = XenaStream(parent=self, index='{}/{}'.format(self.ref, len(self.streams)), name=name)
+        stream = XenaStream(parent=self, index='{}/{}'.format(self.index, len(self.streams)), name=name)
         stream.send_command('ps_create')
         tpld_id = tpld_id if tpld_id else XenaStream.next_tpld_id
         stream.set_attributes(ps_comment='"{}"'.format(stream.name), ps_tpldid=tpld_id)
@@ -243,12 +243,11 @@ class XenaPort(XenaObject):
         :rtype: dict of (int, xenamanager.xena_port.XenaTpld)
         """
 
-        # TPLD has the same index as stream. Since we don't want to override the streams and as TPLDs are temporary and
-        # dynamic we create them under port parent (chassis) and erase them before we read them again.
+        # As TPLDs are dynamic we must re-read them each time from the port.
         self.parent.del_objects_by_type('tpld')
         for tpld in self.get_attribute('pr_tplds').split():
-            XenaTpld(parent=self.parent, index='{}/{}'.format(self.ref, tpld)).read_stats()
-        return {t.id: t for t in self.parent.get_objects_by_type('tpld')}
+            XenaTpld(parent=self, index='{}/{}'.format(self.index, tpld)).read_stats()
+        return {t.id: t for t in self.get_objects_by_type('tpld')}
 
     @property
     def capture(self):
@@ -277,11 +276,11 @@ class XenaTpld(XenaObject):
         super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
 
     def _build_index_command(self, command, *arguments):
-        module, port, sid = self.ref.split('/')
+        module, port, sid = self.index.split('/')
         return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        module, port, sid = self.ref.split('/')
+        module, port, sid = self.index.split('/')
         return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
 
     def _get_index_len(self):
@@ -308,7 +307,7 @@ class XenaCapture(XenaObject):
     """
 
     def __init__(self, parent):
-        super(self.__class__, self).__init__(objType='capture', index=parent.ref, parent=parent)
+        super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent)
 
     def get_packet(self, index):
         """" get captured packet complete information.
