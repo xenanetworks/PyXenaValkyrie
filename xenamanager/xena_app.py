@@ -76,7 +76,11 @@ class XenaSession(XenaObject):
         """
 
         if chassis not in self.chassis_list:
-            self.chassis_list[chassis] = XenaChassis(self, chassis, port).logon(password, self.owner)
+            try:
+                XenaChassis(self, chassis, port).logon(password, self.owner)
+            except Exception as error:
+                self.objects.pop(chassis)
+                raise error
         return self.chassis_list[chassis]
 
     def disconnect(self):

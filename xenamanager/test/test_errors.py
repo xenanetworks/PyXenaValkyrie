@@ -26,6 +26,7 @@ class XenaTestBase(TgnTest):
     def test_errors(self):
 
         self.assertRaises(IOError, self.xm.session.add_chassis, 'invalid IP')
+        assert(len(self.xm.session.chassis_list) == 0)
 
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
