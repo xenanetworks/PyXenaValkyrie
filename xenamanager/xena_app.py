@@ -79,18 +79,17 @@ class XenaSession(XenaObject):
 
         if chassis not in self.chassis_list:
             try:
-                XenaChassis(self, chassis, port).logon(password, self.owner)
+                XenaChassis(self, chassis, port, password)
             except Exception as error:
                 self.objects.pop(chassis)
                 raise error
         return self.chassis_list[chassis]
 
     def disconnect(self):
-        """ Disconnect from all chassis. """
+        """ Release ports and disconnect from all chassis. """
 
         self.release_ports()
-        for chassis in self.chassis_list.values():
-            chassis.disconnect()
+        self.api.disconnect()
 
     def inventory(self):
         """ Get inventory for all chassis. """
@@ -219,29 +218,24 @@ class XenaChassis(XenaObject):
 
     stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
-    def __init__(self, parent, ip, port=22611):
+    def __init__(self, parent, ip, port=22611, password='xena'):
         """
         :param parent: parent session object
+        :param owner: owner of the scripting session
         :param ip: chassis IP address
         :param port: chassis port number
+        :param password: chassis password
         """
 
         super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip, objRef=ip)
         self.chassis = self
+        self.owner = parent.owner
         self.ip = ip
         self.port = port
+        self.password = password
         self.api.add_chassis(self)
 
         self.c_info = None
-
-    def logon(self, password, owner):
-        self.send_command('c_logon', '"{}"'.format(password))
-        self.send_command('c_owner', '"{}"'.format(owner))
-
-    def disconnect(self):
-        """ Disconnect from chassis. """
-
-        self.api.disconnect(self)
 
     def get_session_id(self):
         """ Get ID of the current automation session on the chassis.

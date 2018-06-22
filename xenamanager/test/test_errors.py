@@ -18,20 +18,24 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
-        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
+        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger,
+                            self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
 
     def tearDown(self):
-        self.xm.logoff()
+        self.xm.session.disconnect()
 
     def test_errors(self):
 
+        self.xm.session.connect(self.config.get('Xena', 'owner'))
         self.assertRaises(IOError, self.xm.session.add_chassis, 'invalid IP')
         assert(len(self.xm.session.chassis_list) == 0)
 
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
 
-        xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
+        xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger,
+                       self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
+        xm.session.connect(self.config.get('Xena', 'owner'))
         xm.session.add_chassis(self.config.get('Xena', 'chassis'))
 
         #: :type port: xenamanager.xena_port.XenaPort
@@ -40,14 +44,12 @@ class XenaTestBase(TgnTest):
         #: :type api: xenamanager.api.XenaSocket.XenaSocket
         api = port.api
 
-        api.connect()
+        api.connect(self.config.get('Xena', 'owner'))
 
         self.assertRaises(XenaCommandException, port.get_attribute, 'ps_packetlimit')
         self.assertRaises(XenaCommandException, port.get_attributes, 'ps_packetlimit')
 
-        self.assertRaises(XenaCommandException, port.api.sendQuery, 'p_comment 4/6 ?')
-
-        api.connect()
+        api.connect(self.config.get('Xena', 'owner'))
 
         # test read only
 

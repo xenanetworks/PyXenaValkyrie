@@ -26,8 +26,10 @@ class XenaCliWrapper(object):
     def connect(self, owner):
         self.owner = owner
 
-    def disconnect(self, chassis):
-        self.chassis_list[chassis].disconnect()
+    def disconnect(self):
+        for chassis in self.chassis_list.values():
+            chassis.disconnect()
+        self.chassis_list = {}
 
     def add_chassis(self, chassis):
         """
@@ -37,6 +39,8 @@ class XenaCliWrapper(object):
         self.chassis_list[chassis] = XenaSocket(self.logger, chassis.ip, chassis.port)
         self.chassis_list[chassis].connect()
         KeepAliveThread(self.chassis_list[chassis]).start()
+        self.send_command(chassis, 'c_logon', '"{}"'.format(chassis.password))
+        self.send_command(chassis, 'c_owner', '"{}"'.format(chassis.owner))
 
     def send_command(self, obj, command, *arguments):
         """ Send command and do not parse output (except for communication errors). """
@@ -52,6 +56,3 @@ class XenaCliWrapper(object):
         """ Send command and wait for multiple lines output. """
         index_command = obj._build_index_command(command, *arguments)
         return self.chassis_list[obj.chassis].sendQuery(index_command, True)
-
-    def is_connected(self, obj):
-        return self.chassis_list[obj.chassis].is_connected()

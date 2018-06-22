@@ -46,9 +46,9 @@ class XenaStream(XenaObject):
 
         super(self.__class__, self).__init__(objType='stream', index=index, parent=parent, name=name)
 
-    def __del__(self):
-        if self.api.is_connected(self):
-            self.send_command('ps_delete')
+    def del_object_from_parent(self):
+        self.send_command('ps_delete')
+        super(self.__class__, self).del_object_from_parent()
 
     def set_state(self, state):
         """ Set stream state.

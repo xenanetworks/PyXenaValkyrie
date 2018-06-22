@@ -15,6 +15,18 @@ Supported operations:
 	- Capture - get captured packets
 	- Release ports and disconnect
 
+Upgrade from version 0.8.5 to version 0.10 and up
+"""""""""""""""""""""""""""""""""""""""""""""""""
+Remove the owner parameter from init_xena:
+xm = init_xena(api, logger, owner) -> xm = init_xena(api, logger)
+
+Call xm.session.connect with owner parameter just before calling add_chassis:
+xm.session.connect(owner)
+xm.session.add_chassis(chassis)
+
+Replace logoff with disconnect: 
+xm.logoff() -> xm.session.disconnect()
+
 Installation
 """"""""""""
 pip instsll pyxenamanager

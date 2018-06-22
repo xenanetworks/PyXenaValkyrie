@@ -4,14 +4,22 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 :author: yoram@ignissoft.com
 """
 
-import time
-import re
-import logging
+import requests
+import json
+from enum import Enum
 
-from trafficgenerator.tgn_utils import TgnError
-from trafficgenerator.tgn_object import TgnObject
 
-logger = logging.getLogger(__name__)
+class OperReturnType(Enum):
+    no_output = 'no_output'
+    line_output = 'line_output'
+    multiline_output = 'multiline_output'
+
+
+class RestMethod(Enum):
+    get = 'GET'
+    delete = 'DELETE'
+    patch = 'PATCH'
+    post = 'POST'
 
 
 class XenaRestWrapper(object):
@@ -27,78 +35,64 @@ class XenaRestWrapper(object):
         self.logger = logger
         self.base_url = 'http://{}:{}'.format(server, port)
 
-    def _build_index_command(self, command, *arguments):
-        return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
+    def connect(self, owner):
+        self.session_url = '{}/{}/'.format(self.base_url, 'session')
+        self._request(RestMethod.post, self.session_url, params={'user': owner})
+        self.user_url = '{}{}'.format(self.session_url, owner)
 
-    def _extract_return(self, command, index_command_value):
-        return re.sub('{}\s*{}\s*'.format(self.index, command.upper()), '', index_command_value)
+    def disconnect(self):
+        self._request(RestMethod.delete, self.user_url)
 
-    def _get_index_len(self):
-        return len(self.index.split())
-
-    def _get_command_len(self):
-        return len(self.index.split())
-
-    def send_command(self, command, *arguments):
-        """ Send command and do not parse output (except for communication errors). """
-        index_command = self._build_index_command(command, *arguments)
-        self.api.sendQueryVerify(index_command)
-
-    def send_command_return(self, command, *arguments):
-        """ Send command and wait for single line output. """
-        index_command = self._build_index_command(command, *arguments)
-        return self._extract_return(command, self.api.sendQuery(index_command))
-
-    def send_command_return_multilines(self, command, *arguments):
-        """ Send command and wait for multiple lines output. """
-        index_command = self._build_index_command(command, *arguments)
-        return self.api.sendQuery(index_command, True)
-
-    def set_attributes(self, **attributes):
+    def add_chassis(self, chassis):
         """
-        :param attributes: dictionary of {attribute: value} to set
-        """
-        for attribute, value in attributes.items():
-            self.send_command(attribute, value)
-
-    def get_attribute(self, attribute):
-        """ Sends single-parameter query and returns the result.
-
-        :param attribute: attribute (e.g. p_config, ps_config) to query.
-        :returns: returned value.
-        :rtype: str
-        """
-        return self.send_command_return(attribute, '?')
-
-    def get_attributes(self, attribute):
-        """ Sends multi-parameter query and returns the result as dictionary.
-
-        :param attribute: multi-parameter attribute (e.g. p_config, ps_config) to query.
-        :returns: dictionary of <attribute, value> of all attributes returned by the query.
-        :rtype: dict of (str, str)
+        :param ip: chassis object
         """
 
-        index_commands_values = self.send_command_return_multilines(attribute, '?')
-        # poor implementation...
-        li = self._get_index_len()
-        ci = self._get_command_len()
-        attributes = {}
-        for index_command_value in index_commands_values:
-            command = index_command_value.split()[ci].lower()
-            if len(index_command_value.split()) > li + 1:
-                value = ' '.join(index_command_value.split()[li+1:]).replace('"', '')
-            else:
-                value = None
-            attributes[command] = value
-        return attributes
+        res = self._request(RestMethod.post, self.user_url, params={'ip': chassis.ip, 'port': chassis.port})
+        assert(res.status_code == 201)
+        return '{}/{}'.format(self.user_url, chassis)
 
-    def wait_for_states(self, attribute, timeout=40, *states):
-        for _ in range(timeout):
-            if self.get_attribute(attribute).lower() in [s.lower() for s in states]:
-                return
-            time.sleep(1)
-        raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
-                       format(attribute, states, self.get_attribute(attribute), timeout))
+    #
+    # Atomic operations.
+    #
 
-    def read_stat(self, captions, stat_name):
-        return dict(zip(captions, [int(v) for v in self.get_attribute(stat_name).split()]))
+    def _get_children(self, object_url):
+        return [c['id'] for c in self._request(RestMethod.get, object_url).json()['objects']]
+
+    def _get_list_attribute(self, object_url, attribute):
+        return self._get_attribute(object_url, attribute).split()
+
+    def _get_attribute(self, object_url, attribute):
+        return self._perform_oper(object_url, attribute, OperReturnType.line_output, '?').json()
+
+    def _get_attributes(self, object_url):
+        attributes_url = '{}/attributes'.format(object_url)
+        return {a['name']: a['value'] for a in self._request(RestMethod.get, attributes_url).json()}
+
+    def _set_attributes(self, object_url, **attributes):
+
+        attributes_url = '{}/attributes'.format(object_url)
+        attributes_list = [{u'name': str(name), u'value': str(value)} for name, value in attributes.items()]
+        self._request(RestMethod.patch, attributes_url, headers={'Content-Type': 'application/json'},
+                      data=json.dumps(attributes_list))
+
+    def _perform_oper(self, object_url, oper, return_type, *parameters):
+        operation_url = '{}/operations/{}'.format(object_url, oper)
+        return self._request(RestMethod.post, operation_url,
+                             json={'return_type': return_type.value, 'parameters': parameters})
+
+    def _get_stats(self, object_url):
+        statistics_url = '{}/statistics'.format(object_url)
+        res = self._request(RestMethod.get, statistics_url)
+        return {g['name']: {c['name']: c['value'] for c in g['counters']} for g in res.json()}
+
+    def _request(self, method, url, **kwargs):
+        self.logger.debug('method: {}, url: {}, kwargs={}'.format(method.value, url, kwargs))
+        ignore = kwargs.pop('ignore', False)
+        res = requests.request(method.value, url, **kwargs)
+        self.logger.debug('status_code: {}'.format(res.status_code))
+        if not ignore and res.status_code >= 400:
+            raise Exception('status_code: {}, content: {}'.format(res.status_code, res.content))
+        if res.content:
+            self.logger.debug('json: {}'.format(res.json()))
+        return res
