@@ -6,7 +6,6 @@ Base class for all Xena package tests.
 
 from os import path
 
-from trafficgenerator.tgn_utils import TgnError
 from xenamanager.xena_stream import XenaModifierType
 from xenamanager.xena_stream import XenaStream
 from xenamanager.test.test_base import XenaTestBase
@@ -74,7 +73,7 @@ class XenaTestOffline(XenaTestBase):
     def test_extended_modifiers(self):
         try:
             port = self.xm.session.reserve_ports([self.port3])[self.port3]
-        except TgnError as e:
+        except Exception as e:
             self.skipTest('Skip test - ' + str(e))
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_100G.xpc'))
 

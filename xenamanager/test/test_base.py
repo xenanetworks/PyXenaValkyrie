@@ -18,8 +18,9 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
-        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'))
+        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger)
         self.temp_dir = self.config.get('General', 'temp_dir')
+        self.xm.session.connect(self.config.get('Xena', 'owner'))
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
         if self.xm.session.add_chassis(self.config.get('Xena', 'chassis2')):
             self.xm.session.add_chassis(self.config.get('Xena', 'chassis2'))
@@ -29,7 +30,7 @@ class XenaTestBase(TgnTest):
         XenaStream.next_tpld_id = 0
 
     def tearDown(self):
-        self.xm.logoff()
+        self.xm.session.disconnect()
 
     def test_hello_world(self):
         pass

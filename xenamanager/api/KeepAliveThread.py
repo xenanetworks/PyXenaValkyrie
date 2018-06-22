@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class KeepAliveThread(threading.Thread):
-    def __init__(self, basesocket, interval=10):
+    def __init__(self, basesocket, interval=60):
         threading.Thread.__init__(self)
         self.message = ''
         self.nr_sent = 0

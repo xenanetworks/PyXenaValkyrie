@@ -16,10 +16,7 @@ class Tshark:
 
         self.ws_path = ws_path
         if not temp_folder:
-            if sys.platform == 'win32':
-                temp_folder = 'c:/temp'
-            else:
-                temp_folder = '/tmp'
+            temp_folder = 'c:/temp' if sys.platform == 'win32' else '/tmp'
         self.temp_folder = temp_folder
 
     def text_to_pcap(self, text_file, pcap_file=None):

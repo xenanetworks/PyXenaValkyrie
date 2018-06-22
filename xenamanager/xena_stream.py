@@ -47,7 +47,7 @@ class XenaStream(XenaObject):
         super(self.__class__, self).__init__(objType='stream', index=index, parent=parent, name=name)
 
     def __del__(self):
-        if self.api.is_connected():
+        if self.api.is_connected(self):
             self.send_command('ps_delete')
 
     def set_state(self, state):
@@ -217,7 +217,8 @@ class XenaModifier(XenaObject):
         module, port, sid = parent.index.split('/')
         self.mid = index.split('/')[-1]
         command = 'ps_modifier' if m_type == XenaModifierType.standard else 'ps_modifierext'
-        reply = parent.api.sendQuery('{}/{} {} [{},{}] ?'.format(module, port, command, sid, self.mid))
+        reply = parent.api.chassis_list[parent.chassis].sendQuery('{}/{} {} [{},{}] ?'.
+                                                                  format(module, port, command, sid, self.mid))
 
         index = '/'.join(index.split('/')[:-1]) + '/' + reply.split()[-4]
         super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)

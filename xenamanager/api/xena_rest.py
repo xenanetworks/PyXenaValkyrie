@@ -14,31 +14,18 @@ from trafficgenerator.tgn_object import TgnObject
 logger = logging.getLogger(__name__)
 
 
-class XenaObject(TgnObject):
+class XenaRestWrapper(object):
 
-    def __init__(self, **data):
-        if data['parent']:
-            self.session = data['parent'].session
-            self.chassis = data['parent'].chassis
-        if 'objRef' not in data:
-            data['objRef'] = '{}-{}'.format(data['objType'], data['index'])
-        if 'name' not in data or data['name'] is None:
-            data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
-        super(XenaObject, self).__init__(**data)
+    def __init__(self, logger, server, port=57911):
+        """ Init Xena REST API.
 
-    def obj_index(self):
+        :param looger: application logger.
+        :param server: REST server IP.
+        :param port: REST TCP port.
         """
-        :return: object index.
-        """
-        return str(self._data['index'])
-    index = property(obj_index)
 
-    def obj_id(self):
-        """
-        :return: object ID.
-        """
-        return int(self.index.split('/')[-1]) if self.index else None
-    id = property(obj_id)
+        self.logger = logger
+        self.base_url = 'http://{}:{}'.format(server, port)
 
     def _build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
@@ -54,15 +41,18 @@ class XenaObject(TgnObject):
 
     def send_command(self, command, *arguments):
         """ Send command and do not parse output (except for communication errors). """
-        self.api.send_command(self, command, *arguments)
+        index_command = self._build_index_command(command, *arguments)
+        self.api.sendQueryVerify(index_command)
 
     def send_command_return(self, command, *arguments):
         """ Send command and wait for single line output. """
-        return self.api.send_command_return(self, command, *arguments)
+        index_command = self._build_index_command(command, *arguments)
+        return self._extract_return(command, self.api.sendQuery(index_command))
 
     def send_command_return_multilines(self, command, *arguments):
         """ Send command and wait for multiple lines output. """
-        return self.api.send_command_return_multilines(self, command, *arguments)
+        index_command = self._build_index_command(command, *arguments)
+        return self.api.sendQuery(index_command, True)
 
     def set_attributes(self, **attributes):
         """
