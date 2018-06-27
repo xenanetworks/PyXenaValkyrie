@@ -371,7 +371,7 @@ class XenaChassis(XenaObject):
 class XenaModule(XenaObject):
     """ Represents Xena module. """
 
-    info_config_commands = ['m_info', 'm_config']
+    info_config_commands = ['m_info', 'm_config', 'm_portcount']
 
     def __init__(self, parent, index):
         """

@@ -73,7 +73,10 @@ class XenaCliWrapper(object):
         :returns: returned value.
         :rtype: str
         """
-        return self.send_command_return(obj, attribute, '?')
+        raw_return = self.send_command_return(obj, attribute, '?')
+        if len(raw_return) > 2 and raw_return[0] == '"' and raw_return[-1] == '"':
+            return raw_return[1:-1]
+        return raw_return
 
     def get_attributes(self, obj):
         """ Get all object's attributes.
@@ -96,7 +99,7 @@ class XenaCliWrapper(object):
                 if len(index_command_value.split()) > li + 1:
                     value = ' '.join(index_command_value.split()[li+1:]).replace('"', '')
                 else:
-                    value = None
+                    value = ''
                 attributes[command] = value
         return attributes
 

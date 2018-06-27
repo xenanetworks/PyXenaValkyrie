@@ -103,7 +103,7 @@ class XenaTestOffline(XenaTestBase):
         assert(port.get_attribute('ps_indices') == '')
 
         stream = port.add_stream('first stream')
-        assert(stream.get_attribute('ps_comment')[1:-1] == 'first stream')
+        assert(stream.get_attribute('ps_comment') == 'first stream')
         assert(stream.get_attribute('ps_tpldid') == '0')
         assert(XenaStream.next_tpld_id == 1)
         assert(len(port.streams) == 1)

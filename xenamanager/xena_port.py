@@ -25,7 +25,7 @@ class XenaCaptureBufferType(Enum):
 class XenaPort(XenaObject):
     """ Represents Xena port. """
 
-    info_config_commands = ['p_info', 'p_config']
+    info_config_commands = ['p_info', 'p_config', 'ps_indices']
 
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
                       'pr_total': ['bps', 'pps', 'bytes', 'packets'],

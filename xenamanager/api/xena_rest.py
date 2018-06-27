@@ -66,6 +66,16 @@ class XenaRestWrapper(object):
         """
         self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
 
+    def send_command_return(self, obj, command, *arguments):
+        """ Send command with single line output.
+
+        :param obj: requested object.
+        :param command: command to send.
+        :param arguments: list of command arguments.
+        """
+        return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.line_output,
+                                  *arguments).json()
+
     def send_command_return_multilines(self, obj, command, *arguments):
         """ Send command with no output.
 
@@ -84,7 +94,7 @@ class XenaRestWrapper(object):
         :returns: returned value.
         :rtype: str
         """
-        return self._get_attribute('{}{}'.format(self.session_url, obj.ref), attribute)
+        return self.get_attributes(obj)[attribute]
 
     def get_attributes(self, obj):
         """ Get all object's attributes.

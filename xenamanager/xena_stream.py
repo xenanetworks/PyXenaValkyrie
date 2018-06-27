@@ -216,11 +216,10 @@ class XenaModifier(XenaObject):
         :type: xenamanager.xena_stram.ModifierType
         """
 
-        module, port, sid = parent.index.split('/')
+        sid = parent.index.split('/')[-1]
         self.mid = index.split('/')[-1]
         command = 'ps_modifier' if m_type == XenaModifierType.standard else 'ps_modifierext'
-        reply = parent.api.chassis_list[parent.chassis].sendQuery('{}/{} {} [{},{}] ?'.
-                                                                  format(module, port, command, sid, self.mid))
+        reply = parent.parent.send_command_return('{} [{},{}]'.format(command, sid, self.mid), '?')
 
         index = '/'.join(index.split('/')[:-1]) + '/' + reply.split()[-4]
         super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)
