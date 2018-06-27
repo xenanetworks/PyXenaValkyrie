@@ -105,12 +105,6 @@ class XenaPort(XenaObject):
                 except XenaCommandException as e:
                     self.logger.warning(str(e))
 
-        tpld_ids = []
-        for index in self.get_attribute('ps_indices').split():
-            stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index))
-            tpld_ids.append(stream.get_attribute('ps_tpldid'))
-        XenaStream.next_tpld_id = max([XenaStream.next_tpld_id] + [int(t) for t in tpld_ids]) + 1
-
     def save_config(self, config_file_name):
         """ Save configuration file to xpc file.
 
@@ -119,7 +113,7 @@ class XenaPort(XenaObject):
 
         with open(config_file_name, 'w+') as f:
             f.write('P_RESET\n')
-            for line in self.send_command_return_multilines('p_fullconfig ?'):
+            for line in self.send_command_return_multilines('p_fullconfig', '?'):
                 f.write(line.split(' ', 1)[1].lstrip())
 
     def add_stream(self, name=None, tpld_id=None, state=XenaStreamState.enabled):
@@ -134,7 +128,7 @@ class XenaPort(XenaObject):
         """
 
         stream = XenaStream(parent=self, index='{}/{}'.format(self.index, len(self.streams)), name=name)
-        stream.send_command('ps_create')
+        stream._create()
         tpld_id = tpld_id if tpld_id else XenaStream.next_tpld_id
         stream.set_attributes(ps_comment='"{}"'.format(stream.name), ps_tpldid=tpld_id)
         XenaStream.next_tpld_id = max(XenaStream.next_tpld_id + 1, tpld_id + 1)
@@ -237,6 +231,13 @@ class XenaPort(XenaObject):
         :rtype: dict of (int, xenamanager.xena_stream.XenaStream)
         """
 
+        if not self.get_objects_by_type('stream'):
+            tpld_ids = []
+            for index in self.get_attribute('ps_indices').split():
+                stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index))
+                tpld_ids.append(stream.get_attribute('ps_tpldid'))
+            if tpld_ids:
+                XenaStream.next_tpld_id = max([XenaStream.next_tpld_id] + [int(t) for t in tpld_ids]) + 1
         return {s.id: s for s in self.get_objects_by_type('stream')}
 
     @property

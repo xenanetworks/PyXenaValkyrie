@@ -38,6 +38,9 @@ class XenaObject(TgnObject):
         return int(self.index.split('/')[-1]) if self.index else None
     id = property(obj_id)
 
+    def _create(self):
+        self.api.create(self)
+
     def _build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
 
@@ -67,11 +70,11 @@ class XenaObject(TgnObject):
         return self.api.send_command_return_multilines(self, command, *arguments)
 
     def set_attributes(self, **attributes):
+        """ Sets list of attributes.
+
+        :param attributes: dictionary of {attribute: value} to set.
         """
-        :param attributes: dictionary of {attribute: value} to set
-        """
-        for attribute, value in attributes.items():
-            self.send_command(attribute, value)
+        self.api.set_attributes(self, **attributes)
 
     def get_attribute(self, attribute):
         """ Returns single object attribute.

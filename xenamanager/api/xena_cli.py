@@ -42,6 +42,9 @@ class XenaCliWrapper(object):
         self.send_command(chassis, 'c_logon', '"{}"'.format(chassis.password))
         self.send_command(chassis, 'c_owner', '"{}"'.format(chassis.owner))
 
+    def create(self, obj):
+        self.send_command(obj, obj.create_command)
+
     def send_command(self, obj, command, *arguments):
         """ Send command and do not parse output (except for communication errors).
 
@@ -96,3 +99,12 @@ class XenaCliWrapper(object):
                     value = None
                 attributes[command] = value
         return attributes
+
+    def set_attributes(self, obj, **attributes):
+        """ Set attributes.
+
+        :param obj: requested object.
+        :param attributes: dictionary of {attribute: value} to set
+        """
+        for attribute, value in attributes.items():
+            self.send_command(obj, attribute, value)

@@ -33,8 +33,8 @@ class XenaModifierAction(Enum):
 
 class XenaStream(XenaObject):
 
+    create_command = 'ps_create'
     info_config_commands = ['ps_config']
-
     stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
     next_tpld_id = 0

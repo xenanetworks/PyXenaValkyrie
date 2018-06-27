@@ -7,7 +7,8 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 import requests
 import json
 from enum import Enum
-from collections import OrderedDict
+
+from xenamanager.api.XenaSocket import XenaCommandException
 
 
 class OperReturnType(Enum):
@@ -52,6 +53,10 @@ class XenaRestWrapper(object):
         res = self._request(RestMethod.post, self.user_url, params={'ip': chassis.ip, 'port': chassis.port})
         assert(res.status_code == 201)
 
+    def create(self, obj):
+        res = self._request(RestMethod.post, '{}{}'.format(self.session_url, obj.ref.rsplit('/', 1)[0]))
+        assert(res.status_code == 201)
+
     def send_command(self, obj, command, *arguments):
         """ Send command with no output.
 
@@ -60,6 +65,16 @@ class XenaRestWrapper(object):
         :param arguments: list of command arguments.
         """
         self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
+
+    def send_command_return_multilines(self, obj, command, *arguments):
+        """ Send command with no output.
+
+        :param obj: requested object.
+        :param command: command to send.
+        :param arguments: list of command arguments.
+        """
+        return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.multiline_output,
+                                  *arguments).json()
 
     def get_attribute(self, obj, attribute):
         """ Returns single object attribute.
@@ -82,6 +97,18 @@ class XenaRestWrapper(object):
         """
         return self._get_attributes('{}{}'.format(self.session_url, obj.ref))
 
+    def set_attributes(self, obj, **attributes):
+        """ Set attributes.
+
+        :param obj: requested object.
+        :param attributes: dictionary of {attribute: value} to set
+        """
+
+        attributes_url = '{}{}/attributes'.format(self.session_url, obj.ref)
+        attributes_list = [{u'name': str(name), u'value': str(value)} for name, value in attributes.items()]
+        self._request(RestMethod.patch, attributes_url, headers={'Content-Type': 'application/json'},
+                      data=json.dumps(attributes_list))
+
     #
     # Atomic operations.
     #
@@ -99,13 +126,6 @@ class XenaRestWrapper(object):
         attributes_url = '{}/attributes'.format(object_url)
         return {a['name']: a['value'] for a in self._request(RestMethod.get, attributes_url).json()}
 
-    def _set_attributes(self, object_url, **attributes):
-
-        attributes_url = '{}/attributes'.format(object_url)
-        attributes_list = [{u'name': str(name), u'value': str(value)} for name, value in attributes.items()]
-        self._request(RestMethod.patch, attributes_url, headers={'Content-Type': 'application/json'},
-                      data=json.dumps(attributes_list))
-
     def _perform_oper(self, object_url, oper, return_type, *parameters):
         operation_url = '{}/operations/{}'.format(object_url, oper)
         return self._request(RestMethod.post, operation_url,
@@ -122,7 +142,7 @@ class XenaRestWrapper(object):
         res = requests.request(method.value, url, **kwargs)
         self.logger.debug('status_code: {}'.format(res.status_code))
         if not ignore and res.status_code >= 400:
-            raise Exception('status_code: {}, content: {}'.format(res.status_code, res.content))
+            raise XenaCommandException('status_code: {}, content: {}'.format(res.status_code, res.content))
         if res.content:
             self.logger.debug('json: {}'.format(res.json()))
         return res

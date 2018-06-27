@@ -35,6 +35,11 @@ Documentation
 """""""""""""
 http://pyxenamanager.readthedocs.io/en/latest/
 
+Usage notes
+"""""""""""
+- Do not create XenaManager manually but use the init_xena factory
+- When loading configuration files, first load all files only then manipulate the configuration.
+
 Related works
 """""""""""""
 The package is partially based on https://github.com/fleitner/XenaPythonLib
