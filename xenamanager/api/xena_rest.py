@@ -65,6 +65,27 @@ class XenaRestWrapper(object):
     def send_command_return_multilines(self, obj, command, *arguments):
         return self._perform_oper(obj.ref, command, OperReturnType.multiline_output, *arguments).json()
 
+    def get_attribute(self, obj, attribute):
+        """ Returns single object attribute.
+
+        :param obj: requested object.
+        :param attribute: requested attribute to query.
+        :returns: returned value.
+        :rtype: str
+        """
+        return self._get_attribute('{}{}'.format(self.session_url, obj.ref), attribute)
+
+    def get_attributes(self, obj):
+        """ Get all object's attributes.
+
+        Sends multi-parameter info/config queries and returns the result as dictionary.
+
+        :param obj: requested object.
+        :returns: dictionary of <name, value> of all attributes returned by the query.
+        :rtype: dict of (str, str)
+        """
+        return self._get_attributes('{}{}'.format(self.session_url, obj.ref))
+
     #
     # Atomic operations.
     #
@@ -90,7 +111,7 @@ class XenaRestWrapper(object):
                       data=json.dumps(attributes_list))
 
     def _perform_oper(self, object_url, oper, return_type, *parameters):
-        operation_url = '{}{}/operations/{}'.format(self.session_url, object_url, oper)
+        operation_url = '{}/operations/{}'.format(object_url, oper)
         return self._request(RestMethod.post, operation_url,
                              json={'return_type': return_type.value, 'parameters': parameters})
 

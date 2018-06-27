@@ -44,7 +44,7 @@ class XenaPort(XenaObject):
         """
 
         super(self.__class__, self).__init__(objType='port', index=index, parent=parent,
-                                             objRef='{}/{}'.format(parent.ref, index))
+                                             objRef='{}/{}'.format(parent.ref, index.split('/')[-1]))
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
 
