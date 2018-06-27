@@ -312,11 +312,20 @@ class XenaCapture(XenaObject):
     def __init__(self, parent):
         super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent)
 
+    def get_attributes(self):
+        """ Returns all object's attributes.
+
+        :returns: dictionary of <name, value> of all attributes.
+        :rtype: dict of (str, str)
+        """
+        self.info_config_commands = ['pc_fullconfig']
+        return self.api.get_attributes(self)
+
     def get_packet(self, index):
-        """" get captured packet complete information.
+        """" Get captured packet complete information.
 
         :param index: index of requested packet.
-        :returns: dictionary of <attribute, value> of all attributes returned by the query.
+        :returns: dictionary of <name, value> of all attributes.
         :rtype: dict of (str, str)
         """
         self.info_config_commands = ['pc_info [{}]'.format(index)]

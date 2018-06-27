@@ -81,7 +81,7 @@ class XenaObject(TgnObject):
     def get_attributes(self):
         """ Returns all object's attributes.
 
-        :returns: dictionary of <name, value> of all attributes returned by the query.
+        :returns: dictionary of <name, value> of all attributes.
         :rtype: dict of (str, str)
         """
         return self.api.get_attributes(self)
