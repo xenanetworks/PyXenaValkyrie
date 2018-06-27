@@ -7,6 +7,7 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 import requests
 import json
 from enum import Enum
+from collections import OrderedDict
 
 
 class OperReturnType(Enum):
@@ -45,12 +46,24 @@ class XenaRestWrapper(object):
 
     def add_chassis(self, chassis):
         """
-        :param ip: chassis object
+        :param chassis: chassis object
         """
 
         res = self._request(RestMethod.post, self.user_url, params={'ip': chassis.ip, 'port': chassis.port})
         assert(res.status_code == 201)
-        return '{}/{}'.format(self.user_url, chassis)
+
+    def send_command(self, obj, command, *arguments):
+        """ Send command and do not parse output (except for communication errors). """
+        index_command = obj._build_index_command(command, *arguments)
+        self.chassis_list[obj.chassis].sendQueryVerify(index_command)
+
+    def send_command_return(self, obj, command, *arguments):
+        """ Send command and wait for single line output. """
+        index_command = obj._build_index_command(command, *arguments)
+        return obj._extract_return(command, self.chassis_list[obj.chassis].sendQuery(index_command))
+
+    def send_command_return_multilines(self, obj, command, *arguments):
+        return self._perform_oper(obj.ref, command, OperReturnType.multiline_output, *arguments).json()
 
     #
     # Atomic operations.
@@ -77,7 +90,7 @@ class XenaRestWrapper(object):
                       data=json.dumps(attributes_list))
 
     def _perform_oper(self, object_url, oper, return_type, *parameters):
-        operation_url = '{}/operations/{}'.format(object_url, oper)
+        operation_url = '{}{}/operations/{}'.format(self.session_url, object_url, oper)
         return self._request(RestMethod.post, operation_url,
                              json={'return_type': return_type.value, 'parameters': parameters})
 

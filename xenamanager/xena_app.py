@@ -4,6 +4,8 @@ Classes and utilities that represents Xena XenaManager-2G application and chassi
 :author: yoram@ignissoft.com
 """
 
+import time
+
 from trafficgenerator.tgn_app import TgnApp
 from trafficgenerator.tgn_utils import ApiType
 from xenamanager.api.xena_rest import XenaRestWrapper
@@ -12,11 +14,12 @@ from xenamanager.xena_object import XenaObject
 from xenamanager.xena_port import XenaPort
 
 
-def init_xena(api, logger, ip=None, port=57911):
+def init_xena(api, logger, owner, ip=None, port=57911):
     """ Create XenaManager object.
 
     :param api: cli/rest
     :param logger: python logger
+    :param owner: owner of the scripting session
     :param ip: rest server IP
     :param port: rest server TCP port
     :return: Xena object
@@ -27,43 +30,46 @@ def init_xena(api, logger, ip=None, port=57911):
         api_wrapper = XenaCliWrapper(logger)
     elif api == ApiType.rest:
         api_wrapper = XenaRestWrapper(logger, ip, port)
-    return XenaApp(logger, api_wrapper)
+    return XenaApp(logger, owner, api_wrapper)
 
 
 class XenaApp(TgnApp):
     """ XenaManager object, equivalent to XenaManager-2G application. """
 
-    def __init__(self, logger, api_wrapper):
+    def __init__(self, logger, owner, api_wrapper):
         """ Start XenaManager-2G equivalent application.
 
-        :param api: cli/rest
+        This seems somewhat redundant but we keep it for compatibility with all other TG packages.
+
+        :param api_wrapper: cli/rest API pbject.
         :param logger: python logger
+        :param owner: owner of the scripting session
         """
 
-        self.logger = logger
-        self.session = XenaSession(self.logger, api_wrapper)
-        self.session.session = self.session
+        self.session = XenaSession(logger, owner, api_wrapper)
 
 
 class XenaSession(XenaObject):
     """ Xena scripting object. Root object for the Xena objects tree. """
 
-    def __init__(self, logger, api):
+    def __init__(self, logger, owner, api):
         """
+        :param api: cli/rest API pbject.
         :param logger: python logger
+        :param owner: owner of the scripting session
         """
 
         self.logger = logger
         self.api = api
-        super(self.__class__, self).__init__(objType='session', index='', parent=None)
-        self.chassis = None
-
-    def connect(self, owner):
-        """
-        :param owner: owner of the scripting session
-        """
         self.owner = owner
+
+        super(self.__class__, self).__init__(objType='session', index='', parent=None, objRef=owner)
+        self.session = self
+        self.chassis = None
         self.api.connect(owner)
+
+        self.create_timestamp = time.time()
+        self.last_timestamp = self.create_timestamp
 
     def add_chassis(self, chassis, port=22611, password='xena'):
         """ Add chassis.
@@ -81,7 +87,7 @@ class XenaSession(XenaObject):
             try:
                 XenaChassis(self, chassis, port, password)
             except Exception as error:
-                self.objects.pop(chassis)
+                self.objects.pop('{}/{}'.format(self.owner, chassis))
                 raise error
         return self.chassis_list[chassis]
 
@@ -216,6 +222,7 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
+    info_config_commands = ['c_info', 'c_config']
     stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
     def __init__(self, parent, ip, port=22611, password='xena'):
@@ -227,7 +234,8 @@ class XenaChassis(XenaObject):
         :param password: chassis password
         """
 
-        super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip, objRef=ip)
+        super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip,
+                                             objRef='{}/{}'.format(parent.ref, ip))
         self.chassis = self
         self.owner = parent.owner
         self.ip = ip
@@ -253,7 +261,7 @@ class XenaChassis(XenaObject):
         :param modules_inventory: True - read modules inventory, false - don't read.
         """
 
-        self.c_info = self.get_attributes('c_info')
+        self.c_info = self.get_attributes()
         for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
             if int(m_portcounts):
                 module = XenaModule(parent=self, index=m_index)
@@ -363,19 +371,22 @@ class XenaChassis(XenaObject):
 class XenaModule(XenaObject):
     """ Represents Xena module. """
 
+    info_config_commands = ['m_info', 'm_config']
+
     def __init__(self, parent, index):
         """
         :param parent: chassis object.
         :param index: module index, 0 based.
         """
 
-        super(self.__class__, self).__init__(objType='module', index=index, parent=parent)
+        super(self.__class__, self).__init__(objType='module', index=index, parent=parent,
+                                             objRef='{}/{}'.format(parent.ref, index))
         self.m_info = None
 
     def inventory(self):
         """ Get module inventory. """
 
-        self.m_info = self.get_attributes('m_info')
+        self.m_info = self.get_attributes()
         if 'NOTCFP' in self.m_info['m_cfptype']:
             a = self.get_attribute('m_portcount')
             m_portcount = int(a)

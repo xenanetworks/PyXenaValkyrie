@@ -21,9 +21,7 @@ class XenaObject(TgnObject):
             self.session = data['parent'].session
             self.chassis = data['parent'].chassis
         if 'objRef' not in data:
-            data['objRef'] = '{}-{}'.format(data['objType'], data['index'])
-        if 'name' not in data or data['name'] is None:
-            data['name'] = data['objType'] + ' ' + data['objRef'].replace(' ', '/')
+            data['objRef'] = '{}/{}/{}'.format(data['parent'].ref, data['objType'], data['index'].split('/')[-1])
         super(XenaObject, self).__init__(**data)
 
     def obj_index(self):
@@ -72,35 +70,21 @@ class XenaObject(TgnObject):
             self.send_command(attribute, value)
 
     def get_attribute(self, attribute):
-        """ Sends single-parameter query and returns the result.
+        """ Returns single object attribute.
 
-        :param attribute: attribute (e.g. p_config, ps_config) to query.
+        :param attribute: requested attribute to query.
         :returns: returned value.
         :rtype: str
         """
-        return self.send_command_return(attribute, '?')
+        return self.api.get_attribute(self, attribute)
 
-    def get_attributes(self, attribute):
-        """ Sends multi-parameter query and returns the result as dictionary.
+    def get_attributes(self):
+        """ Returns all object's attributes.
 
-        :param attribute: multi-parameter attribute (e.g. p_config, ps_config) to query.
-        :returns: dictionary of <attribute, value> of all attributes returned by the query.
+        :returns: dictionary of <name, value> of all attributes returned by the query.
         :rtype: dict of (str, str)
         """
-
-        index_commands_values = self.send_command_return_multilines(attribute, '?')
-        # poor implementation...
-        li = self._get_index_len()
-        ci = self._get_command_len()
-        attributes = {}
-        for index_command_value in index_commands_values:
-            command = index_command_value.split()[ci].lower()
-            if len(index_command_value.split()) > li + 1:
-                value = ' '.join(index_command_value.split()[li+1:]).replace('"', '')
-            else:
-                value = None
-            attributes[command] = value
-        return attributes
+        return self.api.get_attributes(self)
 
     def wait_for_states(self, attribute, timeout=40, *states):
         for _ in range(timeout):

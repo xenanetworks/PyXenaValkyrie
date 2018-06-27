@@ -28,6 +28,7 @@ api = ApiType.socket
 chassis = '176.22.65.114'
 chassis = '192.168.1.170'
 chassis = '192.168.1.197'
+chassis = '176.22.65.117'
 port1 = chassis + '/' + '0/0'
 port0 = chassis + '/' + '0/1'
 owner = 'yoram-s'
@@ -51,8 +52,7 @@ def connect():
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
     # Create XenaManager object and connect to chassis.
-    xm = init_xena(api, logger)
-    xm.session.connect(owner)
+    xm = init_xena(api, logger, owner)
     xm.session.add_chassis(chassis)
 
 
@@ -101,7 +101,7 @@ def configuration():
     p0_s0 = ports[port0].streams[0]
 
     # Get Multi-parameter query with get_attributes which returns all attributes values as dict.
-    ps_config = p0_s0.get_attributes('ps_config')
+    ps_config = p0_s0.get_attributes()
     print('{} info:\n{}'.format(p0_s0.name, json.dumps(ps_config, indent=1)))
 
     # Get packet headers.

@@ -33,11 +33,13 @@ class XenaModifierAction(Enum):
 
 class XenaStream(XenaObject):
 
+    info_config_commands = ['ps_config']
+
     stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
     next_tpld_id = 0
 
-    def __init__(self, parent, index, name=None):
+    def __init__(self, parent, index, name=''):
         """
         :param parent: parent port object.
         :param index: stream index in format module/port/stream.

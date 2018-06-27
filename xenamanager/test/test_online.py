@@ -39,7 +39,7 @@ class XenaTestOnline(XenaTestBase):
         port_stats = port.read_port_stats()
         print(json.dumps(port_stats, indent=1))
         assert(abs(port_stats['pt_total']['packets'] - port_stats['pr_total']['packets']) < 1111)
-        assert(abs(1000 - port.streams[0].read_stats()['pps']) < 11)
+        assert(abs(1000 - port.streams[0].read_stats()['pps']) < 111)
         assert(abs(1000 - port.tplds[0].read_stats()['pr_tpldtraffic']['pps']) < 111)
         self.xm.session.stop_traffic()
         self.xm.session.clear_stats()

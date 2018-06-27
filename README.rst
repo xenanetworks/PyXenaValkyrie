@@ -15,17 +15,13 @@ Supported operations:
 	- Capture - get captured packets
 	- Release ports and disconnect
 
-Upgrade from version 0.8.5 to version 0.10 and up
-"""""""""""""""""""""""""""""""""""""""""""""""""
-Remove the owner parameter from init_xena:
-xm = init_xena(api, logger, owner) -> xm = init_xena(api, logger)
+Upgrade from version 0.9.2 to version 1.0.0 and up
+""""""""""""""""""""""""""""""""""""""""""""""""""
+Version 0.9.2 is the last version supporting only CLI API.
+In order to introduce REST API some changes that breaks backwards compatibily were made:
 
-Call xm.session.connect with owner parameter just before calling add_chassis:
-xm.session.connect(owner)
-xm.session.add_chassis(chassis)
-
-Replace logoff with disconnect: 
-xm.logoff() -> xm.session.disconnect()
+- xena_object.get_attributes() 
+  Remove the attribute parameter and return all attributes of the object instead.
 
 Installation
 """"""""""""

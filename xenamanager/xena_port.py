@@ -25,6 +25,8 @@ class XenaCaptureBufferType(Enum):
 class XenaPort(XenaObject):
     """ Represents Xena port. """
 
+    info_config_commands = ['p_info', 'p_config']
+
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
                       'pr_total': ['bps', 'pps', 'bytes', 'packets'],
                       'pr_notpld': ['bps', 'pps', 'bytes', 'packets'],
@@ -41,12 +43,13 @@ class XenaPort(XenaObject):
         :param index: port index in format module/port (both 0 based)
         """
 
-        super(self.__class__, self).__init__(objType='port', index=index, parent=parent)
+        super(self.__class__, self).__init__(objType='port', index=index, parent=parent,
+                                             objRef='{}/{}'.format(parent.ref, index))
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
 
     def inventory(self):
-        self.p_info = self.get_attributes('p_info')
+        self.p_info = self.get_attributes()
 
     def reserve(self, force=False):
         """ Reserve port.
@@ -316,7 +319,8 @@ class XenaCapture(XenaObject):
         :returns: dictionary of <attribute, value> of all attributes returned by the query.
         :rtype: dict of (str, str)
         """
-        return {k: v.split(' ', 1)[1] for k, v in self.get_attributes('pc_info [{}]'.format(index)).items()}
+        self.info_config_commands = ['pc_info [{}]'.format(index)]
+        return {k: v.split(' ', 1)[1] for k, v in self.get_attributes().items()}
 
     def get_packets(self, from_index=0, to_index=None, cap_type=XenaCaptureBufferType.text,
                     file_name=None, tshark=None):
