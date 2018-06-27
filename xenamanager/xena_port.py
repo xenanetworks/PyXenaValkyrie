@@ -39,12 +39,12 @@ class XenaPort(XenaObject):
 
     def __init__(self, parent, index):
         """
-        :param parent: parent module or session object.
+        :param parent: parent module or chassis.
         :param index: port index in format module/port (both 0 based)
         """
 
-        super(self.__class__, self).__init__(objType='port', index=index, parent=parent,
-                                             objRef='{}/{}'.format(parent.ref, index.split('/')[-1]))
+        objRef = '{}/{}'.format('/'.join(parent.ref.split('/')[:2]), index)
+        super(self.__class__, self).__init__(objType='port', index=index, parent=parent, objRef=objRef)
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
 
@@ -65,7 +65,7 @@ class XenaPort(XenaObject):
         elif p_reservation == 'RESERVED_BY_OTHER' and not force:
             raise TgnError('Port {} reserved by {}'.format(self, self.get_attribute('p_reservedby')))
         self.relinquish()
-        self.send_command('p_reservation reserve')
+        self.send_command('p_reservation', 'reserve')
 
     def relinquish(self):
         if self.get_attribute('p_reservation') != 'RELEASED':

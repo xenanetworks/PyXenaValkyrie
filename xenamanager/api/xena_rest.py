@@ -53,17 +53,13 @@ class XenaRestWrapper(object):
         assert(res.status_code == 201)
 
     def send_command(self, obj, command, *arguments):
-        """ Send command and do not parse output (except for communication errors). """
-        index_command = obj._build_index_command(command, *arguments)
-        self.chassis_list[obj.chassis].sendQueryVerify(index_command)
+        """ Send command with no output.
 
-    def send_command_return(self, obj, command, *arguments):
-        """ Send command and wait for single line output. """
-        index_command = obj._build_index_command(command, *arguments)
-        return obj._extract_return(command, self.chassis_list[obj.chassis].sendQuery(index_command))
-
-    def send_command_return_multilines(self, obj, command, *arguments):
-        return self._perform_oper(obj.ref, command, OperReturnType.multiline_output, *arguments).json()
+        :param obj: requested object.
+        :param command: command to send.
+        :param arguments: list of command arguments.
+        """
+        self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
 
     def get_attribute(self, obj, attribute):
         """ Returns single object attribute.

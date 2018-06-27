@@ -274,7 +274,7 @@ class XenaChassis(XenaObject):
         XenaManager-2G -> Reserve/Relinquish Port.
         XenaManager-2G -> Reset port.
 
-        :param locations: list of ports locations in the form <slot/port> to reserve
+        :param locations: list of ports locations in the form <module/port> to reserve
         :param force: True - take forcefully, False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
         :return: ports dictionary (index: object)
