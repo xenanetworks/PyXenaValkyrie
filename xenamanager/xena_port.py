@@ -25,7 +25,7 @@ class XenaCaptureBufferType(Enum):
 class XenaPort(XenaObject):
     """ Represents Xena port. """
 
-    info_config_commands = ['p_info', 'p_config', 'ps_indices']
+    info_config_commands = ['p_info', 'p_config', 'p_receivesync', 'ps_indices', 'pr_tplds']
 
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
                       'pr_total': ['bps', 'pps', 'bytes', 'packets'],
@@ -83,7 +83,7 @@ class XenaPort(XenaObject):
         return self.send_command('p_reset')
 
     def wait_for_up(self, timeout=40):
-        self.wait_for_states('P_RECEIVESYNC', timeout, 'IN_SYNC')
+        self.wait_for_states('p_receivesync', timeout, 'IN_SYNC')
 
     #
     # Configurations.

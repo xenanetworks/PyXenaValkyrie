@@ -72,6 +72,7 @@ class XenaRestWrapper(object):
         :param obj: requested object.
         :param command: command to send.
         :param arguments: list of command arguments.
+        :return: command output.
         """
         return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.line_output,
                                   *arguments).json()
@@ -82,6 +83,8 @@ class XenaRestWrapper(object):
         :param obj: requested object.
         :param command: command to send.
         :param arguments: list of command arguments.
+        :return: list of command output lines.
+        :rtype: list(str)
         """
         return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.multiline_output,
                                   *arguments).json()
