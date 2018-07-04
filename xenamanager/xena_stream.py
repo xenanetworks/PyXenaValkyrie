@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 from pypacker.layer12.ethernet import Ethernet
 
-from xenamanager.xena_object import XenaObject
+from xenamanager.xena_object import XenaObject, XenaObject21
 
 
 class XenaStreamState(Enum):
@@ -31,7 +31,7 @@ class XenaModifierAction(Enum):
     random = 'RANDOM'
 
 
-class XenaStream(XenaObject):
+class XenaStream(XenaObject21):
 
     create_command = 'ps_create'
     info_config_commands = ['ps_config']
@@ -186,24 +186,6 @@ class XenaStream(XenaObject):
         :return: dictionary {position: object} of extended modifiers.
         """
         return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.extended}
-
-    #
-    # Private methods.
-    #
-
-    def _build_index_command(self, command, *arguments):
-        module, port, sid = self.index.split('/')
-        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
-
-    def _extract_return(self, command, index_command_value):
-        module, port, sid = self.index.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
-
-    def _get_index_len(self):
-        return 2
-
-    def _get_command_len(self):
-        return 1
 
 
 class XenaModifier(XenaObject):

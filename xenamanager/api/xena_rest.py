@@ -38,9 +38,9 @@ class XenaRestWrapper(object):
         self.base_url = 'http://{}:{}'.format(server, port)
 
     def connect(self, owner):
-        self.session_url = '{}/{}/'.format(self.base_url, 'session')
+        self.session_url = '{}/{}'.format(self.base_url, 'session')
         self._request(RestMethod.post, self.session_url, params={'user': owner})
-        self.user_url = '{}{}'.format(self.session_url, owner)
+        self.user_url = '{}/{}'.format(self.session_url, owner)
 
     def disconnect(self):
         self._request(RestMethod.delete, self.user_url)
@@ -54,7 +54,7 @@ class XenaRestWrapper(object):
         assert(res.status_code == 201)
 
     def create(self, obj):
-        res = self._request(RestMethod.post, '{}{}'.format(self.session_url, obj.ref.rsplit('/', 1)[0]))
+        res = self._request(RestMethod.post, '{}/{}'.format(self.session_url, obj.ref.rsplit('/', 1)[0]))
         assert(res.status_code == 201)
 
     def send_command(self, obj, command, *arguments):
@@ -64,7 +64,7 @@ class XenaRestWrapper(object):
         :param command: command to send.
         :param arguments: list of command arguments.
         """
-        self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
+        self._perform_command('{}/{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
 
     def send_command_return(self, obj, command, *arguments):
         """ Send command with single line output.
@@ -74,8 +74,8 @@ class XenaRestWrapper(object):
         :param arguments: list of command arguments.
         :return: command output.
         """
-        return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.line_output,
-                                  *arguments).json()
+        return self._perform_command('{}/{}'.format(self.session_url, obj.ref), command, OperReturnType.line_output,
+                                     *arguments).json()
 
     def send_command_return_multilines(self, obj, command, *arguments):
         """ Send command with no output.
@@ -86,8 +86,8 @@ class XenaRestWrapper(object):
         :return: list of command output lines.
         :rtype: list(str)
         """
-        return self._perform_oper('{}{}'.format(self.session_url, obj.ref), command, OperReturnType.multiline_output,
-                                  *arguments).json()
+        return self._perform_command('{}/{}'.format(self.session_url, obj.ref), command,
+                                     OperReturnType.multiline_output, *arguments).json()
 
     def get_attribute(self, obj, attribute):
         """ Returns single object attribute.
@@ -108,7 +108,7 @@ class XenaRestWrapper(object):
         :returns: dictionary of <name, value> of all attributes returned by the query.
         :rtype: dict of (str, str)
         """
-        return self._get_attributes('{}{}'.format(self.session_url, obj.ref))
+        return self._get_attributes('{}/{}'.format(self.session_url, obj.ref))
 
     def set_attributes(self, obj, **attributes):
         """ Set attributes.
@@ -117,10 +117,20 @@ class XenaRestWrapper(object):
         :param attributes: dictionary of {attribute: value} to set
         """
 
-        attributes_url = '{}{}/attributes'.format(self.session_url, obj.ref)
+        attributes_url = '{}/{}/attributes'.format(self.session_url, obj.ref)
         attributes_list = [{u'name': str(name), u'value': str(value)} for name, value in attributes.items()]
         self._request(RestMethod.patch, attributes_url, headers={'Content-Type': 'application/json'},
                       data=json.dumps(attributes_list))
+
+    def get_stats(self, obj, stat_name):
+        """ Send CLI command that returns list of integer counters.
+
+        :param obj: requested object.
+        :param stat_name: statistics command name.
+        :return: list of counters.
+        :rtype: list(int)
+        """
+        return [int(v) for v in self.send_command_return(obj, stat_name, '?').split()]
 
     #
     # Atomic operations.
@@ -133,14 +143,14 @@ class XenaRestWrapper(object):
         return self._get_attribute(object_url, attribute).split()
 
     def _get_attribute(self, object_url, attribute):
-        return self._perform_oper(object_url, attribute, OperReturnType.line_output, '?').json()
+        return self._perform_command(object_url, attribute, OperReturnType.line_output, '?').json()
 
     def _get_attributes(self, object_url):
         attributes_url = '{}/attributes'.format(object_url)
         return {a['name']: a['value'] for a in self._request(RestMethod.get, attributes_url).json()}
 
-    def _perform_oper(self, object_url, oper, return_type, *parameters):
-        operation_url = '{}/operations/{}'.format(object_url, oper)
+    def _perform_command(self, object_url, command, return_type, *parameters):
+        operation_url = '{}/commands/{}'.format(object_url, command)
         return self._request(RestMethod.post, operation_url,
                              json={'return_type': return_type.value, 'parameters': parameters})
 

@@ -89,7 +89,7 @@ class XenaTestOnline(XenaTestBase):
 
         packets = port.capture.get_packets(0, 1, cap_type=XenaCaptureBufferType.raw)
         assert(len(packets) == 1)
-        port.capture.get_packet(0)
+        port.capture.packets[0].get_attributes()
         packet = ethernet.Ethernet(binascii.unhexlify(packets[0]))
         assert(packet.ip.dst_s == '1.1.0.0')
 

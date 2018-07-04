@@ -41,18 +41,6 @@ class XenaObject(TgnObject):
     def _create(self):
         self.api.create(self)
 
-    def _build_index_command(self, command, *arguments):
-        return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
-
-    def _extract_return(self, command, index_command_value):
-        return re.sub('{}\s*{}\s*'.format(self.index, command.upper()), '', index_command_value)
-
-    def _get_index_len(self):
-        return len(self.index.split())
-
-    def _get_command_len(self):
-        return len(self.index.split())
-
     def send_command(self, command, *arguments):
         """ Send command with no output.
 
@@ -101,5 +89,42 @@ class XenaObject(TgnObject):
         raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
                        format(attribute, states, self.get_attribute(attribute), timeout))
 
+    #
+    # Private methods.
+    #
+
     def read_stat(self, captions, stat_name):
-        return dict(zip(captions, [int(v) for v in self.get_attribute(stat_name).split()]))
+        return dict(zip(captions, self.api.get_stats(self, stat_name)))
+
+    def _build_index_command(self, command, *arguments):
+        return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
+
+    def _extract_return(self, command, index_command_value):
+        return re.sub('{}\s*{}\s*'.format(self.index, command.upper()), '', index_command_value)
+
+    def _get_index_len(self):
+        return len(self.index.split())
+
+    def _get_command_len(self):
+        return len(self.index.split())
+
+
+class XenaObject21(XenaObject):
+
+    #
+    # Private methods.
+    #
+
+    def _build_index_command(self, command, *arguments):
+        module, port, sid = self.index.split('/')
+        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
+
+    def _extract_return(self, command, index_command_value):
+        module, port, sid = self.index.split('/')
+        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
+
+    def _get_index_len(self):
+        return 2
+
+    def _get_command_len(self):
+        return 1

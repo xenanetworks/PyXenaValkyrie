@@ -12,7 +12,7 @@ from enum import Enum
 from trafficgenerator.tgn_utils import TgnError
 
 from xenamanager.api.XenaSocket import XenaCommandException
-from xenamanager.xena_object import XenaObject
+from xenamanager.xena_object import XenaObject, XenaObject21
 from xenamanager.xena_stream import XenaStream, XenaStreamState
 
 
@@ -168,6 +168,7 @@ class XenaPort(XenaObject):
 
         Capture -> Start Capture
         """
+        self.del_objects_by_type('capture')
         self.send_command('p_capture', 'on')
 
     def stop_capture(self):
@@ -265,7 +266,7 @@ class XenaPort(XenaObject):
         return self.get_object_by_type('capture')
 
 
-class XenaTpld(XenaObject):
+class XenaTpld(XenaObject21):
 
     stats_captions = {'pr_tpldtraffic': ['bps', 'pps', 'byt', 'pac'],
                       'pr_tplderrors': ['dummy', 'seq', 'mis', 'pld'],
@@ -278,20 +279,6 @@ class XenaTpld(XenaObject):
         :param index: TPLD index in format module/port/tpld.
         """
         super(self.__class__, self).__init__(objType='tpld', index=index, parent=parent)
-
-    def _build_index_command(self, command, *arguments):
-        module, port, sid = self.index.split('/')
-        return ('{}/{} {} [{}]' + len(arguments) * ' {}').format(module, port, command, sid, *arguments)
-
-    def _extract_return(self, command, index_command_value):
-        module, port, sid = self.index.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
-
-    def _get_index_len(self):
-        return 2
-
-    def _get_command_len(self):
-        return 1
 
     def read_stats(self):
         """
@@ -310,27 +297,11 @@ class XenaCapture(XenaObject):
         of the capture criteria and inspection of the captured data from a port.
     """
 
+    info_config_commands = ['pc_fullconfig']
+
     def __init__(self, parent):
-        super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent)
-
-    def get_attributes(self):
-        """ Returns all object's attributes.
-
-        :returns: dictionary of <name, value> of all attributes.
-        :rtype: dict of (str, str)
-        """
-        self.info_config_commands = ['pc_fullconfig']
-        return self.api.get_attributes(self)
-
-    def get_packet(self, index):
-        """" Get captured packet complete information.
-
-        :param index: index of requested packet.
-        :returns: dictionary of <name, value> of all attributes.
-        :rtype: dict of (str, str)
-        """
-        self.info_config_commands = ['pc_info [{}]'.format(index)]
-        return {k: v.split(' ', 1)[1] for k, v in self.get_attributes().items()}
+        objRef = '{}/capture'.format(parent.ref)
+        super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent, objRef=objRef)
 
     def get_packets(self, from_index=0, to_index=None, cap_type=XenaCaptureBufferType.text,
                     file_name=None, tshark=None):
@@ -349,7 +320,7 @@ class XenaCapture(XenaObject):
 
         raw_packets = []
         for index in range(from_index, to_index):
-            raw_packets.append(self.get_attribute('pc_packet [{}]'.format(index)).split('0x')[1])
+            raw_packets.append(self.packets[index].get_attribute('pc_packet').split('0x')[1])
 
         if cap_type == XenaCaptureBufferType.raw:
             self._save_captue(file_name, raw_packets)
@@ -375,8 +346,37 @@ class XenaCapture(XenaObject):
         tshark.text_to_pcap(temp_file_name, file_name)
         os.remove(temp_file_name)
 
+    #
+    # Properties.
+    #
+
+    @property
+    def packets(self):
+        """
+        :return: dictionary {id: object} of all packets.
+        :rtype: dict of (int, xenamanager.xena_port.XenaCapturePacket)
+        """
+
+        if not self.get_object_by_type('cappacket'):
+            for index in range(0, int(self.get_attribute('pc_stats').split()[1])):
+                XenaCapturePacket(parent=self, index='{}/{}'.format(self.index, index))
+        return {p.id: p for p in self.get_objects_by_type('cappacket')}
+
+    #
+    # Private methods.
+    #
+
     def _save_captue(self, file_name, packets):
         if file_name:
             with open(file_name, 'w+') as f:
                 for packet in packets:
                     f.write(packet)
+
+
+class XenaCapturePacket(XenaObject21):
+
+    info_config_commands = ['pc_info']
+
+    def __init__(self, parent, index):
+        objRef = '{}/{}'.format(parent.ref, index.split('/')[-1])
+        super(self.__class__, self).__init__(objType='cappacket', parent=parent, index=index, objRef=objRef)
