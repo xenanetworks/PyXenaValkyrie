@@ -65,7 +65,7 @@ class XenaStream(XenaObject21):
         :return: dictionary {stat name: value}
             See XenaStream.stats_captions
         """
-        return self.read_stat(self.stats_captions, 'pt_stream')
+        return self.read_stat(XenaStream.stats_captions, 'pt_stream')
 
     def get_packet_headers(self):
         """

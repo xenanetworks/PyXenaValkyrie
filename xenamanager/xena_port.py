@@ -5,7 +5,6 @@ Classes and utilities that represents Xena XenaManager-2G port.
 """
 
 import os
-import re
 from collections import OrderedDict
 from enum import Enum
 
@@ -251,7 +250,7 @@ class XenaPort(XenaObject):
         # As TPLDs are dynamic we must re-read them each time from the port.
         self.parent.del_objects_by_type('tpld')
         for tpld in self.get_attribute('pr_tplds').split():
-            XenaTpld(parent=self, index='{}/{}'.format(self.index, tpld)).read_stats()
+            XenaTpld(parent=self, index='{}/{}'.format(self.index, tpld))
         return {t.id: t for t in self.get_objects_by_type('tpld')}
 
     @property
@@ -298,10 +297,18 @@ class XenaCapture(XenaObject):
     """
 
     info_config_commands = ['pc_fullconfig']
+    stats_captions = ['status', 'packets', 'starttime']
 
     def __init__(self, parent):
         objRef = '{}/capture'.format(parent.ref)
         super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent, objRef=objRef)
+
+    def read_stats(self):
+        """
+        :return: dictionary {stat name: value}.
+            Sea XenaCapture.stats_captions.
+        """
+        return self.read_stat(XenaCapture.stats_captions, 'pc_stats')
 
     def get_packets(self, from_index=0, to_index=None, cap_type=XenaCaptureBufferType.text,
                     file_name=None, tshark=None):
@@ -316,7 +323,7 @@ class XenaCapture(XenaObject):
         :return: list of requested packets, None for pcap type.
         """
 
-        to_index = to_index if to_index else int(self.get_attribute('pc_stats').split()[1])
+        to_index = to_index if to_index else len(self.packets)
 
         raw_packets = []
         for index in range(from_index, to_index):
@@ -358,7 +365,7 @@ class XenaCapture(XenaObject):
         """
 
         if not self.get_object_by_type('cappacket'):
-            for index in range(0, int(self.get_attribute('pc_stats').split()[1])):
+            for index in range(0, self.read_stats()['packets']):
                 XenaCapturePacket(parent=self, index='{}/{}'.format(self.index, index))
         return {p.id: p for p in self.get_objects_by_type('cappacket')}
 

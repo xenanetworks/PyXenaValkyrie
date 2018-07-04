@@ -8,7 +8,6 @@ Some tests require two back-to-back ports, like stream statistics tests.
 """
 
 from os import path
-import time
 import json
 import binascii
 
@@ -35,7 +34,6 @@ class XenaTestOnline(XenaTestBase):
         port_stats = port.read_port_stats()
         print(json.dumps(port_stats, indent=1))
         self.xm.session.start_traffic()
-        time.sleep(2)
         port_stats = port.read_port_stats()
         print(json.dumps(port_stats, indent=1))
         assert(abs(port_stats['pt_total']['packets'] - port_stats['pr_total']['packets']) < 1111)

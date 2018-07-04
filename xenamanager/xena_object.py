@@ -89,12 +89,12 @@ class XenaObject(TgnObject):
         raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
                        format(attribute, states, self.get_attribute(attribute), timeout))
 
+    def read_stat(self, captions, stat_name):
+        return dict(zip(captions, self.api.get_stats(self, stat_name)))
+
     #
     # Private methods.
     #
-
-    def read_stat(self, captions, stat_name):
-        return dict(zip(captions, self.api.get_stats(self, stat_name)))
 
     def _build_index_command(self, command, *arguments):
         return ('{} {}' + len(arguments) * ' {}').format(self.index, command, *arguments)
