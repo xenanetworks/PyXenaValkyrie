@@ -55,13 +55,13 @@ class XenaTestOffline(XenaTestBase):
         assert(packet.ip6.dst_s == '33::33')
 
         assert(len(port.streams[0].modifiers) == 1)
-        assert(port.streams[0].modifiers[4].action == XenaModifierAction.increment)
-        print(port.streams[0].modifiers[4].get_attributes())
+        assert(port.streams[0].modifiers[0].action == XenaModifierAction.increment)
+        print(port.streams[0].modifiers[0].get_attributes())
         assert(len(port.streams[1].modifiers) == 1)
-        assert(port.streams[1].modifiers[46].action == XenaModifierAction.random)
-        print(port.streams[1].modifiers[46].get_attributes())
+        assert(port.streams[1].modifiers[0].action == XenaModifierAction.random)
+        print(port.streams[1].modifiers[0].get_attributes())
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
-        modifier1 = port.streams[0].modifiers[4]
+        modifier1 = port.streams[0].modifiers[0]
         assert(modifier1.min_val == 0)
         print(modifier1)
         #: :type modifier2: xenamanager.xena_strea.XenaModifier
@@ -72,8 +72,8 @@ class XenaTestOffline(XenaTestBase):
         print(modifier2)
         print(port.streams[0].modifiers)
 
-        port.streams[0].remove_modifier(4)
-        assert(port.streams[0].modifiers[12].max_val == 65535)
+        port.streams[0].remove_modifier(0)
+        assert(port.streams[0].modifiers[0].max_val == 65535)
 
     def test_extended_modifiers(self):
         try:
@@ -84,19 +84,22 @@ class XenaTestOffline(XenaTestBase):
 
         assert(len(port.streams[0].modifiers) == 1)
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
-        modifier1 = port.streams[0].modifiers[4]
+        modifier1 = port.streams[0].modifiers[0]
         assert(modifier1.min_val == 0)
         print(modifier1)
-        #: :type modifier2: xenamanager.xena_strea.XenaModifier
+        #: :type modifier2: xenamanager.xena_strea.XenaXModifier
         modifier2 = port.streams[0].add_modifier(position=12, m_type=XenaModifierType.extended)
-        assert(len(port.streams[0].modifiers) == 2)
+        assert(len(port.streams[0].modifiers) == 1)
+        assert(len(port.streams[0].xmodifiers) == 1)
         modifier2.get()
         assert(modifier2.position == 12)
         print(modifier2)
-        print(port.streams[0].modifiers)
 
-        port.streams[0].remove_modifier(4)
-        assert(port.streams[0].modifiers[12].max_val == 65535)
+        port.streams[0].remove_modifier(0)
+        assert(len(port.streams[0].modifiers) == 0)
+        assert(len(port.streams[0].xmodifiers) == 1)
+        port.streams[0].remove_modifier(0, m_type=XenaModifierType.extended)
+        assert(len(port.streams[0].xmodifiers) == 0)
 
     def test_build_config(self):
 

@@ -109,51 +109,51 @@ class XenaStream(XenaObject21):
     # Modifiers.
     #
 
-    def add_modifier(self, position, m_type=XenaModifierType.standard, **kwargs):
+    def add_modifier(self, m_type=XenaModifierType.standard, **kwargs):
         """ Add modifier.
 
-        :param position: modifier position.
         :param m_type: modifier type - standard or extended.
         :type: xenamanager.xena_stram.ModifierType
         :return: newly created modifier.
         :rtype: xenamanager.xena_stream.XenaModifier
         """
 
-        modifier_index = len(self.modifiers)
         if m_type == XenaModifierType.standard:
-            modifier_index = len(self.standard_modifiers)
+            modifier_index = len(self.modifiers)
             self.set_attributes(ps_modifiercount=modifier_index + 1)
+            modifier = XenaModifier(self, index='{}/{}'.format(self.index, modifier_index))
         else:
-            modifier_index = len(self.extended_modifiers)
+            modifier_index = len(self.xmodifiers)
             self.set_attributes(ps_modifierextcount=modifier_index + 1)
-        modifier = XenaModifier(self, index='{}/{}'.format(self.index, modifier_index), m_type=m_type)
-        modifier.position = position
+            modifier = XenaXModifier(self, index='{}/{}'.format(self.index, modifier_index))
         modifier.set(**kwargs)
         return modifier
 
-    def remove_modifier(self, position):
+    def remove_modifier(self, index, m_type=XenaModifierType.standard):
         """ Remove modifier.
 
-        :param position: position of modifier to remove.
+        :param m_type: modifier type - standard or extended.
+        :param index: index of modifier to remove.
         """
 
-        current_modifiers = OrderedDict(self.modifiers)
-        del current_modifiers[position]
+        if m_type == XenaModifierType.standard:
+            current_modifiers = OrderedDict(self.modifiers)
+            del current_modifiers[index]
 
-        self.set_attributes(ps_modifiercount=0)
-        try:
+            self.set_attributes(ps_modifiercount=0)
+            self.del_objects_by_type('modifier')
+
+        else:
+            current_modifiers = OrderedDict(self.xmodifiers)
+            del current_modifiers[index]
+
             self.set_attributes(ps_modifierextcount=0)
-        except Exception as _:
-            pass
-        self.del_objects_by_type('modifier')
+            self.del_objects_by_type('xmodifier')
 
         for modifier in current_modifiers.values():
-            self.add_modifier(modifier.position, modifier.m_type).set(mask=modifier.mask,
-                                                                      action=modifier.action,
-                                                                      repeat=modifier.repeat,
-                                                                      min_val=modifier.min_val,
-                                                                      step=modifier.step,
-                                                                      max_val=modifier.max_val)
+            self.add_modifier(m_type,
+                              mask=modifier.mask, action=modifier.action, repeat=modifier.repeat,
+                              min_val=modifier.min_val, step=modifier.step, max_val=modifier.max_val)
 
     #
     # Properties.
@@ -162,78 +162,50 @@ class XenaStream(XenaObject21):
     @property
     def modifiers(self):
         """
-        :return: dictionary {position: object} of all modifiers.
+        :return: dictionary {index: object} of standard modifiers.
         """
-
         if not self.get_objects_by_type('modifier'):
             for index in range(int(self.get_attribute('ps_modifiercount'))):
-                XenaModifier(self, index='{}/{}'.format(self.index, index), m_type=XenaModifierType.standard)
+                XenaModifier(self, index='{}/{}'.format(self.index, index))
+        return {s.id: s for s in self.get_objects_by_type('modifier')}
+
+    @property
+    def xmodifiers(self):
+        """
+        :return: dictionary {index: object} of extended modifiers.
+        """
+        if not self.get_objects_by_type('xmodifier'):
             try:
                 for index in range(int(self.get_attribute('ps_modifierextcount'))):
-                    XenaModifier(self, index='{}/{}'.format(self.index, index), m_type=XenaModifierType.extended)
+                    XenaXModifier(self, index='{}/{}'.format(self.index, index))
             except Exception as _:
                 pass
-        return {m.position: m for m in self.get_objects_by_type('modifier')}
-
-    @property
-    def standard_modifiers(self):
-        """
-        :return: dictionary {position: object} of standard modifiers.
-        """
-        return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.standard}
-
-    @property
-    def extended_modifiers(self):
-        """
-        :return: dictionary {position: object} of extended modifiers.
-        """
-        return {p: m for p, m in self.modifiers.items() if m.m_type == XenaModifierType.extended}
+        return {s.id: s for s in self.get_objects_by_type('xmodifier')}
 
 
-class XenaModifier(XenaObject):
+class _XenaModifierBase(XenaObject):
 
-    info_config_commands = ['ps_modifier', 'ps_modifierrange']
-
-    def __init__(self, parent, index, m_type):
-        """
-        :param parent: parent stream object.
-        :param index: modifier index in format module/port/stream/modifier.
-        :param m_type: modifier type - standard or extended.
-        :type: xenamanager.xena_stram.ModifierType
-        """
-
-        sid = parent.index.split('/')[-1]
-        self.mid = index.split('/')[-1]
-        if m_type == XenaModifierType.standard:
-            command = 'ps_modifier'
-            self.info_config_commands = ['ps_modifier', 'ps_modifierrange']
-        else:
-            command = 'ps_modifierext'
-            self.info_config_commands = ['ps_modifierext', 'ps_modifierextrange']
-        reply = parent.parent.send_command_return('{} [{},{}]'.format(command, sid, self.mid), '?')
-
-        index = '/'.join(index.split('/')[:-1]) + '/' + reply.split()[-4]
-        super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)
-        self.m_type = m_type
+    def __init__(self, objType, parent, index):
+        super(_XenaModifierBase, self).__init__(objType=objType, index=index, parent=parent)
         self.get()
 
     def set(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
-        if self.m_type == XenaModifierType.standard:
+        if type(self) == XenaModifier:
             self.set_attributes(ps_modifier='{} {} {} {}'.format(self.position, self.mask,
                                                                  self.action.value, self.repeat))
         else:
             self.set_attributes(ps_modifierext='{} {} {} {}'.format(self.position, self.mask,
                                                                     self.action.value, self.repeat))
         if self.action != XenaModifierAction.random:
-            if self.m_type == XenaModifierType.standard:
+            if type(self) == XenaModifier:
                 self.set_attributes(ps_modifierrange='{} {} {}'.format(self.min_val, self.step, self.max_val))
             else:
                 self.set_attributes(ps_modifierextrange='{} {} {}'.format(self.min_val, self.step, self.max_val))
 
     def get(self):
-        if self.m_type == XenaModifierType.standard:
+        if type(self) == XenaModifier:
             position, mask, action, repeat = self.get_attribute('ps_modifier').split()
         else:
             position, mask, action, repeat = self.get_attribute('ps_modifierext').split()
@@ -242,7 +214,7 @@ class XenaModifier(XenaObject):
         self.action = XenaModifierAction(action)
         self.repeat = int(repeat)
         if self.action != XenaModifierAction.random:
-            if self.m_type == XenaModifierType.standard:
+            if type(self) == XenaModifier:
                 min_val, step, max_val = self.get_attribute('ps_modifierrange').split()
             else:
                 min_val, step, max_val = self.get_attribute('ps_modifierextrange').split()
@@ -255,19 +227,43 @@ class XenaModifier(XenaObject):
     #
 
     def _build_index_command(self, command, *arguments):
-        module, port, sid, _ = self.index.split('/')
-        return ('{}/{} {} [{},{}]' + len(arguments) * ' {}').format(module, port, command, sid, self.mid, *arguments)
+        module, port, sid, mid = self.index.split('/')
+        return ('{}/{} {} [{},{}]' + len(arguments) * ' {}').format(module, port, command, sid, mid, *arguments)
 
     def _extract_return(self, command, index_command_value):
-        module, port, sid, _ = self.index.split('/')
+        module, port, sid, mid = self.index.split('/')
         return re.sub('{}/{}\s*{}\s*\[{},{}\]\s*'.
-                      format(module, port, command.upper(), sid, self.mid), '', index_command_value)
+                      format(module, port, command.upper(), sid, mid), '', index_command_value)
 
     def _get_index_len(self):
         return 2
 
     def _get_command_len(self):
         return 1
+
+
+class XenaModifier(_XenaModifierBase):
+
+    info_config_commands = ['ps_modifier', 'ps_modifierrange']
+
+    def __init__(self, parent, index):
+        """
+        :param parent: parent stream object.
+        :param index: modifier index in format module/port/stream/modifier.
+        """
+        super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)
+
+
+class XenaXModifier(_XenaModifierBase):
+
+    info_config_commands = ['ps_modifierext', 'ps_modifierextrange']
+
+    def __init__(self, parent, index):
+        """
+        :param parent: parent stream object.
+        :param index: modifier index in format module/port/stream/modifier.
+        """
+        super(self.__class__, self).__init__(objType='xmodifier', index=index, parent=parent)
 
 
 pypacker_2_xena = {'ethernet': 'ethernet',
