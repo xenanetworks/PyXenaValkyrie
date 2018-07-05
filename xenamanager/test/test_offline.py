@@ -6,7 +6,7 @@ Base class for all Xena package tests.
 
 from os import path
 
-from xenamanager.xena_stream import XenaModifierType
+from xenamanager.xena_stream import XenaModifierType, XenaModifierAction
 from xenamanager.xena_stream import XenaStream
 from xenamanager.test.test_base import XenaTestBase
 
@@ -55,6 +55,11 @@ class XenaTestOffline(XenaTestBase):
         assert(packet.ip6.dst_s == '33::33')
 
         assert(len(port.streams[0].modifiers) == 1)
+        assert(port.streams[0].modifiers[4].action == XenaModifierAction.increment)
+        print(port.streams[0].modifiers[4].get_attributes())
+        assert(len(port.streams[1].modifiers) == 1)
+        assert(port.streams[1].modifiers[46].action == XenaModifierAction.random)
+        print(port.streams[1].modifiers[46].get_attributes())
         #: :type modifier1: xenamanager.xena_strea.XenaModifier
         modifier1 = port.streams[0].modifiers[4]
         assert(modifier1.min_val == 0)

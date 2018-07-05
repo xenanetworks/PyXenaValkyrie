@@ -21,8 +21,10 @@ Version 0.9.2 is the last version supporting only CLI API.
 In order to introduce REST API some changes that breaks backwards compatibility were made:
 - xena_object.get_attributes() 
   Remove the attribute parameter and return all attributes of the object instead.
-- xena_object.get_attribute() returns string attributes without the surrounding "", just like they are returned by
-  config/info commands. 
+- xena_object.get_attribute(attribute)
+  returns string attributes without the surrounding "", just like they are returned by config/info commands.
+- xena_stream.add_modifier(self, position, m_type=XenaModifierType.standard, **kwargs):
+  added position attribute
 
 Installation
 """"""""""""

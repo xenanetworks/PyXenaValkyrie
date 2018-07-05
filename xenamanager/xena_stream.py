@@ -109,9 +109,10 @@ class XenaStream(XenaObject21):
     # Modifiers.
     #
 
-    def add_modifier(self, m_type=XenaModifierType.standard, **kwargs):
+    def add_modifier(self, position, m_type=XenaModifierType.standard, **kwargs):
         """ Add modifier.
 
+        :param position: modifier position.
         :param m_type: modifier type - standard or extended.
         :type: xenamanager.xena_stram.ModifierType
         :return: newly created modifier.
@@ -126,6 +127,7 @@ class XenaStream(XenaObject21):
             modifier_index = len(self.extended_modifiers)
             self.set_attributes(ps_modifierextcount=modifier_index + 1)
         modifier = XenaModifier(self, index='{}/{}'.format(self.index, modifier_index), m_type=m_type)
+        modifier.position = position
         modifier.set(**kwargs)
         return modifier
 
@@ -146,12 +148,12 @@ class XenaStream(XenaObject21):
         self.del_objects_by_type('modifier')
 
         for modifier in current_modifiers.values():
-            self.add_modifier(modifier.m_type, position=modifier.position).set(mask=modifier.mask,
-                                                                               action=modifier.action,
-                                                                               repeat=modifier.repeat,
-                                                                               min_val=modifier.min_val,
-                                                                               step=modifier.step,
-                                                                               max_val=modifier.max_val)
+            self.add_modifier(modifier.position, modifier.m_type).set(mask=modifier.mask,
+                                                                      action=modifier.action,
+                                                                      repeat=modifier.repeat,
+                                                                      min_val=modifier.min_val,
+                                                                      step=modifier.step,
+                                                                      max_val=modifier.max_val)
 
     #
     # Properties.
@@ -190,6 +192,8 @@ class XenaStream(XenaObject21):
 
 class XenaModifier(XenaObject):
 
+    info_config_commands = ['ps_modifier', 'ps_modifierrange']
+
     def __init__(self, parent, index, m_type):
         """
         :param parent: parent stream object.
@@ -200,7 +204,12 @@ class XenaModifier(XenaObject):
 
         sid = parent.index.split('/')[-1]
         self.mid = index.split('/')[-1]
-        command = 'ps_modifier' if m_type == XenaModifierType.standard else 'ps_modifierext'
+        if m_type == XenaModifierType.standard:
+            command = 'ps_modifier'
+            self.info_config_commands = ['ps_modifier', 'ps_modifierrange']
+        else:
+            command = 'ps_modifierext'
+            self.info_config_commands = ['ps_modifierext', 'ps_modifierextrange']
         reply = parent.parent.send_command_return('{} [{},{}]'.format(command, sid, self.mid), '?')
 
         index = '/'.join(index.split('/')[:-1]) + '/' + reply.split()[-4]
