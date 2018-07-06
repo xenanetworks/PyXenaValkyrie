@@ -10,14 +10,15 @@ from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenamanager.xena_app import init_xena
 from xenamanager.api.XenaSocket import XenaCommandException
+from xenamanager.api.xena_rest import XenaRestWrapper
 
 
-class XenaTestBase(TgnTest):
+class XenaTestErrors(TgnTest):
 
     TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
 
     def setUp(self):
-        super(XenaTestBase, self).setUp()
+        super(XenaTestErrors, self).setUp()
         self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'),
                             self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
 
@@ -25,6 +26,9 @@ class XenaTestBase(TgnTest):
         self.xm.session.disconnect()
 
     def test_errors(self):
+
+        if type(self.xm.session.api) is XenaRestWrapper:
+            self.skipTest('Skip test - REST API')
 
         self.assertRaises(IOError, self.xm.session.add_chassis, 'invalid IP')
         assert(len(self.xm.session.chassis_list) == 0)

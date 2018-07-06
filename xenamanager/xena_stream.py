@@ -12,6 +12,7 @@ from collections import OrderedDict
 from pypacker.layer12.ethernet import Ethernet
 
 from xenamanager.xena_object import XenaObject, XenaObject21
+from xenamanager.api.xena_cli import XenaCliWrapper
 
 
 class XenaStreamState(Enum):
@@ -119,13 +120,11 @@ class XenaStream(XenaObject21):
         """
 
         if m_type == XenaModifierType.standard:
-            modifier_index = len(self.modifiers)
-            self.set_attributes(ps_modifiercount=modifier_index + 1)
-            modifier = XenaModifier(self, index='{}/{}'.format(self.index, modifier_index))
+            modifier = XenaModifier(self, index='{}/{}'.format(self.index, len(self.modifiers)))
         else:
-            modifier_index = len(self.xmodifiers)
-            self.set_attributes(ps_modifierextcount=modifier_index + 1)
-            modifier = XenaXModifier(self, index='{}/{}'.format(self.index, modifier_index))
+            modifier = XenaXModifier(self, index='{}/{}'.format(self.index, len(self.xmodifiers)))
+        modifier._create()
+        modifier.get()
         modifier.set(**kwargs)
         return modifier
 
@@ -166,7 +165,7 @@ class XenaStream(XenaObject21):
         """
         if not self.get_objects_by_type('modifier'):
             for index in range(int(self.get_attribute('ps_modifiercount'))):
-                XenaModifier(self, index='{}/{}'.format(self.index, index))
+                XenaModifier(self, index='{}/{}'.format(self.index, index)).get()
         return {s.id: s for s in self.get_objects_by_type('modifier')}
 
     @property
@@ -177,7 +176,7 @@ class XenaStream(XenaObject21):
         if not self.get_objects_by_type('xmodifier'):
             try:
                 for index in range(int(self.get_attribute('ps_modifierextcount'))):
-                    XenaXModifier(self, index='{}/{}'.format(self.index, index))
+                    XenaXModifier(self, index='{}/{}'.format(self.index, index)).get()
             except Exception as _:
                 pass
         return {s.id: s for s in self.get_objects_by_type('xmodifier')}
@@ -187,7 +186,15 @@ class _XenaModifierBase(XenaObject):
 
     def __init__(self, objType, parent, index):
         super(_XenaModifierBase, self).__init__(objType=objType, index=index, parent=parent)
-        self.get()
+
+    def _create(self):
+        if type(self.api) is XenaCliWrapper:
+            if type(self) == XenaModifier:
+                self.parent.set_attributes(ps_modifiercount=len(self.parent.modifiers))
+            else:
+                self.parent.set_attributes(ps_modifierextcount=len(self.parent.xmodifiers))
+        else:
+            super(_XenaModifierBase, self)._create()
 
     def set(self, **kwargs):
         for k, v in kwargs.items():

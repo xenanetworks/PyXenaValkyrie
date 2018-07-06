@@ -67,7 +67,6 @@ class XenaTestOffline(XenaTestBase):
         #: :type modifier2: xenamanager.xena_strea.XenaModifier
         modifier2 = port.streams[0].add_modifier(position=12)
         assert(len(port.streams[0].modifiers) == 2)
-        modifier2.get()
         assert(modifier2.position == 12)
         print(modifier2)
         print(port.streams[0].modifiers)
@@ -88,10 +87,9 @@ class XenaTestOffline(XenaTestBase):
         assert(modifier1.min_val == 0)
         print(modifier1)
         #: :type modifier2: xenamanager.xena_strea.XenaXModifier
-        modifier2 = port.streams[0].add_modifier(position=12, m_type=XenaModifierType.extended)
+        modifier2 = port.streams[0].add_modifier(m_type=XenaModifierType.extended, position=12)
         assert(len(port.streams[0].modifiers) == 1)
         assert(len(port.streams[0].xmodifiers) == 1)
-        modifier2.get()
         assert(modifier2.position == 12)
         print(modifier2)
 
