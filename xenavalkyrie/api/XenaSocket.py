@@ -2,7 +2,7 @@
 import threading
 import socket
 
-from xenamanager.api.BaseSocket import BaseSocket
+from xenavalkyrie.api.BaseSocket import BaseSocket
 
 
 class XenaCommandException(Exception):

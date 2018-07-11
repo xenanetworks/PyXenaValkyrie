@@ -7,12 +7,12 @@ Base class for all Xena package tests.
 from os import path
 
 from trafficgenerator.test.test_tgn import TgnTest
-from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
+from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
 
 class XenaTestBase(TgnTest):
 
-    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
+    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaValkyrie.ini')
 
     text_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.txt')
     pcap_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.pcap')

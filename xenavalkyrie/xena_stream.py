@@ -11,8 +11,8 @@ from collections import OrderedDict
 
 from pypacker.layer12.ethernet import Ethernet
 
-from xenamanager.xena_object import XenaObject, XenaObject21
-from xenamanager.api.xena_cli import XenaCliWrapper
+from xenavalkyrie.xena_object import XenaObject, XenaObject21
+from xenavalkyrie.api.xena_cli import XenaCliWrapper
 
 
 class XenaStreamState(Enum):
@@ -57,7 +57,7 @@ class XenaStream(XenaObject21):
         """ Set stream state.
 
         :param state: new stream state.
-        :type stae: xenamanager.xena_stream.XenaStreamState
+        :type stae: xenavalkyrie.xena_stream.XenaStreamState
         """
         self.set_attributes(ps_enable=state.value)
 
@@ -114,9 +114,9 @@ class XenaStream(XenaObject21):
         """ Add modifier.
 
         :param m_type: modifier type - standard or extended.
-        :type: xenamanager.xena_stram.ModifierType
+        :type: xenavalkyrie.xena_stram.ModifierType
         :return: newly created modifier.
-        :rtype: xenamanager.xena_stream.XenaModifier
+        :rtype: xenavalkyrie.xena_stream.XenaModifier
         """
 
         if m_type == XenaModifierType.standard:

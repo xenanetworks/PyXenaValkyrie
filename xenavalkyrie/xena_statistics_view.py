@@ -9,7 +9,8 @@ There are three different views - ports, streams and TPLD.
 
 from collections import OrderedDict
 
-from trafficgenerator.tgn_object import TgnObjectsDict
+from trafficgenerator.tgn_object import TgnSubStatsDict
+from xenavalkyrie.xena_object import XenaObjectsDict
 
 
 class XenaStats(object):
@@ -18,7 +19,7 @@ class XenaStats(object):
     def __init__(self, session):
         """
         :param session: current session
-        :type session: xenamanager.xena_app.XenaSession
+        :type session: xenavalkyrie.xena_app.XenaSession
         """
 
         self.session = session
@@ -61,7 +62,7 @@ class XenaPortsStats(XenaStats):
         :return: dictionary {port name {group name, {stat name: stat value}}}
         """
 
-        self.statistics = TgnObjectsDict()
+        self.statistics = XenaObjectsDict()
         for port in self.session.ports.values():
             self.statistics[port] = port.read_port_stats()
         return self.statistics
@@ -75,7 +76,7 @@ class XenaStreamsStats(XenaStats):
     +--------+-------+-----+-------+-----+-------+-----+-------+-----+-------+-----+
     | Stream | tx    |     | rx    |     |       |     |       |     |       |     |
     +--------+-------+-----+-------+-----+-------+-----+-------+-----+-------+-----+
-    |        |       |     | TPLD  |     |       |     | TPLD  |     |       |     |
+    |        |       |     | Port  |     |       |     | Port  |     |       |     |
     +--------+-------+-----+-------+-----+-------+-----+-------+-----+-------+-----+
     |        |       |     | Group |     | Group |     | Group |     | Group |     |
     +--------+-------+-----+-------+-----+-------+-----+-------+-----+-------+-----+
@@ -93,22 +94,23 @@ class XenaStreamsStats(XenaStats):
         :return: dictionary {stream: {tx: {stat name: stat value}} rx: {tpld: {stat group {stat name: value}}}}
         """
 
-        self.tx_statistics = TgnObjectsDict()
+        self.tx_statistics = XenaObjectsDict()
         for port in self.session.ports.values():
             for stream in port.streams.values():
                 self.tx_statistics[stream] = stream.read_stats()
 
         tpld_statistics = XenaTpldsStats(self.session).read_stats()
 
-        self.statistics = TgnObjectsDict()
+        self.statistics = XenaObjectsDict()
         for stream, stream_stats in self.tx_statistics.items():
             self.statistics[stream] = OrderedDict()
             self.statistics[stream]['tx'] = stream_stats
-            self.statistics[stream]['rx'] = OrderedDict()
-            stream_tpld = stream.get_attribute('ps_tpldid')
+            self.statistics[stream]['rx'] = TgnSubStatsDict()
+            ps_tpldid = stream.get_attribute('ps_tpldid')
+            stream_tpld = int(ps_tpldid) if ps_tpldid else -1
             for tpld, tpld_stats in tpld_statistics.items():
                 if tpld.id == stream_tpld:
-                    self.statistics[stream]['rx'][tpld] = tpld_stats
+                    self.statistics[stream]['rx'][tpld.parent] = tpld_stats
         return self.statistics
 
     def get_flat_stats(self):
@@ -137,7 +139,7 @@ class XenaTpldsStats(XenaStats):
         :return: dictionary {tpld full index {group name {stat name: stat value}}}
         """
 
-        self.statistics = TgnObjectsDict()
+        self.statistics = XenaObjectsDict()
         for port in self.session.ports.values():
             for tpld in port.tplds.values():
                 self.statistics[tpld] = tpld.read_stats()

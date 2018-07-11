@@ -18,5 +18,5 @@ docs/_*
 .coverage
 .eggs
 
-xenamanager/test/configs/save_config.xpc 
-xenamanager/test/configs/customers/
+xenavalkyrie/test/configs/save_config.xpc 
+xenavalkyrie/test/configs/customers/

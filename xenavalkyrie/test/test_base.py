@@ -8,13 +8,13 @@ from os import path
 
 from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
-from xenamanager.xena_app import init_xena
-from xenamanager.xena_stream import XenaStream
+from xenavalkyrie.xena_app import init_xena
+from xenavalkyrie.xena_stream import XenaStream
 
 
 class XenaTestBase(TgnTest):
 
-    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
+    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaValkyrie.ini')
 
     def setUp(self):
         super(XenaTestBase, self).setUp()

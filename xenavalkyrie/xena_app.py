@@ -8,10 +8,10 @@ import time
 
 from trafficgenerator.tgn_app import TgnApp
 from trafficgenerator.tgn_utils import ApiType
-from xenamanager.api.xena_rest import XenaRestWrapper
-from xenamanager.api.xena_cli import XenaCliWrapper
-from xenamanager.xena_object import XenaObject
-from xenamanager.xena_port import XenaPort
+from xenavalkyrie.api.xena_rest import XenaRestWrapper
+from xenavalkyrie.api.xena_cli import XenaCliWrapper
+from xenavalkyrie.xena_object import XenaObject
+from xenavalkyrie.xena_port import XenaPort
 
 
 def init_xena(api, logger, owner, ip=None, port=57911):
@@ -80,7 +80,7 @@ class XenaSession(XenaObject):
         :param port: chassis port number
         :param password: chassis password
         :return: newly created chassis
-        :rtype: xenamanager.xena_app.XenaChassis
+        :rtype: xenavalkyrie.xena_app.XenaChassis
         """
 
         if chassis not in self.chassis_list:

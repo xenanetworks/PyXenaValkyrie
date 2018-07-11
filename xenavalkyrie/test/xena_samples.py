@@ -17,10 +17,10 @@ from pypacker.layer3.ip6 import IP6
 from pypacker.layer4.tcp import TCP
 
 from trafficgenerator.tgn_utils import ApiType
-from xenamanager.xena_app import init_xena
-from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
-from xenamanager.xena_port import XenaCaptureBufferType
-from xenamanager.xena_tshark import Tshark, TsharkAnalyzer
+from xenavalkyrie.xena_app import init_xena
+from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
+from xenavalkyrie.xena_port import XenaCaptureBufferType
+from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
 wireshark_path = '/usr/bin'
 
@@ -37,7 +37,7 @@ save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xpc')
 pcap_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.pcap')
 ports = {}
 
-#: :type xm: xenamanager.xena_app.XenaManager
+#: :type xm: xenavalkyrie.xena_app.XenaApp
 xm = None
 
 
@@ -51,7 +51,7 @@ def connect():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    # Create XenaManager object and connect to chassis.
+    # Create XenaApp object and connect to chassis.
     xm = init_xena(api, logger, owner)
     xm.session.add_chassis(chassis)
 
@@ -86,9 +86,9 @@ def configuration():
     global ports
 
     #: :type header: pypacker.layer12.ethernet
-    #: :type p0_s0: xenamanager.xena_stream.XenaStream
-    #: :type p1_s0: xenamanager.xena_stream.XenaStream
-    #: :type modifier: xenamanager.xena_strea.XenaModifier
+    #: :type p0_s0: xenavalkyrie.xena_stream.XenaStream
+    #: :type p1_s0: xenavalkyrie.xena_stream.XenaStream
+    #: :type modifier: xenavalkyrie.xena_strea.XenaModifier
 
     ports = xm.session.reserve_ports([port0, port1], True)
     ports[port0].wait_for_up(16)

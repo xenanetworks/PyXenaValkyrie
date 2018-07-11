@@ -8,7 +8,7 @@ import requests
 import json
 from enum import Enum
 
-from xenamanager.api.XenaSocket import XenaCommandException
+from xenavalkyrie.api.XenaSocket import XenaCommandException
 
 
 class OperReturnType(Enum):

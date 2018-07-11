@@ -5,7 +5,7 @@ from __future__ import print_function
 from setuptools import setup, find_packages
 import io
 
-import xenamanager
+import xenavalkyrie
 
 
 def read(*filenames, **kwargs):
@@ -25,9 +25,9 @@ install_requires = [r for r in required if r and r[0] != '#' and not r.startswit
 long_description = read('README.rst')
 
 setup(
-    name='pyxenamanager',
-    version=xenamanager.__version__,
-    url='https://github.com/xenadevel/PyXenaManager/',
+    name='xenavalkyrie',
+    version=xenavalkyrie.__version__,
+    url='https://github.com/xenadevel/PyXenaValkyrie/',
     license='Apache Software License',
     author='Yoram Shamir',
     install_requires=install_requires,

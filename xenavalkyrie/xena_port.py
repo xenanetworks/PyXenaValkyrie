@@ -10,9 +10,9 @@ from enum import Enum
 
 from trafficgenerator.tgn_utils import TgnError
 
-from xenamanager.api.XenaSocket import XenaCommandException
-from xenamanager.xena_object import XenaObject, XenaObject21
-from xenamanager.xena_stream import XenaStream, XenaStreamState
+from xenavalkyrie.api.XenaSocket import XenaCommandException
+from xenavalkyrie.xena_object import XenaObject, XenaObject21
+from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
 
 
 class XenaCaptureBufferType(Enum):
@@ -121,9 +121,9 @@ class XenaPort(XenaObject):
         :param name: stream description.
         :param tpld_id: TPLD ID. If None the a unique value will be set.
         :param state: new stream state.
-        :type state: xenamanager.xena_stream.XenaStreamState
+        :type state: xenavalkyrie.xena_stream.XenaStreamState
         :return: newly created stream.
-        :rtype: xenamanager.xena_stream.XenaStream
+        :rtype: xenavalkyrie.xena_stream.XenaStream
         """
 
         stream = XenaStream(parent=self, index='{}/{}'.format(self.index, len(self.streams)), name=name)
@@ -228,13 +228,16 @@ class XenaPort(XenaObject):
     def streams(self):
         """
         :return: dictionary {id: object} of all streams.
-        :rtype: dict of (int, xenamanager.xena_stream.XenaStream)
+        :rtype: dict of (int, xenavalkyrie.xena_stream.XenaStream)
         """
 
         if not self.get_objects_by_type('stream'):
             tpld_ids = []
             for index in self.get_attribute('ps_indices').split():
-                stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index))
+                stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index, name=None))
+                ps_comment = stream.get_attribute('ps_comment')
+                if ps_comment:
+                    stream._data['name'] = ps_comment
                 tpld_ids.append(stream.get_attribute('ps_tpldid'))
             if tpld_ids:
                 XenaStream.next_tpld_id = max([XenaStream.next_tpld_id] + [int(t) for t in tpld_ids]) + 1
@@ -244,7 +247,7 @@ class XenaPort(XenaObject):
     def tplds(self):
         """
         :return: dictionary {id: object} of all current tplds.
-        :rtype: dict of (int, xenamanager.xena_port.XenaTpld)
+        :rtype: dict of (int, xenavalkyrie.xena_port.XenaTpld)
         """
 
         # As TPLDs are dynamic we must re-read them each time from the port.
@@ -319,7 +322,7 @@ class XenaCapture(XenaObject):
         :param cap_type: returned capture format. If pcap then file name and tshark must be provided.
         :param file_name: if specified, capture will be saved in file.
         :param tshark: tshark object for pcap type only.
-        :type: xenamanager.xena_tshark.Tshark
+        :type: xenavalkyrie.xena_tshark.Tshark
         :return: list of requested packets, None for pcap type.
         """
 
@@ -361,7 +364,7 @@ class XenaCapture(XenaObject):
     def packets(self):
         """
         :return: dictionary {id: object} of all packets.
-        :rtype: dict of (int, xenamanager.xena_port.XenaCapturePacket)
+        :rtype: dict of (int, xenavalkyrie.xena_port.XenaCapturePacket)
         """
 
         if not self.get_object_by_type('cappacket'):

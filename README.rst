@@ -4,40 +4,38 @@ This package implements Python OO API for Xena traffic generator.
 Functionality
 """""""""""""
 The current version supports the following test flow:
-	Load/Build configuration -> Change configuration -> Start/Stop traffic -> Get statistics/capture
-Supported operations:
-	- Login, connect to chassis and reserve ports
-	- Load existing configuration file
-	- Build configuration from scratch
-	- Get/set attributes
-	- Start/Stop - transmit, capture
-	- Statistics - ports, streams (end to ends) and TPLDs
-	- Capture - get captured packets
-	- Release ports and disconnect
 
-Upgrade from version 0.9.2 to version 1.0.0 and up
-""""""""""""""""""""""""""""""""""""""""""""""""""
-Version 0.9.2 is the last version supporting only CLI API.
-In order to introduce REST API some changes that breaks backwards compatibility were made:
-- xena_object.get_attributes() 
-  Remove the attribute parameter and return all attributes of the object instead.
-- xena_object.get_attribute(attribute)
-  returns string attributes without the surrounding "", just like they are returned by config/info commands.
-- xena_stream.add_modifier(self, position, m_type=XenaModifierType.standard, **kwargs):
-  added position attribute
+- Load/Build configuration -> Change configuration -> Start/Stop traffic -> Get statistics/capture
+
+Supported operations:
+
+- Login, connect to chassis and reserve ports
+- Load existing configuration file
+- Build configuration from scratch
+- Get/set attributes
+- Start/Stop - transmit, capture
+- Statistics - ports, streams (end to ends) and TPLDs
+- Capture - get captured packets
+- Release ports and disconnect
+
+Changes from pyxenamanager
+""""""""""""""""""""""""""
+- Package renamed from xenamanager to xenavalkyrie
+- XenaStreamsStats.statistics['rx']:
+  Returns all RX statistics indexed by RX port instead of TPLD object.
 
 Installation
 """"""""""""
-pip instsll pyxenamanager
+pip instsll xenavalkyrie
 
 Getting started
 """""""""""""""
-Under xenamanager.test.xena_samples you will find some basic samples.
+Under xenavalkyrie.test.xena_samples you will find some basic samples.
 See inside for more info.
 
 Documentation
 """""""""""""
-http://pyxenamanager.readthedocs.io/en/latest/
+http://pyxenavalkyrie.readthedocs.io/en/latest/
 
 Usage notes
 """""""""""
@@ -46,7 +44,7 @@ Usage notes
 
 Related works
 """""""""""""
-The package is partially based on https://github.com/fleitner/XenaPythonLib
+The package replaces pyxenamanager - https://github.com/xenadevel/PyXenaManager
 
 Contact
 """""""

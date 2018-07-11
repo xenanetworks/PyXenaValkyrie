@@ -8,14 +8,14 @@ from os import path
 
 from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
-from xenamanager.xena_app import init_xena
-from xenamanager.api.XenaSocket import XenaCommandException
-from xenamanager.api.xena_rest import XenaRestWrapper
+from xenavalkyrie.xena_app import init_xena
+from xenavalkyrie.api.XenaSocket import XenaCommandException
+from xenavalkyrie.api.xena_rest import XenaRestWrapper
 
 
 class XenaTestErrors(TgnTest):
 
-    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaManager.ini')
+    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaValkyrie.ini')
 
     def setUp(self):
         super(XenaTestErrors, self).setUp()
@@ -40,10 +40,10 @@ class XenaTestErrors(TgnTest):
                        self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
         xm.session.add_chassis(self.config.get('Xena', 'chassis'))
 
-        #: :type port: xenamanager.xena_port.XenaPort
+        #: :type port: xenavalkyrie.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
 
-        #: :type api: xenamanager.api.XenaSocket.XenaSocket
+        #: :type api: xenavalkyrie.api.XenaSocket.XenaSocket
 
         self.assertRaises(XenaCommandException, port.get_attribute, 'ps_packetlimit')
 

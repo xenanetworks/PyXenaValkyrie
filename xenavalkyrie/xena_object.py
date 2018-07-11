@@ -7,11 +7,24 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 import time
 import re
 import logging
+from collections import OrderedDict
 
 from trafficgenerator.tgn_utils import TgnError
-from trafficgenerator.tgn_object import TgnObject
+from trafficgenerator.tgn_object import TgnObject, TgnObjectsDict
 
 logger = logging.getLogger(__name__)
+
+
+class XenaObjectsDict(TgnObjectsDict):
+
+    def __getitem__(self, key):
+        """ Override default implementation and allow access with index as well. """
+        if TgnObjectsDict.__getitem__(self, key) is not None:
+            return TgnObjectsDict.__getitem__(self, key)
+        else:
+            for obj in self:
+                if obj.index == key:
+                    return OrderedDict.__getitem__(self, obj)
 
 
 class XenaObject(TgnObject):
@@ -22,6 +35,8 @@ class XenaObject(TgnObject):
             self.chassis = data['parent'].chassis
         if 'objRef' not in data:
             data['objRef'] = '{}/{}/{}'.format(data['parent'].ref, data['objType'], data['index'].split('/')[-1])
+        if 'name' not in data:
+            data['name'] = data['index']
         super(XenaObject, self).__init__(**data)
 
     def obj_index(self):

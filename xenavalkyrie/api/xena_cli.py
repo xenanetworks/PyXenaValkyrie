@@ -6,8 +6,8 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 
 import logging
 
-from xenamanager.api.XenaSocket import XenaSocket
-from xenamanager.api.KeepAliveThread import KeepAliveThread
+from xenavalkyrie.api.XenaSocket import XenaSocket
+from xenavalkyrie.api.KeepAliveThread import KeepAliveThread
 
 logger = logging.getLogger(__name__)
 

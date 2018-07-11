@@ -6,9 +6,9 @@ Base class for all Xena package tests.
 
 from os import path
 
-from xenamanager.xena_stream import XenaModifierType, XenaModifierAction
-from xenamanager.xena_stream import XenaStream
-from xenamanager.test.test_base import XenaTestBase
+from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
+from xenavalkyrie.xena_stream import XenaStream
+from xenavalkyrie.test.test_base import XenaTestBase
 
 
 class XenaTestOffline(XenaTestBase):
@@ -25,7 +25,7 @@ class XenaTestOffline(XenaTestBase):
         print('+++')
 
     def test_load_config(self):
-        #: :type port: xenamanager.xena_port.XenaPort
+        #: :type port: xenavalkyrie.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port2])[self.port2]
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
 
@@ -60,11 +60,11 @@ class XenaTestOffline(XenaTestBase):
         assert(len(port.streams[1].modifiers) == 1)
         assert(port.streams[1].modifiers[0].action == XenaModifierAction.random)
         print(port.streams[1].modifiers[0].get_attributes())
-        #: :type modifier1: xenamanager.xena_strea.XenaModifier
+        #: :type modifier1: xenavalkyrie.xena_strea.XenaModifier
         modifier1 = port.streams[0].modifiers[0]
         assert(modifier1.min_val == 0)
         print(modifier1)
-        #: :type modifier2: xenamanager.xena_strea.XenaModifier
+        #: :type modifier2: xenavalkyrie.xena_strea.XenaModifier
         modifier2 = port.streams[0].add_modifier(position=12)
         assert(len(port.streams[0].modifiers) == 2)
         assert(modifier2.position == 12)
@@ -82,11 +82,11 @@ class XenaTestOffline(XenaTestBase):
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_100G.xpc'))
 
         assert(len(port.streams[0].modifiers) == 1)
-        #: :type modifier1: xenamanager.xena_strea.XenaModifier
+        #: :type modifier1: xenavalkyrie.xena_strea.XenaModifier
         modifier1 = port.streams[0].modifiers[0]
         assert(modifier1.min_val == 0)
         print(modifier1)
-        #: :type modifier2: xenamanager.xena_strea.XenaXModifier
+        #: :type modifier2: xenavalkyrie.xena_strea.XenaXModifier
         modifier2 = port.streams[0].add_modifier(m_type=XenaModifierType.extended, position=12)
         assert(len(port.streams[0].modifiers) == 1)
         assert(len(port.streams[0].xmodifiers) == 1)
@@ -101,7 +101,7 @@ class XenaTestOffline(XenaTestBase):
 
     def test_build_config(self):
 
-        #: :type port: xenamanager.xena_port.XenaPort
+        #: :type port: xenavalkyrie.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], force=False, reset=True)[self.port1]
 
         assert(XenaStream.next_tpld_id == 0)

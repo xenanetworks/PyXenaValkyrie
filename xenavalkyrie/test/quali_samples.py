@@ -16,8 +16,8 @@ from cloudshell.api.cloudshell_api import CloudShellAPISession
 from cloudshell.traffic.tg_helper import get_reservation_resources, get_address
 from shellfoundry.releasetools.test_helper import create_command_context, end_reservation
 
-from xenamanager.xena_app import init_xena
-from xenamanager.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
+from xenavalkyrie.xena_app import init_xena
+from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 
 owner = 'yoram-s'
 config1 = path.join(path.dirname(__file__), 'configs', 'test_config.xpc')

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# PyXenaManager documentation build configuration file, created by
+# XenaValykyrie documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan 02 12:32:33 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -53,7 +53,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyxenamanager'
+project = u'xenavalkyrie'
 copyright = u'2018, Yoram Shamir'
 author = u'Yoram Shamir'
 
@@ -207,7 +207,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PyXenaManagerdoc'
+htmlhelp_basename = 'XenaValkyriedoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -229,7 +229,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'PyXenaManager.tex', u'PyXenaManager Documentation',
+  (master_doc, 'XenaValkyrie.tex', u'XenaValkyrie Documentation',
    u'Yoram Shamir', 'manual'),
 ]
 
@@ -259,7 +259,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pyxenamanager', u'PyXenaManager Documentation',
+    (master_doc, 'xenavalkyrie', u'XenaValkyrie Documentation',
      [author], 1)
 ]
 
@@ -273,8 +273,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'PyXenaManager', u'PyXenaManager Documentation',
-   author, 'PyXenaManager', 'One line description of project.',
+  (master_doc, 'XenaValkyrie', u'XenaValkyrie Documentation',
+   author, 'XenaValkyrie', 'One line description of project.',
    'Miscellaneous'),
 ]
 
