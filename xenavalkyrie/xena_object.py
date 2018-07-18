@@ -15,6 +15,10 @@ from trafficgenerator.tgn_object import TgnObject, TgnObjectsDict
 logger = logging.getLogger(__name__)
 
 
+class XenaAttributeError(TgnError):
+    pass
+
+
 class XenaObjectsDict(TgnObjectsDict):
 
     def __getitem__(self, key):
@@ -77,7 +81,13 @@ class XenaObject(TgnObject):
 
         :param attributes: dictionary of {attribute: value} to set.
         """
-        self.api.set_attributes(self, **attributes)
+        try:
+            self.api.set_attributes(self, **attributes)
+        except Exception as e:
+            if '<notwritable>' in repr(e).lower() or '<badvalue>' in repr(e).lower():
+                raise XenaAttributeError(e)
+            else:
+                raise e
 
     def get_attribute(self, attribute):
         """ Returns single object attribute.
@@ -86,7 +96,13 @@ class XenaObject(TgnObject):
         :returns: returned value.
         :rtype: str
         """
-        return self.api.get_attribute(self, attribute)
+        try:
+            return self.api.get_attribute(self, attribute)
+        except Exception as e:
+            if '#syntax error' in repr(e).lower() or 'keyerror' in repr(e).lower():
+                raise XenaAttributeError(e)
+            else:
+                raise e
 
     def get_attributes(self):
         """ Returns all object's attributes.

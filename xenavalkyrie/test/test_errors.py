@@ -9,8 +9,7 @@ from os import path
 from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenavalkyrie.xena_app import init_xena
-from xenavalkyrie.api.XenaSocket import XenaCommandException
-from xenavalkyrie.api.xena_rest import XenaRestWrapper
+from xenavalkyrie.xena_object import XenaAttributeError
 
 
 class XenaTestErrors(TgnTest):
@@ -19,35 +18,34 @@ class XenaTestErrors(TgnTest):
 
     def setUp(self):
         super(XenaTestErrors, self).setUp()
-        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'),
+        self.xm = init_xena(self.api, self.logger, self.config.get('Xena', 'owner'),
                             self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
+        self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
 
     def tearDown(self):
         self.xm.session.disconnect()
 
     def test_errors(self):
 
-        if type(self.xm.session.api) is XenaRestWrapper:
-            self.skipTest('Skip test - REST API')
+        # Test invalid chassis IP and port number.
 
-        self.assertRaises(IOError, self.xm.session.add_chassis, 'invalid IP')
+        with self.assertRaises(Exception) as cm:
+            self.xm.session.add_chassis('InvalidIp')
+        assert('IOError' in repr(cm.exception) or 'OSError' in repr(cm.exception))
         assert(len(self.xm.session.chassis_list) == 0)
 
+        with self.assertRaises(Exception) as cm:
+            self.xm.session.add_chassis(self.config.get('Xena', 'chassis'), -17)
+        assert('IOError' in repr(cm.exception) or 'OSError' in repr(cm.exception))
+        assert(len(self.xm.session.chassis_list) == 0)
+
+        # Reserve port to continue testing...
+
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
-        self.port1 = '{}/{}'.format(self.config.get('Xena', 'chassis'), self.config.get('Xena', 'port1'))
-
-        xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'),
-                       self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
-        xm.session.add_chassis(self.config.get('Xena', 'chassis'))
-
-        #: :type port: xenavalkyrie.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port1], True)[self.port1]
 
-        #: :type api: xenavalkyrie.api.XenaSocket.XenaSocket
+        # Test attributes errors.
 
-        self.assertRaises(XenaCommandException, port.get_attribute, 'ps_packetlimit')
-
-        # test read only
-
-        self.assertRaises(NotImplementedError,
-                          self.xm.session.chassis_list[self.config.get('Xena', 'chassis')].get_session_id)
+        self.assertRaises(XenaAttributeError, port.get_attribute, 'InvalidAttribute')
+        self.assertRaises(XenaAttributeError, port.set_attributes, p_reservation=17)
+        self.assertRaises(XenaAttributeError, port.set_attributes, p_reservedby=17)

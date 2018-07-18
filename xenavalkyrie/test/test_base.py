@@ -6,7 +6,6 @@ Base class for all Xena package tests.
 
 from os import path
 
-from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_stream import XenaStream
@@ -18,7 +17,7 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
-        self.xm = init_xena(ApiType[self.config.get('Xena', 'api')], self.logger, self.config.get('Xena', 'owner'),
+        self.xm = init_xena(self.api, self.logger, self.config.get('Xena', 'owner'),
                             self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
         self.temp_dir = self.config.get('General', 'temp_dir')
         self.xm.session.add_chassis(self.config.get('Xena', 'chassis'))
