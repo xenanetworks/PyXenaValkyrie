@@ -3,9 +3,10 @@ import threading
 import socket
 
 from xenavalkyrie.api.BaseSocket import BaseSocket
+from xenavalkyrie.api.xena_keepalive import KeepAliveThread
 
 
-class XenaCommandException(Exception):
+class XenaCommandError(Exception):
     pass
 
 
@@ -22,6 +23,7 @@ class XenaSocket(object):
         logger.debug("Initializing")
         self.bsocket = BaseSocket(hostname, port, timeout)
         self.access_semaphor = threading.Semaphore(1)
+        self.keepalive_thread = None
 
     def is_connected(self):
         return self.bsocket.is_connected()
@@ -37,9 +39,13 @@ class XenaSocket(object):
         self.bsocket.set_keepalives()
         self.access_semaphor.release()
         self.logger.info('Connected to {}:{}'.format(self.hostname, self.port))
+        self.keepalive_thread = KeepAliveThread(self.logger, self)
+        self.keepalive_thread.start()
 
     def disconnect(self):
         self.logger.info('Disconnect from {}:{}'.format(self.hostname, self.port))
+        if self.keepalive_thread:
+            self.keepalive_thread.stop()
         self.access_semaphor.acquire()
         self.bsocket.disconnect()
         self.access_semaphor.release()
@@ -73,7 +79,7 @@ class XenaSocket(object):
                 # check for syntax problems
                 if reply.rfind('Syntax') != -1:
                     self.access_semaphor.release()
-                    raise XenaCommandException("Multiline: syntax error - {}".format(reply))
+                    raise XenaCommandError("Multiline: syntax error - {}".format(reply))
 
                 if reply.rfind('<SYNC>') == 0:
                     self.logger.debug("Multiline EOL SYNC message")
@@ -109,7 +115,7 @@ class XenaSocket(object):
             replies = self.__sendQueryReplies(cmd)
             for reply in replies:
                 if reply.startswith(XenaSocket.reply_errors):
-                    raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, replies))
+                    raise XenaCommandError('sendQuery({}) reply({})'.format(cmd, replies))
             self.logger.debug("sendQuery(%s) -- Begin", cmd)
             for l in replies:
                 self.logger.debug("%s", l.strip())
@@ -118,7 +124,7 @@ class XenaSocket(object):
         else:
             reply = self.__sendQueryReply(cmd)
             if reply.startswith(XenaSocket.reply_errors):
-                raise XenaCommandException('sendQuery({}) reply({})'.format(cmd, reply))
+                raise XenaCommandError('sendQuery({}) reply({})'.format(cmd, reply))
             self.logger.debug('sendQuery(%s) reply(%s)', cmd, reply)
             return reply
 
@@ -134,5 +140,10 @@ class XenaSocket(object):
 
         resp = self.__sendQueryReply(cmd)
         if resp != self.reply_ok:
-            raise XenaCommandException('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
+            raise XenaCommandError('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
         self.logger.debug("SendQueryVerify(%s) Succeed", cmd)
+
+    def keep_alive(self):
+        """ Send keep alive message. """
+        self.logger.debug("Send KeepAlive message")
+        self.sendQuery('')

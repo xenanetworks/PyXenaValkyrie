@@ -10,7 +10,7 @@ from enum import Enum
 
 from trafficgenerator.tgn_utils import TgnError
 
-from xenavalkyrie.api.XenaSocket import XenaCommandException
+from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
 
@@ -101,7 +101,7 @@ class XenaPort(XenaObject):
             if not command.startswith(';'):
                 try:
                     self.send_command(command)
-                except XenaCommandException as e:
+                except XenaCommandError as e:
                     self.logger.warning(str(e))
 
     def save_config(self, config_file_name):

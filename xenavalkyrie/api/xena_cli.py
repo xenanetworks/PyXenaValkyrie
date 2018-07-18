@@ -6,8 +6,7 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 
 import logging
 
-from xenavalkyrie.api.XenaSocket import XenaSocket
-from xenavalkyrie.api.KeepAliveThread import KeepAliveThread
+from xenavalkyrie.api.xena_socket import XenaSocket
 
 logger = logging.getLogger(__name__)
 
@@ -21,24 +20,23 @@ class XenaCliWrapper(object):
         """
 
         self.logger = logger
-        self.chassis_list = {}
+        self.sockets_list = {}
 
     def connect(self, owner):
         self.owner = owner
 
     def disconnect(self):
-        for chassis in self.chassis_list.values():
+        for chassis in self.sockets_list.values():
             chassis.disconnect()
-        self.chassis_list = {}
+        self.sockets_list = {}
 
     def add_chassis(self, chassis):
         """
-        :param ip: chassis object
+        :param chassis: chassis object
         """
 
-        self.chassis_list[chassis] = XenaSocket(self.logger, chassis.ip, chassis.port)
-        self.chassis_list[chassis].connect()
-        KeepAliveThread(self.chassis_list[chassis]).start()
+        self.sockets_list[chassis] = XenaSocket(self.logger, chassis.ip, chassis.port)
+        self.sockets_list[chassis].connect()
         self.send_command(chassis, 'c_logon', '"{}"'.format(chassis.password))
         self.send_command(chassis, 'c_owner', '"{}"'.format(chassis.owner))
 
@@ -53,17 +51,17 @@ class XenaCliWrapper(object):
         :param arguments: list of command arguments.
         """
         index_command = obj._build_index_command(command, *arguments)
-        self.chassis_list[obj.chassis].sendQueryVerify(index_command)
+        self.sockets_list[obj.chassis].sendQueryVerify(index_command)
 
     def send_command_return(self, obj, command, *arguments):
         """ Send command and wait for single line output. """
         index_command = obj._build_index_command(command, *arguments)
-        return obj._extract_return(command, self.chassis_list[obj.chassis].sendQuery(index_command))
+        return obj._extract_return(command, self.sockets_list[obj.chassis].sendQuery(index_command))
 
     def send_command_return_multilines(self, obj, command, *arguments):
         """ Send command and wait for multiple lines output. """
         index_command = obj._build_index_command(command, *arguments)
-        return self.chassis_list[obj.chassis].sendQuery(index_command, True)
+        return self.sockets_list[obj.chassis].sendQuery(index_command, True)
 
     def get_attribute(self, obj, attribute):
         """ Returns single object attribute.

@@ -8,7 +8,8 @@ import requests
 import json
 from enum import Enum
 
-from xenavalkyrie.api.XenaSocket import XenaCommandException
+from xenavalkyrie.api.xena_socket import XenaCommandError
+from xenavalkyrie.api.xena_keepalive import KeepAliveThread
 
 
 class OperReturnType(Enum):
@@ -36,13 +37,19 @@ class XenaRestWrapper(object):
 
         self.logger = logger
         self.base_url = 'http://{}:{}'.format(server, port)
+        self.keepalive_thread = None
 
     def connect(self, owner):
         self.session_url = '{}/{}'.format(self.base_url, 'session')
         self._request(RestMethod.post, self.session_url, params={'user': owner})
         self.user_url = '{}/{}'.format(self.session_url, owner)
+        self.keepalive_thread = KeepAliveThread(self.logger, self)
+        self.keepalive_thread.start()
 
     def disconnect(self):
+        self.logger.info('Disconnect from {}'.format(self.user_url))
+        if self.keepalive_thread:
+            self.keepalive_thread.stop()
         self._request(RestMethod.delete, self.user_url)
 
     def add_chassis(self, chassis):
@@ -132,6 +139,11 @@ class XenaRestWrapper(object):
         """
         return [int(v) for v in self.send_command_return(obj, stat_name, '?').split()]
 
+    def keep_alive(self):
+        """ Send keep alive message. """
+        self.logger.debug("Send KeepAlive message")
+        self._request(RestMethod.get, self.user_url)
+
     #
     # Atomic operations.
     #
@@ -165,7 +177,7 @@ class XenaRestWrapper(object):
         res = requests.request(method.value, url, **kwargs)
         self.logger.debug('status_code: {}'.format(res.status_code))
         if not ignore and res.status_code >= 400:
-            raise XenaCommandException('status_code: {}, content: {}'.format(res.status_code, res.content))
+            raise XenaCommandError('status_code: {}, content: {}'.format(res.status_code, res.content))
         if res.content:
             self.logger.debug('json: {}'.format(res.json()))
         return res

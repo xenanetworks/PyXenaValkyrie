@@ -6,7 +6,6 @@ Test all kinds of errors.
 
 from os import path
 
-from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_object import XenaAttributeError
