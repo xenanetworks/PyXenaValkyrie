@@ -5,7 +5,9 @@ Base class for all Xena package tests.
 """
 
 from os import path
+import pytest
 
+from trafficgenerator.tgn_utils import ApiType
 from trafficgenerator.test.test_tgn import TgnTest
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_stream import XenaStream
@@ -17,6 +19,13 @@ class XenaTestBase(TgnTest):
 
     def setUp(self):
         super(XenaTestBase, self).setUp()
+
+        # To support non pytest runners.
+        try:
+            TgnTest.api = ApiType[pytest.config.getoption('--api')]  # @UndefinedVariable
+        except Exception as _:
+            TgnTest.api = ApiType[TgnTest.config.get('Server', 'api')]
+
         self.xm = init_xena(self.api, self.logger, self.config.get('Xena', 'owner'),
                             self.config.get('Server', 'ip'), self.config.get('Server', 'port'))
         self.temp_dir = self.config.get('General', 'temp_dir')

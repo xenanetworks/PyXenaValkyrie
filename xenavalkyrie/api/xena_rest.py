@@ -71,7 +71,8 @@ class XenaRestWrapper(object):
         :param command: command to send.
         :param arguments: list of command arguments.
         """
-        self._perform_command('{}/{}'.format(self.session_url, obj.ref), command, OperReturnType.no_output, *arguments)
+
+        self._send_command(obj, command, OperReturnType.no_output, *arguments)
 
     def send_command_return(self, obj, command, *arguments):
         """ Send command with single line output.
@@ -81,8 +82,8 @@ class XenaRestWrapper(object):
         :param arguments: list of command arguments.
         :return: command output.
         """
-        return self._perform_command('{}/{}'.format(self.session_url, obj.ref), command, OperReturnType.line_output,
-                                     *arguments).json()
+
+        return self._send_command(obj, command, OperReturnType.line_output, *arguments)
 
     def send_command_return_multilines(self, obj, command, *arguments):
         """ Send command with no output.
@@ -93,8 +94,15 @@ class XenaRestWrapper(object):
         :return: list of command output lines.
         :rtype: list(str)
         """
-        return self._perform_command('{}/{}'.format(self.session_url, obj.ref), command,
-                                     OperReturnType.multiline_output, *arguments).json()
+
+        return self._send_command(obj, command, OperReturnType.multiline_output, *arguments)
+
+    def _send_command(self, obj, command, return_type, *arguments):
+        obj_url = '{}/{}'.format(self.session_url, obj.ref)
+        if obj.__class__.__name__ == 'XenaChassis' and command.strip()[0].isdigit():
+            return self._backdoor_command(obj_url, command, return_type)
+        else:
+            return self._perform_command(obj_url, command, return_type, *arguments).json()
 
     def get_attribute(self, obj, attribute):
         """ Returns single object attribute.
@@ -170,6 +178,11 @@ class XenaRestWrapper(object):
         statistics_url = '{}/statistics'.format(object_url)
         res = self._request(RestMethod.get, statistics_url)
         return {g['name']: {c['name']: c['value'] for c in g['counters']} for g in res.json()}
+
+    def _backdoor_command(self, chassis_url, command, return_type):
+        backdoor_url = '{}/backdoor'.format(chassis_url, command)
+        return self._request(RestMethod.post, backdoor_url,
+                             json={'return_type': return_type.value, 'command': command})
 
     def _request(self, method, url, **kwargs):
         self.logger.debug('method: {}, url: {}, kwargs={}'.format(method.value, url, kwargs))
