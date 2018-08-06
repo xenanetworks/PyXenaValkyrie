@@ -1,5 +1,6 @@
 
 This package implements Python OO API for Xena traffic generator.
+-----------------------------------------------------------------
 
 Functionality
 """""""""""""

@@ -80,7 +80,7 @@ class XenaTestOnline(XenaTestBase):
         assert(streams_stats.tx_statistics[ports[self.port1].streams[0]]['packets'] == 8000)
         assert(streams_stats.statistics[ports[self.port1].streams[0]]['tx']['packets'] == 8000)
         assert(streams_stats.statistics['Stream 1-1']['tx']['packets'] == 8000)
-        assert(streams_stats.statistics[self.config.get('Xena', 'port1') + '/0']['tx']['packets'] == 8000)
+        assert(streams_stats.statistics['/'.join(self.port1.split('/')[1:]) + '/0']['tx']['packets'] == 8000)
         # Access RX counter with port name on RX side or directly.
         assert(streams_stats.statistics['Stream 1-1']['rx']['pr_tpldtraffic']['pac'] == 8000)
         assert(streams_stats.statistics['Stream 1-1']['rx'][ports[self.port2]]['pr_tpldtraffic']['pac'] == 8000)
