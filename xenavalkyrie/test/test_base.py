@@ -8,17 +8,17 @@ from os import path
 import pytest
 
 from trafficgenerator.tgn_utils import ApiType
-from trafficgenerator.test.test_tgn import TgnTest
+from trafficgenerator.test.test_tgn import TestTgnBase
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_stream import XenaStream
 
 
-class XenaTestBase(TgnTest):
+class TestXenaBase(TestTgnBase):
 
-    TgnTest.config_file = path.join(path.dirname(__file__), 'XenaValkyrie.ini')
+    TestTgnBase.config_file = path.join(path.dirname(__file__), 'XenaValkyrie.ini')
 
-    def setUp(self):
-        super(XenaTestBase, self).setUp()
+    def setup(self):
+        super(TestXenaBase, self).setup()
 
         self._get_config()
 
@@ -30,7 +30,7 @@ class XenaTestBase(TgnTest):
         self.port3 = self.config.get('Xena', 'port3')
         XenaStream.next_tpld_id = 0
 
-    def tearDown(self):
+    def teardown(self):
         self.xm.session.disconnect()
 
     def test_hello_world(self):

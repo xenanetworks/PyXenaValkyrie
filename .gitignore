@@ -17,6 +17,7 @@ docs/_*
 .tox
 .coverage
 .eggs
+.README.md.html
 
 xenavalkyrie/test/configs/save_config.xpc 
 xenavalkyrie/test/configs/customers/

@@ -1,9 +1,7 @@
 
-This package implements Python OO API for Xena traffic generator.
------------------------------------------------------------------
+## Python OO API for Xena Valkyrie traffic generator.
 
-Functionality
-"""""""""""""
+### Functionality
 The current version supports the following test flow:
 
 - Load/Build configuration -> Change configuration -> Start/Stop traffic -> Get statistics/capture
@@ -19,34 +17,29 @@ Supported operations:
 - Capture - get captured packets
 - Release ports and disconnect
 
-Changes from pyxenamanager
-""""""""""""""""""""""""""
+### Migrate from pyxenamanager
 - Package renamed from xenamanager to xenavalkyrie
-- XenaStreamsStats.statistics['rx']:
+- XenaStreamsStats.statistics['rx']:<br>
   Returns all RX statistics indexed by RX port instead of TPLD object.
 
-Installation
-""""""""""""
+### Installation
+```
 pip instsll xenavalkyrie
+```
 
-Getting started
-"""""""""""""""
-Under xenavalkyrie.test.xena_samples you will find some basic samples.
+### Getting started
+Under ```xenavalkyrie.test.xena_samples``` you will find some basic samples.<br>
 See inside for more info.
 
-Documentation
-"""""""""""""
+### Documentation
 http://pyxenavalkyrie.readthedocs.io/en/latest/
 
-Usage notes
-"""""""""""
+### Usage notes
 - Do not create XenaManager manually but use the init_xena factory
 - When loading configuration files, first load all files only then manipulate the configuration.
 
-Related works
-"""""""""""""
+### Related works
 The package replaces pyxenamanager - https://github.com/xenadevel/PyXenaManager
 
-Contact
-"""""""
+### Contact
 Feel free to contact me with any question or feature request at yoram@ignissoft.com

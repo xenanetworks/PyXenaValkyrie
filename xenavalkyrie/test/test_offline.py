@@ -8,10 +8,10 @@ from os import path
 
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
-from xenavalkyrie.test.test_base import XenaTestBase
+from xenavalkyrie.test.test_base import TestXenaBase
 
 
-class XenaTestOffline(XenaTestBase):
+class TestXenaOffline(TestXenaBase):
 
     def test_inventory(self):
         self.xm.session.inventory()

@@ -15,12 +15,12 @@ import time
 from pypacker.layer12 import ethernet
 
 from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
-from xenavalkyrie.test.test_base import XenaTestBase
+from xenavalkyrie.test.test_base import TestXenaBase
 from xenavalkyrie.xena_port import XenaCaptureBufferType
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
 
-class XenaTestOnline(XenaTestBase):
+class TestXenaOnline(TestXenaBase):
 
     def test_online(self):
         self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
