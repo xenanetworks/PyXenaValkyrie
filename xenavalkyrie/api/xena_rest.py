@@ -41,7 +41,7 @@ class XenaRestWrapper(object):
 
     def connect(self, owner):
         self.session_url = '{}/{}'.format(self.base_url, 'session')
-        self._request(RestMethod.post, self.session_url, params={'user': owner})
+        self._request(RestMethod.post, self.session_url, params={'user': owner}, ignore=True)
         self.user_url = '{}/{}'.format(self.session_url, owner)
         self.keepalive_thread = KeepAliveThread(self.logger, self)
         self.keepalive_thread.start()
@@ -58,7 +58,7 @@ class XenaRestWrapper(object):
         """
 
         res = self._request(RestMethod.post, self.user_url, params={'ip': chassis.ip, 'port': chassis.port})
-        assert(res.status_code == 201)
+        assert(res.status_code in [200, 201])
 
     def create(self, obj):
         res = self._request(RestMethod.post, '{}/{}'.format(self.session_url, obj.ref.rsplit('/', 1)[0]))

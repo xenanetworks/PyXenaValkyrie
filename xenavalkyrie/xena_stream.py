@@ -35,7 +35,7 @@ class XenaModifierAction(Enum):
 class XenaStream(XenaObject21):
 
     create_command = 'ps_create'
-    info_config_commands = ['ps_config']
+    _info_config_commands = ['ps_config']
     stats_captions = ['bps', 'pps', 'bytes', 'packets']
 
     next_tpld_id = 0
@@ -251,7 +251,7 @@ class _XenaModifierBase(XenaObject):
 
 class XenaModifier(_XenaModifierBase):
 
-    info_config_commands = ['ps_modifier', 'ps_modifierrange']
+    _info_config_commands = ['ps_modifier', 'ps_modifierrange']
 
     def __init__(self, parent, index):
         """
@@ -263,7 +263,7 @@ class XenaModifier(_XenaModifierBase):
 
 class XenaXModifier(_XenaModifierBase):
 
-    info_config_commands = ['ps_modifierext', 'ps_modifierextrange']
+    _info_config_commands = ['ps_modifierext', 'ps_modifierextrange']
 
     def __init__(self, parent, index):
         """

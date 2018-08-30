@@ -5,6 +5,7 @@ Base class for all Xena package tests.
 """
 
 from os import path
+import pytest
 
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
@@ -78,7 +79,7 @@ class TestXenaOffline(TestXenaBase):
         try:
             port = self.xm.session.reserve_ports([self.port3])[self.port3]
         except Exception as e:
-            self.skipTest('Skip test - ' + str(e))
+            pytest.skip('Skip test - ' + str(e))
         port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_100G.xpc'))
 
         assert(len(port.streams[0].modifiers) == 1)

@@ -32,6 +32,7 @@ class XenaObjectsDict(TgnObjectsDict):
 
 
 class XenaObject(TgnObject):
+    """ Base class for all Xena objects. """
 
     def __init__(self, **data):
         if data['parent']:
@@ -141,6 +142,7 @@ class XenaObject(TgnObject):
 
 
 class XenaObject21(XenaObject):
+    """ Base class for all Xena objects with index_len = 2 and command_len = 1. """
 
     #
     # Private methods.

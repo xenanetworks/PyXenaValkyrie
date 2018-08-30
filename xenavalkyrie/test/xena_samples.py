@@ -52,7 +52,7 @@ def connect():
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
     # Create XenaApp object and connect to chassis.
-    xm = init_xena(api, logger, owner)
+    xm = init_xena(api, logger, owner, chassis)
     xm.session.add_chassis(chassis)
 
 

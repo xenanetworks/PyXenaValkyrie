@@ -9,6 +9,7 @@ import pytest
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_object import XenaAttributeError
 from xenavalkyrie.test.test_base import TestXenaBase
+from trafficgenerator.tgn_utils import ApiType
 
 
 class TestXenaErrors(TestXenaBase):
@@ -33,10 +34,11 @@ class TestXenaErrors(TestXenaBase):
         assert('IOError' in repr(excinfo.value) or 'OSError' in repr(excinfo.value))
         assert(len(self.xm.session.chassis_list) == 0)
 
-        with pytest.raises(Exception) as excinfo:
-            self.xm.session.add_chassis(self.chassis, -17)
-        assert('IOError' in repr(excinfo.value) or 'OSError' in repr(excinfo.value))
-        assert(len(self.xm.session.chassis_list) == 0)
+        if self.api == ApiType.socket:
+            with pytest.raises(Exception) as excinfo:
+                self.xm.session.add_chassis(self.chassis, -17)
+            assert('IOError' in repr(excinfo.value) or 'OSError' in repr(excinfo.value))
+            assert(len(self.xm.session.chassis_list) == 0)
 
         # Reserve port to continue testing...
 

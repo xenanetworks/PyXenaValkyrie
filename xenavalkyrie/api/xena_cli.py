@@ -87,7 +87,7 @@ class XenaCliWrapper(object):
         """
 
         attributes = {}
-        for info_config_command in obj.info_config_commands:
+        for info_config_command in obj._info_config_commands:
             index_commands_values = self.send_command_return_multilines(obj, info_config_command, '?')
             # poor implementation...
             li = obj._get_index_len()

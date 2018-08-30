@@ -24,7 +24,7 @@ class XenaCaptureBufferType(Enum):
 class XenaPort(XenaObject):
     """ Represents Xena port. """
 
-    info_config_commands = ['p_info', 'p_config', 'p_receivesync', 'ps_indices', 'pr_tplds']
+    _info_config_commands = ['p_info', 'p_config', 'p_receivesync', 'ps_indices', 'pr_tplds']
 
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
                       'pr_total': ['bps', 'pps', 'bytes', 'packets'],
@@ -299,7 +299,7 @@ class XenaCapture(XenaObject):
         of the capture criteria and inspection of the captured data from a port.
     """
 
-    info_config_commands = ['pc_fullconfig']
+    _info_config_commands = ['pc_fullconfig']
     stats_captions = ['status', 'packets', 'starttime']
 
     def __init__(self, parent):
@@ -384,8 +384,9 @@ class XenaCapture(XenaObject):
 
 
 class XenaCapturePacket(XenaObject21):
+    """ Represents single captured packet. """
 
-    info_config_commands = ['pc_info']
+    _info_config_commands = ['pc_info']
 
     def __init__(self, parent, index):
         objRef = '{}/{}'.format(parent.ref, index.split('/')[-1])

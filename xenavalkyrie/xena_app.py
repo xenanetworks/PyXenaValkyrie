@@ -15,7 +15,7 @@ from xenavalkyrie.xena_port import XenaPort
 
 
 def init_xena(api, logger, owner, ip=None, port=57911):
-    """ Create XenaManager object.
+    """ Create XenaApp object.
 
     :param api: cli/rest
     :param logger: python logger
@@ -34,7 +34,7 @@ def init_xena(api, logger, owner, ip=None, port=57911):
 
 
 class XenaApp(TgnApp):
-    """ XenaManager object, equivalent to XenaManager-2G application. """
+    """ XenaApp object, equivalent to XenaManager-2G application. """
 
     def __init__(self, logger, owner, api_wrapper):
         """ Start XenaManager-2G equivalent application.
@@ -54,9 +54,9 @@ class XenaSession(XenaObject):
 
     def __init__(self, logger, owner, api):
         """
-        :param api: cli/rest API pbject.
         :param logger: python logger
         :param owner: owner of the scripting session
+        :param api: cli/rest API pbject.
         """
 
         self.logger = logger
@@ -67,9 +67,6 @@ class XenaSession(XenaObject):
         self.session = self
         self.chassis = None
         self.api.connect(owner)
-
-        self.create_timestamp = time.time()
-        self.last_timestamp = self.create_timestamp
 
     def add_chassis(self, chassis, port=22611, password='xena'):
         """ Add chassis.
@@ -222,7 +219,7 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
-    info_config_commands = ['c_info', 'c_config']
+    _info_config_commands = ['c_info', 'c_config']
     stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
     def __init__(self, parent, ip, port=22611, password='xena'):
@@ -371,7 +368,7 @@ class XenaChassis(XenaObject):
 class XenaModule(XenaObject):
     """ Represents Xena module. """
 
-    info_config_commands = ['m_info', 'm_config', 'm_portcount']
+    _info_config_commands = ['m_info', 'm_config', 'm_portcount']
 
     def __init__(self, parent, index):
         """
