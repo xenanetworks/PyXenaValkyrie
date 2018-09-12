@@ -24,6 +24,8 @@ class XenaCaptureBufferType(Enum):
 class XenaPort(XenaObject):
     """ Represents Xena port. """
 
+    cli_prefix = 'p'
+
     _info_config_commands = ['p_info', 'p_config', 'p_receivesync', 'ps_indices', 'pr_tplds']
 
     stats_captions = {'pr_pfcstats': ['total', 'CoS 0', 'CoS 1', 'CoS 2', 'CoS 3', 'CoS 4', 'CoS 5', 'CoS 6', 'CoS 7'],
@@ -49,30 +51,6 @@ class XenaPort(XenaObject):
 
     def inventory(self):
         self.p_info = self.get_attributes()
-
-    def reserve(self, force=False):
-        """ Reserve port.
-
-        XenaManager-2G -> Reserve/Relinquish Port.
-
-        :param force: True - take forcefully, False - fail if port is reserved by other user
-        """
-
-        p_reservation = self.get_attribute('p_reservation')
-        if p_reservation == 'RESERVED_BY_YOU':
-            return
-        elif p_reservation == 'RESERVED_BY_OTHER' and not force:
-            raise TgnError('Port {} reserved by {}'.format(self, self.get_attribute('p_reservedby')))
-        self.relinquish()
-        self.send_command('p_reservation', 'reserve')
-
-    def relinquish(self):
-        if self.get_attribute('p_reservation') != 'RELEASED':
-            self.send_command('p_reservation relinquish')
-
-    def release(self):
-        if self.get_attribute('p_reservation') == 'RESERVED_BY_YOU':
-            self.send_command('p_reservation release')
 
     def reset(self):
         """ Reset port-level parameters to standard values, and delete all streams, filters, capture,

@@ -219,6 +219,8 @@ class XenaSession(XenaObject):
 class XenaChassis(XenaObject):
     """ Represents single Xena chassis. """
 
+    cli_prefix = 'c'
+
     _info_config_commands = ['c_info', 'c_config']
     stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
@@ -241,6 +243,30 @@ class XenaChassis(XenaObject):
         self.api.add_chassis(self)
 
         self.c_info = None
+
+    def shutdown(self, restart=False, wait=False):
+        """ Shutdown chassis.
+
+        Limitations: shutdown to single chassis will disconnect all chassis so in multiple chassis environment the test
+        should reconnect by calling api.add_chassis(chassis).
+
+        :param restart: True - restart, False - poweroff
+        :param wait: True - wait for chassis to come up after restart, False - return immediately
+        :todo: fix limitation.
+        """
+
+        whattodo = 'restart' if restart else 'shutdown'
+        self.send_command('c_down', '-1480937026', whattodo)
+        self.api.disconnect()
+        if wait:
+            while True:
+                time.sleep(2)
+                try:
+                    self.api.connect(self.owner)
+                    self.api.add_chassis(self)
+                    break
+                except Exception as e:
+                    pass
 
     def get_session_id(self):
         """ Get ID of the current automation session on the chassis.
@@ -367,6 +393,8 @@ class XenaChassis(XenaObject):
 
 class XenaModule(XenaObject):
     """ Represents Xena module. """
+
+    cli_prefix = 'm'
 
     _info_config_commands = ['m_info', 'm_config', 'm_portcount']
 

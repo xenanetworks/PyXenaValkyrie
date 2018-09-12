@@ -6,10 +6,12 @@ Base class for all Xena package tests.
 
 from os import path
 import pytest
+import requests
 
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
 from xenavalkyrie.test.test_base import TestXenaBase
+from trafficgenerator.tgn_utils import ApiType
 
 
 class TestXenaOffline(TestXenaBase):
@@ -126,3 +128,46 @@ class TestXenaOffline(TestXenaBase):
         assert(port.get_attribute('ps_indices').split()[0] == '1')
 
         port.save_config(path.join(path.dirname(__file__), 'configs', 'save_config.xpc'))
+
+    def test_rest_server(self):
+
+        if self.api == ApiType.rest:
+            pytest.skip('Skip test - REST API')
+
+        #: :type chassis: xenavalkyrie.xena_app.XenaChassis
+        chassis = self.xm.session.chassis_list[self.chassis]
+        chassis.reserve()
+
+        assert(int(chassis.get_attribute('c_restport')) == self.server_port)
+        assert(chassis.get_attribute('c_reststatus').lower() == 'service_on')
+        assert(chassis.get_attribute('c_restenable').lower() == 'on')
+        base_url = 'http://{}:{}'.format(self.server_ip, self.server_port)
+        requests.get(base_url)
+        chassis.set_attributes(c_restport=self.server_port + 10)
+        chassis.set_attributes(c_restcontrol='restart')
+        assert(chassis.get_attribute('c_reststatus').lower() == 'service_on')
+        assert(int(chassis.get_attribute('c_restport')) == self.server_port + 10)
+        base_url = 'http://{}:{}'.format(self.server_ip, self.server_port + 10)
+        requests.get(base_url)
+        chassis.set_attributes(c_restport=self.server_port)
+        chassis.set_attributes(c_restcontrol='stop')
+        assert(chassis.get_attribute('c_reststatus').lower() == 'service_off')
+        base_url = 'http://{}:{}'.format(self.server_ip, self.server_port)
+        with pytest.raises(Exception) as _:
+            requests.get(base_url)
+        chassis.set_attributes(c_restcontrol='start')
+        assert(chassis.get_attribute('c_reststatus').lower() == 'service_on')
+        requests.get(base_url)
+
+        chassis.set_attributes(c_restenable='off')
+        assert(chassis.get_attribute('c_restenable').lower() == 'off')
+        chassis.shutdown(restart=True, wait=True)
+        assert(chassis.get_attribute('c_restenable').lower() == 'off')
+        with pytest.raises(Exception) as _:
+            requests.get(base_url)
+        chassis.reserve()
+        chassis.set_attributes(c_restenable='on')
+        assert(chassis.get_attribute('c_restenable').lower() == 'on')
+        chassis.shutdown(restart=True, wait=True)
+        assert(chassis.get_attribute('c_restenable').lower() == 'on')
+        requests.get(base_url)

@@ -61,6 +61,39 @@ class XenaObject(TgnObject):
     def _create(self):
         self.api.create(self)
 
+    def reserve(self, force=False):
+        """ Reserve object.
+
+        XenaManager-2G -> [Relinquish]/Reserve Chassis/Module/Port.
+
+        :param force: True - take forcefully, False - fail if port is reserved by other user
+        """
+
+        reservation = self.get_attribute(self.cli_prefix + '_reservation')
+        if reservation == 'RESERVED_BY_YOU':
+            return
+        elif reservation == 'RESERVED_BY_OTHER' and not force:
+            reservedby = self.get_attribute(self.cli_prefix + '_reservedby')
+            raise TgnError('Resource {} reserved by {}'.format(self, reservedby))
+        self.relinquish()
+        self.send_command(self.cli_prefix + '_reservation', 'reserve')
+
+    def relinquish(self):
+        """ Relinquish object.
+
+        XenaManager-2G -> Relinquish Chassis/Module/Port.
+        """
+        if self.get_attribute(self.cli_prefix + '_reservation') != 'RELEASED':
+            self.send_command(self.cli_prefix + '_reservation relinquish')
+
+    def release(self):
+        """ Release object.
+
+        XenaManager-2G -> Release Chassis/Module/Port.
+        """
+        if self.get_attribute(self.cli_prefix + '_reservation') == 'RESERVED_BY_YOU':
+            self.send_command(self.cli_prefix + '_reservation release')
+
     def send_command(self, command, *arguments):
         """ Send command with no output.
 
