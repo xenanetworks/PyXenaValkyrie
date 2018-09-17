@@ -8,10 +8,10 @@ from os import path
 import pytest
 import requests
 
+from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
 from xenavalkyrie.test.test_base import TestXenaBase
-from trafficgenerator.tgn_utils import ApiType
 
 
 class TestXenaOffline(TestXenaBase):
@@ -133,6 +133,9 @@ class TestXenaOffline(TestXenaBase):
 
         if self.api == ApiType.rest:
             pytest.skip('Skip test - REST API')
+
+        if is_local_host(self.server_ip):
+            pytest.skip('Skip test - localhost')
 
         #: :type chassis: xenavalkyrie.xena_app.XenaChassis
         chassis = self.xm.session.chassis_list[self.chassis]

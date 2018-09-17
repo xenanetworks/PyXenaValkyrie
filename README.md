@@ -24,7 +24,7 @@ Supported operations:
 
 ### Installation
 ```
-pip instsll xenavalkyrie
+pip install xenavalkyrie
 ```
 
 ### Getting started

@@ -84,7 +84,7 @@ class XenaSession(XenaObject):
             try:
                 XenaChassis(self, chassis, port, password)
             except Exception as error:
-                self.objects.pop('{}/{}'.format(self.owner, chassis))
+                self.objects.pop('{}/chassis/{}'.format(self.owner, chassis))
                 raise error
         return self.chassis_list[chassis]
 
@@ -234,7 +234,7 @@ class XenaChassis(XenaObject):
         """
 
         super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip,
-                                             objRef='{}/{}'.format(parent.ref, ip))
+                                             objRef='{}/chassis/{}'.format(parent.ref, ip))
         self.chassis = self
         self.owner = parent.owner
         self.ip = ip
@@ -404,8 +404,7 @@ class XenaModule(XenaObject):
         :param index: module index, 0 based.
         """
 
-        super(self.__class__, self).__init__(objType='module', index=index, parent=parent,
-                                             objRef='{}/{}'.format(parent.ref, index))
+        super(self.__class__, self).__init__(objType='module', index=str(index), parent=parent)
         self.m_info = None
 
     def inventory(self):

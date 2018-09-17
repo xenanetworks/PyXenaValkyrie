@@ -39,12 +39,18 @@ class XenaPort(XenaObject):
                       'pt_notpld': ['bps', 'pps', 'bytes', 'packets']}
 
     def __init__(self, parent, index):
-        """
+        """ Create port object.
+
+        Note that port can be child of chassis or module objects.
+
         :param parent: parent module or chassis.
         :param index: port index in format module/port (both 0 based)
         """
 
-        objRef = '{}/{}'.format('/'.join(parent.ref.split('/')[:2]), index)
+        if 'module' in parent.ref:
+            objRef = '{}/port/{}'.format(parent.ref, index.split('/')[-1])
+        else:
+            objRef = '{}/module/{}/port/{}'.format(parent.ref, *index.split('/'))
         super(self.__class__, self).__init__(objType='port', index=index, parent=parent, objRef=objRef)
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None

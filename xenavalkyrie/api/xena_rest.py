@@ -57,7 +57,8 @@ class XenaRestWrapper(object):
         :param chassis: chassis object
         """
 
-        res = self._request(RestMethod.post, self.user_url, params={'ip': chassis.ip, 'port': chassis.port})
+        res = self._request(RestMethod.post, '{}/chassis'.format(self.user_url),
+                            params={'ip': chassis.ip, 'port': chassis.port})
         assert(res.status_code in [200, 201])
 
     def create(self, obj):
