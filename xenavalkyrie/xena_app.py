@@ -354,6 +354,20 @@ class XenaChassis(XenaObject):
         """
         raise NotImplementedError('Bug in chassis when trying to read c_statsession')
 
+    def save_config(self, config_file_name):
+        """ Save entire chassis configuration file.
+
+        :param config_file_name: full path to the configuration file.
+        """
+
+        with open(config_file_name, 'w+') as f:
+            f.write(';Chassis: {}\n'.format(self.name))
+            for line in self.send_command_return_multilines('c_config', '?'):
+                f.write(line.lstrip())
+
+        for module in self.modules.values():
+            module.save_config(config_file_name, 'a+')
+
     #
     # Properties.
     #
@@ -418,6 +432,21 @@ class XenaModule(XenaObject):
             m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
         for p_index in range(m_portcount):
             XenaPort(parent=self, index='{}/{}'.format(self.index, p_index)).inventory()
+
+    def save_config(self, config_file_name, file_mode='w+'):
+        """ Save module configuration file (including all ports under module).
+
+        :param config_file_name: full path to the configuration file.
+        :param file_mode: w+ for module configuration file, a+ for chassis configuration.
+        """
+
+        with open(config_file_name, file_mode) as f:
+            f.write(';Module: {}\n'.format(self.index))
+            for line in self.send_command_return_multilines('m_config', '?'):
+                f.write(line.split(' ', 1)[1].lstrip())
+
+        for port in self.ports.values():
+            port.save_config(config_file_name, 'a+')
 
     #
     # Properties.

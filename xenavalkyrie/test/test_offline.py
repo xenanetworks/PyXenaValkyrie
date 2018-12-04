@@ -27,6 +27,9 @@ class TestXenaOffline(TestXenaBase):
                     print('\t\tport {}'.format(p_name))
         print('+++')
 
+        save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xmc')
+        self.xm.session.chassis_list.values()[0].save_config(save_config)
+
     def test_load_config(self):
         #: :type port: xenavalkyrie.xena_port.XenaPort
         port = self.xm.session.reserve_ports([self.port2])[self.port2]

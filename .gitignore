@@ -19,5 +19,5 @@ docs/_*
 .eggs
 .README.md.html
 
-xenavalkyrie/test/configs/save_config.xpc 
+xenavalkyrie/test/configs/save_config.* 
 xenavalkyrie/test/configs/customers/

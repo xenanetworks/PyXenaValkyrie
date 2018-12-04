@@ -8,8 +8,6 @@ import os
 from collections import OrderedDict
 from enum import Enum
 
-from trafficgenerator.tgn_utils import TgnError
-
 from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
@@ -88,13 +86,15 @@ class XenaPort(XenaObject):
                 except XenaCommandError as e:
                     self.logger.warning(str(e))
 
-    def save_config(self, config_file_name):
+    def save_config(self, config_file_name, file_mode='w+'):
         """ Save configuration file to xpc file.
 
         :param config_file_name: full path to the configuration file.
+        :param file_mode: w+ for port configuration file, a+ for module configuration.
         """
 
-        with open(config_file_name, 'w+') as f:
+        with open(config_file_name, file_mode) as f:
+            f.write(';Port: {}\n'.format(self.index))
             f.write('P_RESET\n')
             for line in self.send_command_return_multilines('p_fullconfig', '?'):
                 f.write(line.split(' ', 1)[1].lstrip())
