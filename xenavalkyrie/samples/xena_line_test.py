@@ -5,7 +5,7 @@
 """
 
 import sys
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, SUPPRESS
 import logging
 import time
 import json
@@ -17,7 +17,7 @@ from xenavalkyrie.xena_stream import XenaStreamState
 from xenavalkyrie.xena_statistics_view import XenaPortsStats
 
 
-version = 0.2
+version = 0.3
 
 
 def xena_line_test(args=None):
@@ -42,8 +42,8 @@ def xena_line_test(args=None):
     # save sub-parser
     save_convert = subparsers.add_parser('save', formatter_class=ArgumentDefaultsHelpFormatter)
     save_convert.set_defaults(func=save_config)
-    save_convert.add_argument('-p', '--ports', required=False, nargs='+', metavar='port',
-                              help='Ports to start traffic on')
+    save_convert.add_argument('-p', '--ports', default=SUPPRESS, required=False, nargs='+', metavar='port',
+                              help='Ports to save configuration from. (default: all)')
     save_convert.add_argument('-o', '--output', required=True, metavar='file',
                               help='Configuration output file.')
 
@@ -57,11 +57,13 @@ def xena_line_test(args=None):
     run_analyze = subparsers.add_parser('run', formatter_class=ArgumentDefaultsHelpFormatter)
     run_analyze.set_defaults(func=run_test)
     run_analyze.add_argument('-p', '--ports', required=True, nargs='+', metavar='port',
-                             help='Ports to start traffic on')
+                             help='Ports to start traffic on.')
     run_analyze.add_argument('-t', '--time', required=True, type=int, metavar='int',
                              help='Run duration in seconds')
     run_analyze.add_argument('-r', '--results', required=True, metavar='file',
                              help='Results output file')
+    run_analyze.add_argument('-c', '--counters', required=False, default=SUPPRESS, nargs='+', metavar='counter',
+                             help='List of counters to save in output file. (default: all)')
 
     # Process arguments
     parsed_args = parser.parse_args(args)
@@ -127,10 +129,20 @@ def run_test(parsed_args):
 
     time.sleep(2)
 
+    counters = parsed_args.counters if hasattr(parsed_args, 'counters') else None
     with open(parsed_args.results, 'w+') as f:
         ports_stats = XenaPortsStats(chassis.parent)
         ports_stats.read_stats()
-        f.write(json.dumps(ports_stats.get_flat_stats(), indent=2))
+        if counters:
+            f.write('port,{}\n'.format(','.join(counters)))
+            for port in chassis.ports:
+                line = port
+                for counter in counters:
+                    line += ','
+                    line += str(ports_stats.get_flat_stats()[port][counter])
+                f.write('{}\n'.format(line))
+        else:
+            f.write(json.dumps(ports_stats.get_flat_stats(), indent=2))
 
     for port in chassis.ports.values():
         port.release()
