@@ -33,6 +33,13 @@ class XenaModifierAction(Enum):
     decrement = 'DEC'
     random = 'RANDOM'
 
+class XenaPayloadType(Enum):
+    REPEATING = 'PATTERN' #(a pattern is repeated up through the packet)
+    INCREMENTING = 'INCREMENTING' #(bytes are incremented up through the packet)
+    PRBS = 'PRBS' #(bytes are randomized from packet to packet)
+    RANDOM = 'RANDOM' #(a random generated pattern)
+    FIXED = 'FIXED'
+
 
 class XenaStream(XenaObject21):
 
@@ -272,6 +279,9 @@ class XenaModifier(_XenaModifierBase):
         """
         super(self.__class__, self).__init__(objType='modifier', index=index, parent=parent)
 
+    def update(self,**kwargs):
+        self.get()
+        self.set(**kwargs)
 
 class XenaXModifier(_XenaModifierBase):
 
