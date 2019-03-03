@@ -12,6 +12,8 @@ import sys
 import logging
 import json
 import binascii
+import time
+
 from pypacker.layer12.ethernet import Ethernet, Dot1Q
 from pypacker.layer3.ip6 import IP6
 from pypacker.layer4.tcp import TCP
@@ -25,16 +27,14 @@ from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 wireshark_path = '/usr/bin'
 
 api = ApiType.socket
-chassis = '176.22.65.114'
-chassis = '192.168.1.170'
-chassis = '176.22.65.117'
 chassis = '192.168.1.197'
+chassis = '176.22.65.117'
 port1 = chassis + '/' + '0/0'
 port0 = chassis + '/' + '0/1'
 owner = 'yoram-s'
-config0 = path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc')
-save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xpc')
-pcap_file = path.join(path.dirname(__file__), 'configs', 'xena_cap.pcap')
+config0 = path.join(path.dirname(__file__), 'test_config_1.xpc')
+save_config = path.join(path.dirname(__file__), 'save_config.xpc')
+pcap_file = path.join(path.dirname(__file__), 'xena_cap.pcap')
 ports = {}
 
 #: :type xm: xenavalkyrie.xena_app.XenaApp
@@ -71,8 +71,10 @@ def inventory():
         print('chassis ' + c_name)
         for m_name, module in chassis.modules.items():
             print('\tmodule ' + str(m_name))
-            for p_name, _ in module.ports.items():
+            for p_name, port in module.ports.items():
                 print('\t\tport ' + str(p_name))
+                for s_name, _ in port.streams.items():
+                    print('\t\t\tstream ' + str(s_name))
     print('+++')
 
 

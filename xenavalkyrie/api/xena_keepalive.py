@@ -1,10 +1,11 @@
 
 import threading
+import time
 
 
 class KeepAliveThread(threading.Thread):
 
-    def __init__(self, logger, api, interval=60):
+    def __init__(self, logger, api, interval=10):
         threading.Thread.__init__(self)
         self.nr_sent = 0
         self.logger = logger
@@ -22,8 +23,9 @@ class KeepAliveThread(threading.Thread):
     def run(self):
         while not self.finished.isSet():
             self.finished.wait(self.interval)
-            try:
-                self.api.keep_alive()
-            except Exception as _:
-                pass
-            self.nr_sent += 1
+            if (time.time() - self.api.last_command_timestamp) >= self.interval:
+                try:
+                    self.api.keep_alive()
+                except Exception as _:
+                    pass
+                self.nr_sent += 1

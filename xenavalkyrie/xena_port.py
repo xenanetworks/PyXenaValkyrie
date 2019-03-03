@@ -373,5 +373,5 @@ class XenaCapturePacket(XenaObject21):
     _info_config_commands = ['pc_info']
 
     def __init__(self, parent, index):
-        objRef = '{}/{}'.format(parent.ref, index.split('/')[-1])
-        super(self.__class__, self).__init__(objType='cappacket', parent=parent, index=index, objRef=objRef)
+        obj_ref = '{}/{}'.format(parent.ref, index.split('/')[-1])
+        super(self.__class__, self).__init__(objType='cappacket', parent=parent, index=index, objRef=obj_ref)

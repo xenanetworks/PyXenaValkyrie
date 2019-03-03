@@ -11,7 +11,7 @@ import requests
 from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
-from xenavalkyrie.test.test_base import TestXenaBase
+from xenavalkyrie.tests.test_base import TestXenaBase
 
 
 class TestXenaOffline(TestXenaBase):
@@ -144,6 +144,7 @@ class TestXenaOffline(TestXenaBase):
         chassis = self.xm.session.chassis_list[self.chassis]
         chassis.reserve()
 
+        chassis.set_attributes(c_restport=self.server_port)
         assert(int(chassis.get_attribute('c_restport')) == self.server_port)
         assert(chassis.get_attribute('c_reststatus').lower() == 'service_on')
         assert(chassis.get_attribute('c_restenable').lower() == 'on')

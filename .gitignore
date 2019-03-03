@@ -19,5 +19,10 @@ docs/_*
 .eggs
 .README.md.html
 
-xenavalkyrie/test/configs/save_config.* 
+xenavalkyrie/test/configs/save_config.*
 xenavalkyrie/test/configs/customers/
+
+xenavalkyrie/samples/*.txt
+xenavalkyrie/samples/*.csv
+xenavalkyrie/samples/*.pcap
+xenavalkyrie/samples/save_config.*

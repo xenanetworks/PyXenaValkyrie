@@ -6,6 +6,7 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 
 import requests
 import json
+import time
 from enum import Enum
 
 from xenavalkyrie.api.xena_socket import XenaCommandError
@@ -38,6 +39,7 @@ class XenaRestWrapper(object):
         self.logger = logger
         self.base_url = 'http://{}:{}'.format(server, port)
         self.keepalive_thread = None
+        self.last_command_timestamp = time.time()
 
     def connect(self, owner):
         self.session_url = '{}/{}'.format(self.base_url, 'session')
@@ -100,6 +102,7 @@ class XenaRestWrapper(object):
 
     def _send_command(self, obj, command, return_type, *arguments):
         obj_url = '{}/{}'.format(self.session_url, obj.ref)
+        self.last_command_timestamp = time.time()
         if obj.__class__.__name__ == 'XenaChassis' and command.strip()[0].isdigit():
             return self._backdoor_command(obj_url, command, return_type)
         else:

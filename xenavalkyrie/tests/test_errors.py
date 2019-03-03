@@ -8,7 +8,7 @@ import pytest
 
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_object import XenaAttributeError
-from xenavalkyrie.test.test_base import TestXenaBase
+from xenavalkyrie.tests.test_base import TestXenaBase
 from trafficgenerator.tgn_utils import ApiType
 
 

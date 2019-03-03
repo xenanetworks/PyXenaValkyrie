@@ -45,8 +45,8 @@ class TestXenaBase(TestTgnBase):
         self.port3 = pytest.config.getoption('--port3')  # @UndefinedVariable
         self.chassis2 = self.port3.split('/')[0] if self.port3 else ''
         if self.server_ip:
-            self.server_ip = self.server_ip.split(':')[0]
             self.server_port = int(self.server_ip.split(':')[1]) if len(self.server_ip.split(':')) == 2 else 57911
+            self.server_ip = self.server_ip.split(':')[0]
         else:
             self.server_ip = self.chassis
             self.server_port = 57911

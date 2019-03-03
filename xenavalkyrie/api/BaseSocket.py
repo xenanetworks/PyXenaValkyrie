@@ -66,20 +66,22 @@ class BaseSocket:
             raise socket.error("readReply() on a disconnected socket")
 
         try:
-            reply = self.sock.recv(1024)
+            reply = self.sock.recv(4096)
+            while not reply.endswith('\x0a'):
+                reply += self.sock.recv(4096)
             if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
                 # read next line for actual message
-                reply = self.sock.recv(1024)
+                reply = self.sock.recv(4096)
         except Exception as error:
             self.disconnect()
-            raise IOError("Fail to read response, error: {}", error)
+            raise IOError('Fail to read response, error: {}'.format(error))
 
         str_reply = reply.decode("utf-8")
         logger.debug('Reply message({})'.format(str_reply))
         return str_reply
 
     def sendQuery(self, query):
-        logger.debug("sendQuery(%s)", query)
+        logger.debug('sendQuery({})'.format(query))
         self.sendCommand(query)
         reply = self.readReply()
         return reply
