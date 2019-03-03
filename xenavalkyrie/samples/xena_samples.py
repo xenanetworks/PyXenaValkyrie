@@ -27,8 +27,7 @@ from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 wireshark_path = '/usr/bin'
 
 api = ApiType.socket
-chassis = '192.168.1.197'
-chassis = '176.22.65.117'
+chassis = ''
 port1 = chassis + '/' + '0/0'
 port0 = chassis + '/' + '0/1'
 owner = 'yoram-s'
