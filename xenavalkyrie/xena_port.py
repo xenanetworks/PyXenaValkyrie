@@ -11,6 +11,7 @@ from enum import Enum
 from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
+from xena_filter import XenaFilterState, XenaFilter, XenaMatch, XenaLength
 
 
 class XenaCaptureBufferType(Enum):
@@ -126,6 +127,67 @@ class XenaPort(XenaObject):
 
         self.streams[index].del_object_from_parent()
 
+    def add_filter(self, comment=None):
+        """ Add filter.
+
+        We cannot set state before we set condition so it is the test responsibility.
+
+        :param comment: filter description.
+        :return: newly created filter.
+        :rtype: xenavalkyrie.xena_filter.XenaFilter
+        """
+
+        filter = XenaFilter(parent=self, index='{}/{}'.format(self.index, len(self.filters)), name=comment)
+        filter._create()
+        filter.set_attributes(pf_comment='"{}"'.format(filter.name))
+        return filter
+
+    def remove_filter(self, index):
+        """ Remove filter.
+
+        :param index: index of filter to remove.
+        """
+
+        self.filters[index].del_object_from_parent()
+
+    def add_match(self):
+        """ Add match.
+
+        :return: newly created match.
+        :rtype: xenavalkyrie.xena_filter.XenaMatch
+        """
+
+        match = XenaMatch(parent=self, index='{}/{}'.format(self.index, len(self.matches)))
+        match._create()
+        return match
+
+    def remove_match(self, index):
+        """ Remove match.
+
+        :param index: index of match to remove.
+        """
+
+        self.matches[index].del_object_from_parent()
+
+    def add_length(self):
+        """ Add match.
+
+        :return: newly created match.
+        :rtype: xenavalkyrie.xena_filter.XenaMatch
+        """
+
+        length = XenaLength(parent=self, index='{}/{}'.format(self.index, len(self.lengthes)))
+        length._create()
+        return length
+
+    def remove_length(self, index):
+        """ Remove length.
+
+        :param index: index of length to remove.
+        """
+
+        self.lengthes[index].del_object_from_parent()
+
     #
     # Operations.
     #
@@ -218,7 +280,7 @@ class XenaPort(XenaObject):
         if not self.get_objects_by_type('stream'):
             tpld_ids = []
             for index in self.get_attribute('ps_indices').split():
-                stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index, name=None))
+                stream = XenaStream(parent=self, index='{}/{}'.format(self.index, index), name=None)
                 ps_comment = stream.get_attribute('ps_comment')
                 if ps_comment:
                     stream._data['name'] = ps_comment
@@ -250,6 +312,45 @@ class XenaPort(XenaObject):
         if not self.get_object_by_type('capture'):
             XenaCapture(parent=self)
         return self.get_object_by_type('capture')
+
+    @property
+    def filters(self):
+        """
+        :return: dictionary {id: object} of all filters.
+        :rtype: dict of (int, xenavalkyrie.xena_filter.XenaFilter)
+        """
+
+        if not self.get_objects_by_type('filter'):
+            for index in self.get_attribute('pf_indices').split():
+                filter = XenaFilter(parent=self, index='{}/{}'.format(self.index, index), name=None)
+                pf_comment = filter.get_attribute('pf_comment')
+                if pf_comment:
+                    filter._data['name'] = pf_comment
+        return {f.id: f for f in self.get_objects_by_type('filter')}
+
+    @property
+    def matches(self):
+        """
+        :return: dictionary {id: object} of all matches.
+        :rtype: dict of (int, xenavalkyrie.xena_filter.XenaMatch)
+        """
+
+        if not self.get_objects_by_type('match'):
+            for index in self.get_attribute('pm_indices').split():
+                XenaMatch(parent=self, index='{}/{}'.format(self.index, index))
+        return {m.id: m for m in self.get_objects_by_type('match')}
+
+    @property
+    def lengthes(self):
+        """
+        :return: dictionary {id: object} of all lengthes.
+        :rtype: dict of (int, xenavalkyrie.xena_filter.XenaLength)
+        """
+
+        if not self.get_objects_by_type('length'):
+            for index in self.get_attribute('pl_indices').split():
+                XenaLength(parent=self, index='{}/{}'.format(self.index, index))
+        return {l.id: l for l in self.get_objects_by_type('length')}
 
 
 class XenaTpld(XenaObject21):

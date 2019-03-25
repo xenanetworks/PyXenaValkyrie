@@ -12,6 +12,7 @@ from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
 from xenavalkyrie.tests.test_base import TestXenaBase
+from xenavalkyrie.xena_filter import XenaFilterState
 
 
 class TestXenaOffline(TestXenaBase):
@@ -23,8 +24,10 @@ class TestXenaOffline(TestXenaBase):
             print(c_name)
             for m_name, module in chassis.modules.items():
                 print('\tmodule {}'.format(m_name))
-                for p_name, _ in module.ports.items():
+                for p_name, port in module.ports.items():
                     print('\t\tport {}'.format(p_name))
+                    for s_name, _ in port.streams.items():
+                        print('\t\t\tstream {}'.format(s_name))
         print('+++')
 
         save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xmc')
@@ -37,6 +40,7 @@ class TestXenaOffline(TestXenaBase):
 
         assert(len(port.streams) == 2)
         assert(XenaStream.next_tpld_id == 2)
+        port.api.sockets_list[self.xm.session.chassis_list.values()[0]].sendQuery('0/0 ps_comment [17] ?')
 
         packet = port.streams[0].get_packet_headers()
         print(packet)
@@ -124,6 +128,29 @@ class TestXenaOffline(TestXenaBase):
         assert(stream.get_attribute('ps_tpldid') == '7')
         assert(XenaStream.next_tpld_id == 8)
         assert(len(port.streams) == 2)
+
+        match = port.add_match()
+        # Order matters
+        match.set_attributes(pm_protocol='ETHERNET VLAN')
+        match.set_attributes(pm_position=14)
+        match.set_attributes(pm_match='0x0FFF000000000000 0x0064000000000000')
+        assert(len(port.matches) == 1)
+
+        filter = port.add_filter(comment='New Filter')
+        filter.set_attributes(pf_condition='0 0 0 0 1 0')
+        filter.set_state(XenaFilterState.on)
+        assert filter.get_attribute('pf_comment') == 'New Filter'
+        assert(len(port.filters) == 1)
+
+        length = port.add_length()
+        assert(len(port.lengthes) == 1)
+
+        port.remove_length(0)
+        assert(len(port.lengthes) == 0)
+        port.remove_filter(0)
+        assert(len(port.filters) == 0)
+        port.remove_match(0)
+        assert(len(port.matches) == 0)
 
         port.remove_stream(0)
         assert(len(port.streams) == 1)
