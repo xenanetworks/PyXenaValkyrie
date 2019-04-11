@@ -11,7 +11,7 @@ from enum import Enum
 from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
-from xena_filter import XenaFilterState, XenaFilter, XenaMatch, XenaLength
+from xenavalkyrie.xena_filter import XenaFilterState, XenaFilter, XenaMatch, XenaLength
 
 
 class XenaCaptureBufferType(Enum):

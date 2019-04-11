@@ -12,6 +12,7 @@ docs/_*
 .settings
 .cache
 .idea
+venv
 
 .pytest_cache
 .tox
