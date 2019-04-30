@@ -388,8 +388,8 @@ class XenaCapture(XenaObject):
     stats_captions = ['status', 'packets', 'starttime']
 
     def __init__(self, parent):
-        objRef = '{}/capture'.format(parent.ref)
-        super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent, objRef=objRef)
+        obj_ref = '{}/capture'.format(parent.ref)
+        super(self.__class__, self).__init__(objType='capture', index=parent.index, parent=parent, objRef=obj_ref)
 
     def read_stats(self):
         """

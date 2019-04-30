@@ -10,20 +10,23 @@ Two Xena ports connected back to back.
 import sys
 import logging
 import time
+import binascii
+import socket
+from pypacker.layer12.ethernet import Ethernet
 
 from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.xena_app import init_xena
-from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats
 from xenavalkyrie.xena_port import XenaCaptureBufferType
 
 wireshark_path = '/usr/bin'
 
 api = ApiType.socket
 chassis = '176.22.65.117'
-dhcp_client = chassis + '/' + '0/0'
-dhcp_server = chassis + '/' + '0/1'
+client_location = chassis + '/' + '0/0'
+server_location = chassis + '/' + '0/1'
 owner = 'dhcp'
-config0 = 'test_config_long_packets.xpc'
+client_config = 'dhcp_client.xpc'
+server_config = 'dhcp_server.xpc'
 cap_file = 'packets.txt'
 results_file = 'results.txt'
 ports = {}
@@ -53,68 +56,81 @@ def disconnect():
     xm.session.disconnect()
 
 
-def traffic():
+def act_dhcp(server_location, client_location, server_ip, client_ip, subnet_mask, router_ip):
 
     global ports
 
-    with open(cap_file, 'w+') as _:
-        pass
-
-    with open(results_file, 'w+') as _:
-        pass
-
     # Reserve ports
-    ports = xm.session.reserve_ports([port0, port1], True)
-    ports[port0].wait_for_up(16)
-    ports[port1].wait_for_up(16)
+    ports = xm.session.reserve_ports([client_location, server_location], force=True, reset=False)
+    server = ports[server_location]
+    client = ports[client_location]
+    server.wait_for_up(16)
+    client.wait_for_up(16)
 
     # Load configuration on port-0.
-    ports[port0].load_config(config0)
+    # client.load_config(client_config)
+    # server.load_config(server_config)
 
-    # Disable all streams
-    for stream in ports[port0].streams.values():
-        stream.set_attributes(PS_ENABLE='OFF')
+    # Send Discover
+    client.streams[0].set_attributes(PS_ENABLE='ON')
+    client.streams[1].set_attributes(PS_ENABLE='OFF')
+    server.start_capture()
+    client.start_traffic()
+    while not server.capture.packets:
+        time.sleep(0.1)
+    server.stop_capture()
 
-    for sid, stream in ports[port0].streams.items():
+    # At this point we know we have received Discover
+    packet = server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.raw)[0]
+    discover = Ethernet(binascii.unhexlify(packet))
+    print(discover)
 
-        # Enable current stream
-        stream.set_attributes(PS_ENABLE='ON')
+    # Send Offer packet.
+    server.streams[0].set_attributes(PS_ENABLE='ON')
+    server.streams[1].set_attributes(PS_ENABLE='OFF')
+    eth = server.streams[0].get_packet_headers()
+    ip = eth.ip
+    ip.src_s = server_ip
+    ip.dst_s = client_ip
+    dhcp = eth.ip.udp.dhcp
+    dhcp.yiaddr_s = client_ip
+    dhcp.opts[1].body_bytes = socket.inet_aton(server_ip)
+    dhcp.opts[3].body_bytes = socket.inet_aton(subnet_mask)
+    dhcp.opts[4].body_bytes = socket.inet_aton(router_ip)
+    server.streams[0].set_packet_headers(eth)
+    server.start_traffic()
 
-        # Run traffic with capture on all ports.
+    # Send Request
+    client.streams[0].set_attributes(PS_ENABLE='OFF')
+    client.streams[1].set_attributes(PS_ENABLE='ON')
+    server.start_capture()
+    client.start_traffic()
+    while not server.capture.packets:
+        time.sleep(0.1)
+    server.stop_capture()
 
-        # Run traffic on one port and capture on the other port.
-        xm.session.clear_stats()
-        ports[port1].start_capture()
-        ports[port0].start_traffic(blocking=True)
-        ports[port1].stop_capture()
+    # Send Ack packet.
+    server.streams[0].set_attributes(PS_ENABLE='OFF')
+    server.streams[1].set_attributes(PS_ENABLE='ON')
+    eth = server.streams[1].get_packet_headers()
+    ip = eth.ip
+    ip.src_s = server_ip
+    ip.dst_s = client_ip
+    dhcp = ip.udp.dhcp
+    dhcp.yiaddr_s = client_ip
+    dhcp.opts[1].body_bytes = socket.inet_aton(server_ip)
+    dhcp.opts[3].body_bytes = socket.inet_aton(subnet_mask)
+    dhcp.opts[4].body_bytes = socket.inet_aton(router_ip)
+    server.streams[1].set_packet_headers(eth)
+    server.start_traffic()
 
-        # Get port level statistics.
-        streams_stats = XenaStreamsStats(xm.session)
-        streams_stats.read_stats()
-        print(streams_stats.statistics.dumps())
-
-        with open(results_file, 'a+') as f:
-            f.write('{} TX packets = {}\n'.format(stream.name,
-                                                  streams_stats.statistics[stream.name]['tx']['packets']))
-            f.write('{} RX packets = {}\n'.format(stream.name,
-                                                  streams_stats.statistics[stream.name]['rx']['pr_tpldtraffic']['pac']))
-            f.write('{} TX bytes = {}\n'.format(stream.name,
-                                                streams_stats.statistics[stream.name]['tx']['bytes']))
-            f.write('{} RX bytes = {}\n'.format(stream.name,
-                                                streams_stats.statistics[stream.name]['rx']['pr_tpldtraffic']['byt']))
-
-        # Get first captured packet in raw format.
-        packet = ports[port1].capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.text)[0]
-        with open(cap_file, 'a+') as f:
-            f.write('{} first packet = {}\n\n'.format(stream.name, packet))
-
-        # Disable current stream
-        stream.set_attributes(PS_ENABLE='OFF')
+    # Release ports.
+    xm.session.release_ports()
 
 
 def run_all():
     connect()
-    traffic()
+    act_dhcp(server_location, client_location, '10.10.10.1', '10.10.10.10', '255.255.255.0', '10.10.10.1')
     disconnect()
 
 

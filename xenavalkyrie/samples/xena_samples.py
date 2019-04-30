@@ -12,7 +12,6 @@ import sys
 import logging
 import json
 import binascii
-import time
 
 from pypacker.layer12.ethernet import Ethernet, Dot1Q
 from pypacker.layer3.ip6 import IP6
