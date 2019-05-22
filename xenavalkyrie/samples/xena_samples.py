@@ -27,7 +27,7 @@ from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 wireshark_path = '/usr/bin'
 
 api = ApiType.socket
-chassis = ''
+chassis = '176.22.65.117'
 port1 = chassis + '/' + '0/0'
 port0 = chassis + '/' + '0/1'
 owner = 'yoram-s'
@@ -123,6 +123,8 @@ def configuration():
     ps_packetlimit = p1_s0.get_attribute('ps_packetlimit')
     ps_ratepps = p1_s0.get_attribute('ps_ratepps')
     print('{} info:\nps_packetlimit: {}\nps_ratepps: {}'.format(p1_s0.name, ps_packetlimit, ps_ratepps))
+
+    p1_s0.set_attributes(ps_packetlimit=800, ps_ratepps=100)
 
     # Set headers - all fields can be set with the constructor or by direct access after creation.
     eth = Ethernet(src_s='22:22:22:22:22:22')

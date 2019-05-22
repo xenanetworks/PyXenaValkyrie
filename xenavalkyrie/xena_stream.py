@@ -8,6 +8,7 @@ import re
 import binascii
 from enum import Enum
 from collections import OrderedDict
+from copy import deepcopy
 
 from pypacker.layer12.ethernet import Ethernet
 
@@ -77,7 +78,7 @@ class XenaStream(XenaObject21):
         bin_headers = self.get_attribute('ps_packetheader')
         return Ethernet(binascii.unhexlify(bin_headers[2:]))
 
-    def set_packet_headers(self, headers):
+    def set_packet_headers(self, headers, udp_checksum=False):
         """ Set packet header.
 
         The method will try to set ps_headerprotocol to inform the Xena GUI and tester how to interpret the packet
@@ -90,21 +91,27 @@ class XenaStream(XenaObject21):
         :type headers: pypacker.layer12.ethernet.Ethernet
         """
 
-        bin_headers = '0x' + binascii.hexlify(headers.bin()).decode('utf-8')
-        self.set_attributes(ps_packetheader=bin_headers)
-
-        body_handler = headers
+        body_handler = deepcopy(headers)
         ps_headerprotocol = []
         while body_handler:
             segment = pypacker_2_xena.get(str(body_handler).split('(')[0].lower(), None)
             if not segment:
-                self.logger.warning('pypacker header {} not in conversion list'.format(segment))
-                return
+                self.logger.warning('pypacker header {} not in conversion list'.format(str(body_handler).split('(')[0].lower()))
+                break
             ps_headerprotocol.append(segment)
             if type(body_handler) is Ethernet and body_handler.vlan:
                 ps_headerprotocol.append('vlan')
             body_handler = body_handler.body_handler
+        if udp_checksum and 'udp' in ps_headerprotocol:
+            ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
         self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
+
+        headers_str = binascii.hexlify(headers.bin())
+        if udp_checksum:
+            udp_chckesum_start = headers_str.find('00430044') + 12
+            headers_str = headers_str[:udp_chckesum_start] + '0000' + headers_str[udp_chckesum_start+4:]
+        bin_headers = '0x' + headers_str.decode('utf-8')
+        self.set_attributes(ps_packetheader=bin_headers)
 
     #
     # Modifiers.
@@ -280,4 +287,5 @@ pypacker_2_xena = {'ethernet': 'ethernet',
                    'udp': 'udp',
                    'tcp': 'tcp',
                    'icmp': 'icmp',
+                   'dhcp': '39'
                    }
