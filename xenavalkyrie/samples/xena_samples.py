@@ -70,6 +70,7 @@ def inventory():
         print('chassis ' + c_name)
         for m_name, module in chassis.modules.items():
             print('\tmodule ' + str(m_name))
+            print(json.dumps(module.get_attributes(), indent=2))
             for p_name, port in module.ports.items():
                 print('\t\tport ' + str(p_name))
                 for s_name, _ in port.streams.items():

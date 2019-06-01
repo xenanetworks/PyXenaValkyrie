@@ -1,6 +1,6 @@
 future
 requests
 pypacker27==4.2.1
-pysystem
+pytest
 
 pytrafficgen==1.5.1

@@ -108,6 +108,7 @@ class XenaStream(XenaObject21):
 
         headers_str = binascii.hexlify(headers.bin())
         if udp_checksum:
+            # todo - this looks for DHCP packet in UDP header, change to support the general case.
             udp_chckesum_start = headers_str.find('00430044') + 12
             headers_str = headers_str[:udp_chckesum_start] + '0000' + headers_str[udp_chckesum_start+4:]
         bin_headers = '0x' + headers_str.decode('utf-8')
