@@ -67,7 +67,7 @@ class BaseSocket:
 
         try:
             reply = self.sock.recv(4096)
-            while not reply.endswith('\x0a'):
+            while not reply.endswith(b'\x0a'):
                 reply += self.sock.recv(4096)
             if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
                 # read next line for actual message
