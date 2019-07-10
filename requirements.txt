@@ -3,4 +3,4 @@ requests
 pypacker27==4.2.1
 pytest
 
-pytrafficgen==1.5.1
+pytrafficgen==1.5.5
