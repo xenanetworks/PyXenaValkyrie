@@ -28,8 +28,8 @@ wireshark_path = '/usr/bin'
 
 api = ApiType.socket
 chassis = '176.22.65.117'
-port1 = chassis + '/' + '0/0'
-port0 = chassis + '/' + '0/1'
+port0 = chassis + '/' + '0/0'
+port1 = chassis + '/' + '0/1'
 owner = 'yoram-s'
 config0 = path.join(path.dirname(__file__), 'test_config_1.xpc')
 save_config = path.join(path.dirname(__file__), 'save_config.xpc')
@@ -112,7 +112,7 @@ def configuration():
     # Access any header and field by name with nice string representation.
     print('{} MAC SRC: {}'.format(p0_s0.name, headers.src_s))
     print('{} VLAN ID: {}'.format(p0_s0.name, headers.vlan[0].vid))
-    print('{} IP DST: {}'.format(p0_s0.name, headers.ip.dst_s))
+    print('{} IP DST: {}'.format(p0_s0.name, headers.upper_layer.dst_s))
 
     # Add stream on port-1
     p1_s0 = ports[port1].add_stream('new stream')
@@ -130,7 +130,7 @@ def configuration():
     # Set headers - all fields can be set with the constructor or by direct access after creation.
     eth = Ethernet(src_s='22:22:22:22:22:22')
     eth.dst_s = '11:11:11:11:11:11'
-    vlan = Dot1Q(vid=17)
+    vlan = Dot1Q(vid=17, prio=3)
     eth.vlan.append(vlan)
     # In order to add header simply concatenate it.
     ip6 = IP6()

@@ -40,7 +40,6 @@ class TestXenaOffline(TestXenaBase):
 
         assert(len(port.streams) == 2)
         assert(XenaStream.next_tpld_id == 2)
-        port.api.sockets_list[self.xm.session.chassis_list.values()[0]].sendQuery('0/0 ps_comment [17] ?')
 
         packet = port.streams[0].get_packet_headers()
         print(packet)

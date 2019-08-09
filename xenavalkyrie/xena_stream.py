@@ -91,16 +91,19 @@ class XenaStream(XenaObject21):
         :type headers: pypacker.layer12.ethernet.Ethernet
         """
 
+        str(headers)
         body_handler = deepcopy(headers)
         ps_headerprotocol = []
         while body_handler:
             segment = pypacker_2_xena.get(str(body_handler).split('(')[0].lower(), None)
             if not segment:
-                self.logger.warning('pypacker header {} not in conversion list'.format(str(body_handler).split('(')[0].lower()))
+                self.logger.warning('pypacker header {} not in conversion list'.
+                                    format(str(body_handler).split('(')[0].lower()))
                 break
             ps_headerprotocol.append(segment)
             if type(body_handler) is Ethernet and body_handler.vlan:
-                ps_headerprotocol.append('vlan')
+                for _ in range(len(body_handler.vlan)):
+                    ps_headerprotocol.append('vlan')
             body_handler = body_handler.body_handler
         if udp_checksum and 'udp' in ps_headerprotocol:
             ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
