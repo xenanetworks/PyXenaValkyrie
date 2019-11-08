@@ -118,14 +118,14 @@ def configuration():
     p1_s0 = ports[port1].add_stream('new stream')
 
     # Set ps_packetlimit and ps_ratepps with set_attributes which sets list of attributes.
-    p1_s0.set_attributes(ps_packetlimit=80, ps_ratepps=10)
+    p1_s0.set_attributes(ps_packetlimit=800, ps_ratepps=100)
 
     # Get single parameter query with get_attribute which returns the attribute value as str.
     ps_packetlimit = p1_s0.get_attribute('ps_packetlimit')
     ps_ratepps = p1_s0.get_attribute('ps_ratepps')
     print('{} info:\nps_packetlimit: {}\nps_ratepps: {}'.format(p1_s0.name, ps_packetlimit, ps_ratepps))
 
-    p1_s0.set_attributes(ps_packetlimit=800, ps_ratepps=100)
+    p1_s0.set_attributes(ps_packetlimit=80, ps_ratepps=10)
 
     # Set headers - all fields can be set with the constructor or by direct access after creation.
     eth = Ethernet(src_s='22:22:22:22:22:22')

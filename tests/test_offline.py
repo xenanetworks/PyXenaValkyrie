@@ -1,5 +1,5 @@
 """
-Base class for all Xena package tests.
+Tests that does not require online ports - configurations etc.
 
 @author yoram@ignissoft.com
 """
@@ -11,8 +11,8 @@ import requests
 from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
-from xenavalkyrie.tests.test_base import TestXenaBase
 from xenavalkyrie.xena_filter import XenaFilterState
+from test_base import TestXenaBase
 
 
 class TestXenaOffline(TestXenaBase):

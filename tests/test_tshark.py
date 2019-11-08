@@ -1,5 +1,5 @@
 """
-Base class for all Xena package tests.
+Test Xena Tshark auxiliary class.
 
 @author yoram@ignissoft.com
 """

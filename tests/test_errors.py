@@ -6,10 +6,10 @@ Test all kinds of errors.
 
 import pytest
 
+from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_object import XenaAttributeError
-from xenavalkyrie.tests.test_base import TestXenaBase
-from trafficgenerator.tgn_utils import ApiType
+from test_base import TestXenaBase
 
 
 class TestXenaErrors(TestXenaBase):

@@ -20,8 +20,8 @@ venv*
 .eggs
 .README.md.html
 
-xenavalkyrie/tests/configs/save_config.*
-xenavalkyrie/tests/configs/customers/
+tests/configs/save_config.*
+tests/configs/customers/
 
 xenavalkyrie/samples/*.txt
 xenavalkyrie/samples/*.csv
