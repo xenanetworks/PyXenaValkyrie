@@ -12,7 +12,7 @@ from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
 from xenavalkyrie.xena_stream import XenaStream
 from xenavalkyrie.xena_filter import XenaFilterState
-from test_base import TestXenaBase
+from .test_base import TestXenaBase
 
 
 class TestXenaOffline(TestXenaBase):
@@ -31,7 +31,7 @@ class TestXenaOffline(TestXenaBase):
         print('+++')
 
         save_config = path.join(path.dirname(__file__), 'configs', 'save_config.xmc')
-        self.xm.session.chassis_list.values()[0].save_config(save_config)
+        list(self.xm.session.chassis_list.values())[0].save_config(save_config)
 
     def test_load_config(self):
         #: :type port: xenavalkyrie.xena_port.XenaPort

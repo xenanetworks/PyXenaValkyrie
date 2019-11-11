@@ -9,7 +9,7 @@ import pytest
 from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_object import XenaAttributeError
-from test_base import TestXenaBase
+from .test_base import TestXenaBase
 
 
 class TestXenaErrors(TestXenaBase):

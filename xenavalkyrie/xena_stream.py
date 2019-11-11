@@ -91,8 +91,7 @@ class XenaStream(XenaObject21):
         :type headers: pypacker.layer12.ethernet.Ethernet
         """
 
-        str(headers)
-        body_handler = deepcopy(headers)
+        body_handler = headers
         ps_headerprotocol = []
         while body_handler:
             segment = pypacker_2_xena.get(str(body_handler).split('(')[0].lower(), None)
@@ -250,8 +249,8 @@ class _XenaModifierBase(XenaObject):
 
     def _extract_return(self, command, index_command_value):
         module, port, sid, mid = self.index.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{},{}\]\s*'.
-                      format(module, port, command.upper(), sid, mid), '', index_command_value)
+        return re.sub(r'{}/{}\s*{}\s*\[{},{}\]\s*'.format(module, port, command.upper(), sid, mid),
+                      '', index_command_value)
 
     def _get_index_len(self):
         return 2
