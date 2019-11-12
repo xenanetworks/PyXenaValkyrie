@@ -128,6 +128,9 @@ class TestXenaOffline(TestXenaBase):
         assert(XenaStream.next_tpld_id == 8)
         assert(len(port.streams) == 2)
 
+        if self.api == ApiType.rest:
+            return
+
         match = port.add_match()
         # Order matters
         match.set_attributes(pm_protocol='ETHERNET VLAN')

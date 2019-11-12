@@ -17,8 +17,6 @@ class TestXenaErrors(TestXenaBase):
     def setup(self):
         super(TestXenaBase, self).setup()
 
-        self._get_config()
-
         self.xm = init_xena(self.api, self.logger, self.config.get('Xena', 'owner'),
                             self.server_ip, self.server_port)
 
