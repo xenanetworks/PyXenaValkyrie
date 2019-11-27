@@ -105,7 +105,7 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     offer.dst_s = client_mac
     offer.ip.udp.dhcp.chaddr = chaddr
     offer.ip.udp.dhcp.xid = transaction_id
-    server.streams[0].set_packet_headers(offer, udp_checksum=True)
+    server.streams[0].set_packet_headers(offer, l4_checksum=True)
     server.start_traffic()
 
     # Wait for Request
@@ -123,7 +123,7 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     ack.dst_s = client_mac
     ack.ip.udp.dhcp.chaddr = chaddr
     ack.ip.udp.dhcp.xid = transaction_id
-    server.streams[1].set_packet_headers(ack, udp_checksum=True)
+    server.streams[1].set_packet_headers(ack, l4_checksum=True)
     server.start_traffic()
 
     # Release ports.

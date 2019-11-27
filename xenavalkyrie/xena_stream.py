@@ -78,7 +78,7 @@ class XenaStream(XenaObject21):
         bin_headers = self.get_attribute('ps_packetheader')
         return Ethernet(binascii.unhexlify(bin_headers[2:]))
 
-    def set_packet_headers(self, headers, udp_checksum=False):
+    def set_packet_headers(self, headers, l4_checksum=False):
         """ Set packet header.
 
         The method will try to set ps_headerprotocol to inform the Xena GUI and tester how to interpret the packet
@@ -89,6 +89,7 @@ class XenaStream(XenaObject21):
 
         :param headers: current packet headers
         :type headers: pypacker.layer12.ethernet.Ethernet
+        :param l4_checksum: True - set tcp/udp checksum flag, False - do not set
         """
 
         body_handler = headers
@@ -104,15 +105,17 @@ class XenaStream(XenaObject21):
                 for _ in range(len(body_handler.vlan)):
                     ps_headerprotocol.append('vlan')
             body_handler = body_handler.body_handler
-        if udp_checksum and 'udp' in ps_headerprotocol:
-            ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
+        if l4_checksum:
+            l4 = headers.upper_layer.upper_layer
+            l4.sum_au_active = False
+            l4.sum = 0
+            if 'udp' in ps_headerprotocol:
+                ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
+            if 'tcp' in ps_headerprotocol:
+                ps_headerprotocol[ps_headerprotocol.index('tcp')] = 'tcpcheck'
         self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
 
         headers_str = binascii.hexlify(headers.bin())
-        if udp_checksum:
-            # todo - this looks for DHCP packet in UDP header, change to support the general case.
-            udp_chckesum_start = headers_str.find('00430044') + 12
-            headers_str = headers_str[:udp_chckesum_start] + '0000' + headers_str[udp_chckesum_start+4:]
         bin_headers = '0x' + headers_str.decode('utf-8')
         self.set_attributes(ps_packetheader=bin_headers)
 

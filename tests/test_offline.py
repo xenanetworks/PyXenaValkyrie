@@ -7,6 +7,11 @@ Tests that does not require online ports - configurations etc.
 from os import path
 import pytest
 import requests
+from pypacker.layer12.ethernet import Ethernet, Dot1Q
+from pypacker.layer3.ip import IP
+from pypacker.layer3.ip6 import IP6
+from pypacker.layer4.tcp import TCP
+from pypacker.layer4.udp import UDP
 
 from trafficgenerator.tgn_utils import ApiType, is_local_host
 from xenavalkyrie.xena_stream import XenaModifierType, XenaModifierAction
@@ -207,3 +212,46 @@ class TestXenaOffline(TestXenaBase):
         chassis.shutdown(restart=True, wait=True)
         assert(chassis.get_attribute('c_restenable').lower() == 'on')
         requests.get(base_url)
+
+    def test_layer_4_checksums(self):
+
+        #: :type port: xenavalkyrie.xena_port.XenaPort
+        port = self.xm.session.reserve_ports([self.port1], force=False, reset=True)[self.port1]
+
+        #: :type tcp_stream: xenavalkyrie.xena_stream.XenaStream
+        tcp_stream = port.add_stream('tcp stream')
+
+        eth = Ethernet(src_s='22:22:22:22:22:22')
+        eth.dst_s = '11:11:11:11:11:11'
+        vlan = Dot1Q(vid=17, prio=3)
+        eth.vlan.append(vlan)
+        ip = IP()
+        tcp = TCP()
+        headers = eth + ip + tcp
+        tcp_stream.set_packet_headers(headers, l4_checksum=False)
+        headerprotocol = tcp_stream.get_attribute('ps_headerprotocol')
+        assert 'tcpcheck' not in headerprotocol.lower()
+        tcp_stream.set_packet_headers(headers, l4_checksum=True)
+        headerprotocol = tcp_stream.get_attribute('ps_headerprotocol')
+        assert 'tcpcheck' in headerprotocol.lower()
+        resulting_headers = tcp_stream.get_packet_headers()
+        l4 = resulting_headers.upper_layer.upper_layer
+        assert l4.sum == 0
+
+        #: :type udp_stream: xenavalkyrie.xena_stream.XenaStream
+        udp_stream = port.add_stream('udp stream')
+
+        eth = Ethernet(src_s='44:44:44:44:44:44')
+        eth.dst_s = '33:33:33:33:33:33'
+        ip6 = IP6()
+        udp = UDP()
+        headers = eth + ip6 + udp
+        udp_stream.set_packet_headers(headers, l4_checksum=False)
+        headerprotocol = udp_stream.get_attribute('ps_headerprotocol')
+        assert 'udpcheck' not in headerprotocol.lower()
+        udp_stream.set_packet_headers(headers, l4_checksum=True)
+        headerprotocol = udp_stream.get_attribute('ps_headerprotocol')
+        assert 'udpcheck' in headerprotocol.lower()
+        resulting_headers = udp_stream.get_packet_headers()
+        l4 = resulting_headers.upper_layer.upper_layer
+        assert l4.sum == 0

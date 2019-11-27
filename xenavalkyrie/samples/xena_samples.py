@@ -12,7 +12,6 @@ import sys
 import logging
 import json
 import binascii
-import time
 
 from pypacker.layer12.ethernet import Ethernet, Dot1Q
 from pypacker.layer3.ip6 import IP6
@@ -30,7 +29,7 @@ api = ApiType.socket
 chassis = '176.22.65.117'
 port0 = chassis + '/' + '0/0'
 port1 = chassis + '/' + '0/1'
-owner = 'yoram-s'
+owner = 'pyxenavalkyrie-sample'
 config0 = path.join(path.dirname(__file__), 'test_config_1.xpc')
 save_config = path.join(path.dirname(__file__), 'save_config.xpc')
 pcap_file = path.join(path.dirname(__file__), 'xena_cap.pcap')
