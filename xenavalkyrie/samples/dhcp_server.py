@@ -69,7 +69,7 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     # Prep whatever possible in advance.
     offer = server.streams[0].get_packet_headers()
     offer.ip.src_s = server_ip
-    offer.ip.dst_s = client_ip
+    offer.ip.dst_s = '255.255.255.255'
     offer.ip.udp.dhcp.yiaddr_s = client_ip
     offer.ip.udp.dhcp.opts[1].body_bytes = socket.inet_aton(server_ip)
     offer.ip.udp.dhcp.opts[3].body_bytes = socket.inet_aton(subnet_mask)
@@ -90,12 +90,15 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     server.start_capture()
     while not server.capture.packets:
         time.sleep(0.01)
+    logger.info('Discover received')
     server.stop_capture()
 
     # At this point we know we have received Discover
     packet = server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.raw)[0]
     discover = Ethernet(binascii.unhexlify(packet))
-    logger.info('Discover\n{}'.format(discover))
+    logger.info('Discover packet')
+    logger.info(server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.text)[0])
+    logger.info('{}'.format(discover))
     client_mac = discover.src_s
     chaddr = binascii.unhexlify(client_mac.replace(':', '') + '000000000000')
     transaction_id = discover.ip.udp.dhcp.xid
@@ -106,20 +109,38 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     offer.dst_s = client_mac
     offer.ip.udp.dhcp.chaddr = chaddr
     offer.ip.udp.dhcp.xid = transaction_id
-    logger.info('Offer\n{}'.format(offer))
     server.streams[0].set_packet_headers(offer)
     server.start_traffic()
+    logger.info('Offer sent')
+    logger.info('Offer packet')
+    logger.info(raw_2_text(server.streams[0].get_attribute('ps_packetheader')[2:]))
+    logger.info('{}'.format(offer))
 
     # Wait for Request
-    server.start_capture()
-    while not server.capture.packets:
-        time.sleep(0.01)
-    server.stop_capture()
+    request_received = False
+    for _ in range(3):
+        server.start_capture()
+        while not server.capture.packets:
+            time.sleep(0.01)
+        server.stop_capture()
+        packet = server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.raw)[0]
+        dhcpp = Ethernet(binascii.unhexlify(packet))
+        logger.info('Some packet')
+        logger.info(server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.text)[0])
+        logger.info('{}'.format(dhcpp))
+        if int(binascii.hexlify(dhcpp.ip.udp.dhcp.opts[0].body_bytes)) == 3:
+            request_received = True
+            break
+    server.stop_traffic()
+    if not request_received:
+        raise Exception("Failed to get Request")
 
     # At this point we know we have received Request
     packet = server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.raw)[0]
     request = Ethernet(binascii.unhexlify(packet))
-    logger.info('Request\n{}'.format(request))
+    logger.info('Request packet')
+    logger.info(server.capture.get_packets(to_index=1, cap_type=XenaCaptureBufferType.text)[0])
+    logger.info('{}'.format(request))
 
     # Send Ack packet.
     server.streams[0].set_attributes(PS_ENABLE='OFF')
@@ -135,9 +156,20 @@ def act_dhcp(server_port, server_ip, client_ip, subnet_mask, router_ip, dns_ip):
     xm.session.release_ports()
 
 
+def raw_2_text(raw_packet):
+    text_packet = ''
+    for c, b in zip(range(len(raw_packet)), raw_packet):
+        if c % 32 == 0:
+            text_packet += '\n{:06x} '.format(int(c / 2))
+        elif c % 2 == 0:
+            text_packet += ' '
+        text_packet += b
+    return text_packet
+
+
 def run_all():
     connect()
-    act_dhcp(server_location, '10.0.0.138', '10.0.0.10', '255.255.255.0', '10.0.0.138', '10.0.0.138')
+    act_dhcp(server_location, '11.0.0.1', '11.0.0.10', '255.255.255.0', '11.0.0.1', '11.0.0.1')
     disconnect()
 
 
