@@ -2,7 +2,5 @@ future
 requests
 pypacker27==4.2.1 ; python_version < '3.0'
 pypacker==4.3 ; python_version >= '3.0'
-pytest
-pytest-cov
 
-pytrafficgen==1.5.5
+pytrafficgen==1.6.2
