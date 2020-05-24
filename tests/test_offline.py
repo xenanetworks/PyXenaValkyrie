@@ -49,24 +49,24 @@ class TestXenaOffline(TestXenaBase):
         packet = port.streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '22:22:22:22:22:11')
-        assert(packet.ip.dst_s == '2.2.2.1')
+        assert(packet.upper_layer.dst_s == '2.2.2.1')
         packet.dst_s = '33:33:33:33:33:33'
-        packet.ip.dst_s = '3.3.3.3'
+        packet.upper_layer.dst_s = '3.3.3.3'
         port.streams[0].set_packet_headers(packet)
         packet = port.streams[0].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '33:33:33:33:33:33')
-        assert(packet.ip.dst_s == '3.3.3.3')
+        assert(packet.upper_layer.dst_s == '3.3.3.3')
 
         packet = port.streams[1].get_packet_headers()
         print(packet)
         assert(packet.dst_s == '22:22:22:22:22:22')
-        assert(packet.ip6.dst_s == '22::22')
-        packet.ip6.dst_s = u'33::33'
+        assert(packet.upper_layer.dst_s == '22::22')
+        packet.upper_layer.dst_s = u'33::33'
         port.streams[1].set_packet_headers(packet)
         packet = port.streams[1].get_packet_headers()
         print(packet)
-        assert(packet.ip6.dst_s == '33::33')
+        assert(packet.upper_layer.dst_s == '33::33')
 
         assert(len(port.streams[0].modifiers) == 1)
         assert(port.streams[0].modifiers[0].action == XenaModifierAction.increment)

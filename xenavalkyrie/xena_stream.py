@@ -95,16 +95,15 @@ class XenaStream(XenaObject21):
         body_handler = headers
         ps_headerprotocol = []
         while body_handler:
-            segment = pypacker_2_xena.get(str(body_handler).split('(')[0].lower(), None)
+            segment = pypacker_2_xena.get(str(body_handler).split('\n')[0].split('.')[-1].lower(), None)
             if not segment:
-                self.logger.warning('pypacker header {} not in conversion list'.
-                                    format(str(body_handler).split('(')[0].lower()))
+                self.logger.warning(f'pypacker header {segment} not in conversion list')
                 break
             ps_headerprotocol.append(segment)
             if type(body_handler) is Ethernet and body_handler.vlan:
                 for _ in range(len(body_handler.vlan)):
                     ps_headerprotocol.append('vlan')
-            body_handler = body_handler.body_handler
+            body_handler = body_handler.upper_layer
         if l4_checksum:
             l4 = headers.upper_layer.upper_layer
             l4.sum_au_active = False

@@ -23,7 +23,7 @@ from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, 
 from xenavalkyrie.xena_port import XenaCaptureBufferType
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
-wireshark_path = '/usr/bin'
+wireshark_path = 'C:/Program Files/Wireshark'
 
 api = ApiType.socket
 chassis = '176.22.65.117'
@@ -133,7 +133,11 @@ def configuration():
     eth.vlan.append(vlan)
     # In order to add header simply concatenate it.
     ip6 = IP6()
+    ip6.src_s = '128::01'
+    ip6.dst_s = '128::02'
     tcp = TCP()
+    tcp.sport = 200
+    tcp.dport = 300
     headers = eth + ip6 + tcp
     p1_s0.set_packet_headers(headers)
 
