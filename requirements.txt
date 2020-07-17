@@ -1,5 +1,7 @@
+--pre
+
 future
 requests
 pypacker==4.9
 
-pytrafficgen==1.5.5
+pytrafficgen>3.0.2,<=3.0.3
