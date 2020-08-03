@@ -35,7 +35,7 @@ class XenaCliWrapper(object):
         :param chassis: chassis object
         """
 
-        socket = XenaSocket(self.logger, chassis.ip, chassis.port)
+        socket = XenaSocket(self.logger, chassis.ip, chassis.port, 40)
         socket.connect()
         self.sockets_list[chassis] = socket
         self.send_command(chassis, 'c_logon', '"{}"'.format(chassis.password))
