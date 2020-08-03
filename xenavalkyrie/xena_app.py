@@ -10,7 +10,7 @@ from trafficgenerator.tgn_app import TgnApp
 from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.api.xena_rest import XenaRestWrapper
 from xenavalkyrie.api.xena_cli import XenaCliWrapper
-from xenavalkyrie.xena_object import XenaObject
+from xenavalkyrie.xena_object import XenaObject, XenaObjectsDict
 from xenavalkyrie.xena_port import XenaPort
 
 
@@ -88,10 +88,12 @@ class XenaSession(XenaObject):
                 raise error
         return self.chassis_list[chassis]
 
-    def disconnect(self):
+    def disconnect(self, release=True):
         """ Release ports and disconnect from all chassis. """
 
-        self.release_ports()
+        if release:
+            self.release_ports()
+            
         self.api.disconnect()
 
     def inventory(self):
@@ -127,6 +129,35 @@ class XenaSession(XenaObject):
         for chassis in self._per_chassis_ports(*self._get_operation_ports()):
             chassis.release_ports()
 
+
+    def reserve_modules(self, locations, force=False):
+        """ Reserve modules.
+
+        XenaManager-2G -> Reserve/Relinquish Module.
+        XenaManager-2G -> Reserve Module.
+
+        :param locations: list of locations in the form <ip/slot/port> to reserve
+        :param force: True - take forcefully. False - fail if module is reserved by other user
+        :return: module dictionary (index: object)
+        """
+
+        for location in locations:
+            ip, module = location.split('/')
+            self.chassis_list[ip].reserve_modules(['{}'.format(module)], force)
+
+        return self.modules
+
+
+    def release_modules(self):
+        """ Release modules.
+
+        XenaManager-2G -> Release Module.
+        """
+
+        for chassis in self._per_chassis_modules(*self._get_operation_modules()):
+            chassis.release_modules()
+
+
     def start_traffic(self, blocking=False, *ports):
         """ Start traffic on list of ports.
 
@@ -157,6 +188,18 @@ class XenaSession(XenaObject):
 
         for port in self._get_operation_ports(*ports):
             port.clear_stats()
+
+    def read_stats(self, *ports):
+        """ Read statistics on list of ports.
+
+        :param ports: list of ports to read statistics. Default - all session ports.
+        """
+
+        statistics = XenaObjectsDict()
+        for port in self._get_operation_ports(*ports):
+            statistics[port] = port.read_port_stats()
+
+        return statistics
 
     def start_capture(self, *ports):
         """ Start capture on list of ports.
@@ -199,6 +242,17 @@ class XenaSession(XenaObject):
             ports.update({str(p): p for p in chassis.get_objects_by_type('port')})
         return ports
 
+    @property
+    def modules(self):
+        """
+        :return: dictionary {name: object} of all ports.
+        """
+
+        modules = {}
+        for chassis in self.chassis_list.values():
+            modules.update({str(p): p for p in chassis.get_objects_by_type('module')})
+        return modules
+
     #
     # Private methods.
     #
@@ -214,6 +268,19 @@ class XenaSession(XenaObject):
                 per_chassis_ports[chassis] = []
             per_chassis_ports[chassis].append(port)
         return per_chassis_ports
+
+    def _get_operation_modules(self, *modules):
+        return modules if modules else self.modules.values()
+
+    def _per_chassis_modules(self, *modules):
+        per_chassis_modules = {}
+        for module in modules:
+            chassis = module.parent
+            if chassis not in per_chassis_modules:
+                per_chassis_modules[chassis] = []
+            per_chassis_modules[chassis].append(module)
+
+        return per_chassis_modules
 
 
 class XenaChassis(XenaObject):
@@ -291,6 +358,25 @@ class XenaChassis(XenaObject):
                 if modules_inventory:
                     module.inventory()
 
+
+    def reserve_modules(self, locations, force=False):
+        """ Reserve modules.
+
+        XenaManager-2G -> Reserve/Relinquish module.
+        XenaManager-2G -> Reset module.
+
+        :param locations: list of modules locations to reserve
+        :param force: True - take forcefully, False - fail if module is reserved by other user
+        :return: modules dictionary (index: object)
+        """
+
+        for location in locations:
+            module = XenaModule(parent=self, index=location)
+            module.reserve(force)
+
+        return self.modules
+
+
     def reserve_ports(self, locations, force=False, reset=True):
         """ Reserve ports and reset factory defaults.
 
@@ -319,6 +405,15 @@ class XenaChassis(XenaObject):
 
         for port in self.ports.values():
             port.release()
+
+    def release_modules(self):
+        """ Release all ports that were reserved during the session.
+
+        XenaManager-2G -> Release Ports.
+        """
+
+        for module in self.modules.values():
+            module.release()
 
     def start_traffic(self, blocking=False, *ports):
         """ Start traffic on list of ports.
