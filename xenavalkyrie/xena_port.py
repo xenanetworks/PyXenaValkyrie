@@ -53,6 +53,7 @@ class XenaPort(XenaObject):
         super(self.__class__, self).__init__(objType='port', index=index, parent=parent, objRef=objRef)
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
+        self._capabilities = None
 
     def inventory(self):
         self.p_info = self.get_attributes()
@@ -352,6 +353,27 @@ class XenaPort(XenaObject):
                 XenaLength(parent=self, index='{}/{}'.format(self.index, index))
         return {l.id: l for l in self.get_objects_by_type('length')}
 
+    @property
+    def capabilities(self):
+
+        # TODO: Should be changed to use get_objects_by_type()
+
+        if self._capabilities == None:
+            ptr = 0
+
+            self._capabilities = XenaPortCapabilities()
+            capabilities_lst = self.get_attribute('p_capabilities').split() 
+
+            for k,v in self._capabilities.values.items():
+                if hasattr(v, "__iter__") :
+                    self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
+                    ptr += len(v)
+                else:
+                    self._capabilities.values[k] = int(capabilities_lst[ptr])
+                    ptr += 1
+
+        return self._capabilities
+    
 
 class XenaTpld(XenaObject21):
 
@@ -476,3 +498,82 @@ class XenaCapturePacket(XenaObject21):
     def __init__(self, parent, index):
         obj_ref = '{}/{}'.format(parent.ref, index.split('/')[-1])
         super(self.__class__, self).__init__(objType='cappacket', parent=parent, index=index, objRef=obj_ref)
+
+
+class XenaPortCapabilities():
+    """ Structure that provides the port capabilities """
+
+    _MAXTXEQTAPS = 10
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+
+        self.values = {
+           "maxspeed"                   : 0,
+           "maxspeedreduction"          : 0,
+           "mininterframegap"           : 0,
+           "maxinterframegap"           : 0,
+           "maxpreamble"                : 0,
+           "maxstreams"                 : 0,
+           "maxpercent"                 : 0,
+           "maxpps"                     : 0,
+           "maxmbps"                    : 0,
+           "maxseed"                    : 0,
+           "maxlimit"                   : 0,
+           "maxburstsize"               : 0,
+           "minpacketlength"            : 0,
+           "maxpacketlength"            : 0,
+           "maxheaderlength"            : 0,
+           "maxprotocols"               : 0,
+           "maxpatternlength"           : 0,
+           "maxmodifiers"               : 0,
+           "maxmodifierbytes"           : 0,
+           "maxrepeat"                  : 0,
+           "maxtid"                     : 0,
+           "maxmanualpackets"           : 0,
+           "maxmatchterms"              : 0,
+           "maxlengthterms"             : 0,
+           "maxors"                     : 0,
+           "maxnots"                    : 0,
+           "maxfilters"                 : 0,
+           "maxcapturepackets"          : 0,
+           "maxtpldstats"               : 0,
+           "maxdatasets"                : 0,
+           "max32bitmodifiers"          : 0,
+           "cansetautoneg"              : 0,
+           "cantcpchecksum"             : 0,
+           "canudpchecksum"             : 0,
+           "caneee"                     : 0,
+           "canhwregaccess"             : 0,
+           "cantcvrmiiregaccess"        : 0,
+           "canadvphyman"               : 0,
+           "canmicrotpld"               : 0,
+           "canmdimdix"                 : 0,
+           "canpayloadmode"             : 0,
+           "cancustomdatafields"        : 0,
+           "canextpayload"              : 0,
+           "candyntrafficchange"        : 0,
+           "cansynctrafficstart"        : 0,
+           "canpfc"                     : 0,
+           "canpcspmaconfig"            : 0,
+           "canfec"                     : 0,
+           "canfecstats"                : 0,
+           "cantxeq"                    : 0,
+           "canrxretune"                : 0,
+           "prbstypessupported"         : 0,
+           "prbsinvertionsupported"     : 0,
+           "prbspolyssupported"         : [0 for _ in range(0,5)],
+           "numserdes"                  : 0,
+           "numlanes"                   : 0,
+           "numtxeqtaps"                : 0,
+           "txeqtapmaxval"              : [0 for _ in range(0, self._MAXTXEQTAPS)],
+           "txeqtapminval"              : [0 for _ in range(0, self._MAXTXEQTAPS)],
+           "maxfeccorrectablesymbols"   : 0,
+           "maxxmitonepacketlength"     : 0,
+           "txruntpacketminlength"      : 0,
+           "rxruntpacketminlength"      : 0,
+           "canmanipulatepreamble"      : 0,
+           "cansetlinktrain"            : 0,
+           "canlinkflap"                : 0,
+           "canautonegbaser"            : 0
+        }
