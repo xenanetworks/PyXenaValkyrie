@@ -356,21 +356,20 @@ class XenaPort(XenaObject):
     @property
     def capabilities(self):
 
-        # TODO: Should be changed to use get_objects_by_type()
-
         if self._capabilities == None:
-            ptr = 0
-
             self._capabilities = XenaPortCapabilities()
-            capabilities_lst = self.get_attribute('p_capabilities').split() 
 
-            for k,v in self._capabilities.values.items():
-                if hasattr(v, "__iter__") :
-                    self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
-                    ptr += len(v)
-                else:
-                    self._capabilities.values[k] = int(capabilities_lst[ptr])
-                    ptr += 1
+
+        ptr = 0
+        capabilities_lst = self.get_attribute('p_capabilities').split() 
+
+        for k,v in self._capabilities.values.items():
+            if hasattr(v, "__iter__") :
+                self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
+                ptr += len(v)
+            else:
+                self._capabilities.values[k] = int(capabilities_lst[ptr])
+                ptr += 1
 
         return self._capabilities
     
