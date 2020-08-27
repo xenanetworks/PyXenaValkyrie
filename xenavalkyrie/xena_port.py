@@ -114,7 +114,7 @@ class XenaPort(XenaObject):
 
         stream = XenaStream(parent=self, index='{}/{}'.format(self.index, len(self.streams)), name=name)
         stream._create()
-        tpld_id = tpld_id if tpld_id else XenaStream.next_tpld_id
+        tpld_id = tpld_id if tpld_id != None else XenaStream.next_tpld_id
         stream.set_attributes(ps_comment='"{}"'.format(stream.name), ps_tpldid=tpld_id)
         XenaStream.next_tpld_id = max(XenaStream.next_tpld_id + 1, tpld_id + 1)
         stream.set_state(state)
