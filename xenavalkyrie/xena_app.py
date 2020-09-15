@@ -250,7 +250,7 @@ class XenaSession(XenaObject):
 
         modules = {}
         for chassis in self.chassis_list.values():
-            modules.update({str(m.parent) +"/"+str(m): m for m in chassis.get_objects_by_type('module')})
+            modules.update({str(p): p for p in chassis.get_objects_by_type('module')})
         return modules
 
     #
