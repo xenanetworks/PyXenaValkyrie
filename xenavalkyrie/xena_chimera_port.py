@@ -7,8 +7,8 @@ Classes and utilities that represents a Xena Chimera port.
 import os
 from collections import OrderedDict
 
-from xenavalkyrie.xena_port import XenaBasePort
+from xenavalkyrie.xena_port import XenaBasePort, XenaPort
 
 class XenaChimeraPort(XenaBasePort):
     def __init__(self, parent, index):
-        super(XenaPort, self).__init__(parent=parent, index=index)
+        super(XenaChimeraPort, self).__init__(parent=parent, index=index)
