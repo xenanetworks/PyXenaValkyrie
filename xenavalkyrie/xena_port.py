@@ -20,7 +20,7 @@ class XenaCaptureBufferType(Enum):
     pcap = 2
 
 
-class XenaPort(XenaObject):
+class XenaBasePort(XenaObject):
     """ Represents Xena port. """
 
     cli_prefix = 'p'
@@ -50,7 +50,7 @@ class XenaPort(XenaObject):
             objRef = '{}/port/{}'.format(parent.ref, index.split('/')[-1])
         else:
             objRef = '{}/module/{}/port/{}'.format(parent.ref, *index.split('/'))
-        super(self.__class__, self).__init__(objType='port', index=index, parent=parent, objRef=objRef)
+        super(XenaBasePort, self).__init__(objType='port', index=index, parent=parent, objRef=objRef)
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
         self._capabilities = None
@@ -239,7 +239,7 @@ class XenaPort(XenaObject):
     def read_port_stats(self):
         """
         :return: dictionary {group name {stat name: value}}.
-            Sea XenaPort.stats_captions.
+            Sea XenaBasePort.stats_captions.
         """
 
         stats_with_captions = OrderedDict()
@@ -576,3 +576,7 @@ class XenaPortCapabilities():
            "canlinkflap"                : 0,
            "canautonegbaser"            : 0
         }
+
+class XenaPort(XenaBasePort):
+    def __init__(self, parent, index):
+        super(XenaPort, self).__init__(parent=parent, index=index)
