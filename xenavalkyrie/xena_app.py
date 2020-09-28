@@ -12,6 +12,7 @@ from xenavalkyrie.api.xena_rest import XenaRestWrapper
 from xenavalkyrie.api.xena_cli import XenaCliWrapper
 from xenavalkyrie.xena_object import XenaObject, XenaObjectsDict
 from xenavalkyrie.xena_port import XenaPort
+from xenavalkyrie.xena_chimera_port import XenaChimeraPort
 
 
 def init_xena(api, logger, owner, ip=None, port=57911):
@@ -390,7 +391,12 @@ class XenaChassis(XenaObject):
         """
 
         for location in locations:
-            port = XenaPort(parent=self, index=location)
+
+            if self.modules[int(location.split('/')[0])].capabilities.values['ischimera']:
+                port = XenaChimeraPort(parent=self, index=location)
+            else:
+                port = XenaPort(parent=self, index=location)
+
             port.reserve(force)
             if reset:
                 port.reset()
@@ -515,6 +521,7 @@ class XenaModule(XenaObject):
 
         super(self.__class__, self).__init__(objType='module', index=str(index), parent=parent)
         self.m_info = None
+        self._capabilities = None
 
     def inventory(self):
         """ Get module inventory. """
@@ -556,3 +563,37 @@ class XenaModule(XenaObject):
         if not self.get_objects_by_type('port'):
             self.inventory()
         return {int(p.index.split('/')[1]): p for p in self.get_objects_by_type('port')}
+
+    @property
+    def capabilities(self):
+
+        if self._capabilities == None:
+            self._capabilities = XenaModuleCapabilities()
+
+        ptr = 0
+        capabilities_lst = self.get_attribute('m_capabilities').split() 
+
+        for k,v in self._capabilities.values.items():
+            if hasattr(v, "__iter__") :
+                self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
+                ptr += len(v)
+            else:
+                self._capabilities.values[k] = int(capabilities_lst[ptr])
+                ptr += 1
+
+        return self._capabilities
+
+class XenaModuleCapabilities():
+    """ Structure that provides the module capabilities """
+
+    def __init__(self):
+        super(XenaModuleCapabilities, self).__init__()
+
+        self.values = {
+           "canadvtiming"       : 0,
+           "canlocaltimeadjust" : 0,
+           "canmediaconfig"     : 0,
+           "requiresmultiimage" : 0,
+           "ischimera"          : 0,
+           "maxppm"             : 0
+        }
