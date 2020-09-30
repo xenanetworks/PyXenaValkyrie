@@ -550,6 +550,9 @@ class XenaModule(XenaObject):
         for port in self.ports.values():
             port.save_config(config_file_name, 'a+')
 
+    def set_timing_source_local(self):
+        self.send_command('m_timesync', 'module')
+
     #
     # Properties.
     #
