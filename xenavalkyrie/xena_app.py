@@ -355,6 +355,7 @@ class XenaChassis(XenaObject):
         self.c_info = self.get_attributes()
         for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
             if int(m_portcounts):
+                # TODO: Check if we are creating a Chimera module
                 module = XenaModule(parent=self, index=m_index)
                 if modules_inventory:
                     module.inventory()
@@ -372,7 +373,13 @@ class XenaChassis(XenaObject):
         """
 
         for location in locations:
-            module = XenaModule(parent=self, index=location)
+            # Check if the module already exists:
+            if int(location) in self.modules:
+                module = self.modules[int(location)]
+            else:
+                # TODO: Check if we are creating a Chimera module
+                module = XenaModule(parent=self, index=location)
+
             module.reserve(force)
 
         return self.modules
@@ -506,7 +513,7 @@ class XenaChassis(XenaObject):
         return ports if ports else self.ports.values()
 
 
-class XenaModule(XenaObject):
+class XenaBaseModule(XenaObject):
     """ Represents Xena module. """
 
     cli_prefix = 'm'
@@ -519,7 +526,7 @@ class XenaModule(XenaObject):
         :param index: module index, 0 based.
         """
 
-        super(self.__class__, self).__init__(objType='module', index=str(index), parent=parent)
+        super(XenaBaseModule, self).__init__(objType='module', index=str(index), parent=parent)
         self.m_info = None
         self._capabilities = None
 
@@ -600,3 +607,7 @@ class XenaModuleCapabilities():
            "ischimera"          : 0,
            "maxppm"             : 0
         }
+
+class XenaModule(XenaBaseModule):
+    def __init__(self, parent, index):
+        super(XenaModule, self).__init__(parent=parent, index=index)
