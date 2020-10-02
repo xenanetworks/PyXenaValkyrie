@@ -5,6 +5,7 @@ Classes and utilities that represents Xena XenaManager-2G application and chassi
 """
 
 import time
+import re
 
 from trafficgenerator.tgn_app import TgnApp
 from trafficgenerator.tgn_utils import ApiType
@@ -560,6 +561,45 @@ class XenaBaseModule(XenaObject):
     def set_timing_source_local(self):
         self.send_command('m_timesync', 'module')
 
+    def get_name(self):
+        return self.get_attribute('m_name')
+
+    def is_loki(self):
+        module_name = self.get_name()
+
+        is_loki_module = 1
+
+        m = re.match("Loki", module_name)
+
+        if m == None:
+            is_loki_module = 0
+
+        return is_loki_module
+            
+    def is_thor(self):
+        module_name = self.get_name()
+
+        is_thor_module = 1
+
+        m = re.match("Thor", module_name)
+
+        if m == None:
+            is_thor_module = 0
+
+        return is_thor_module
+
+    def is_chimera(self):
+        module_name = self.get_name()
+        
+        is_chimera_module = 1
+
+        m = re.match("Chimera", module_name)
+
+        if m == None:
+            is_chimera_module = 0
+
+        return is_chimera_module
+    
     #
     # Properties.
     #
