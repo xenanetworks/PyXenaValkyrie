@@ -6,7 +6,6 @@ Base class for all Xena package tests.
 
 from os import path
 
-from trafficgenerator.test.test_tgn import TestTgnBase
 from xenavalkyrie.xena_app import init_xena
 from xenavalkyrie.xena_stream import XenaStream
 
@@ -27,6 +26,3 @@ class TestXenaBase(TestTgnBase):
 
     def teardown(self):
         self.xm.session.disconnect()
-
-    def test_hello_world(self):
-        pass

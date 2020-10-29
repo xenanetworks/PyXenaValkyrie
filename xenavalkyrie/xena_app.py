@@ -4,17 +4,21 @@ Classes and utilities that represents Xena XenaManager-2G application and chassi
 :author: yoram@ignissoft.com
 """
 
+from __future__ import annotations
+from logging import Logger
 import time
+from typing import Optional, Union
 
 from trafficgenerator.tgn_app import TgnApp
-from trafficgenerator.tgn_utils import ApiType
+from trafficgenerator.tgn_utils import ApiType, TgnError
 from xenavalkyrie.api.xena_rest import XenaRestWrapper
 from xenavalkyrie.api.xena_cli import XenaCliWrapper
 from xenavalkyrie.xena_object import XenaObject
 from xenavalkyrie.xena_port import XenaPort
 
 
-def init_xena(api, logger, owner, ip=None, port=57911):
+def init_xena(api: ApiType, logger: Logger, owner: str,
+              ip: Optional[str] = None, port: Optional[int] = 57911) -> XenaApp:
     """ Create XenaApp object.
 
     :param api: cli/rest
@@ -22,30 +26,29 @@ def init_xena(api, logger, owner, ip=None, port=57911):
     :param owner: owner of the scripting session
     :param ip: rest server IP
     :param port: rest server TCP port
-    :return: Xena object
-    :rtype: XenaApp
     """
-
     if api == ApiType.socket:
         api_wrapper = XenaCliWrapper(logger)
     elif api == ApiType.rest:
         api_wrapper = XenaRestWrapper(logger, ip, port)
+    else:
+        raise TgnError(f'{api} API not supported, only {ApiType.socket} and {ApiType.rest}')
     return XenaApp(logger, owner, api_wrapper)
 
 
 class XenaApp(TgnApp):
     """ XenaApp object, equivalent to XenaManager-2G application. """
 
-    def __init__(self, logger, owner, api_wrapper):
+    def __init__(self, logger: Logger, owner: str, api_wrapper: Union[XenaCliWrapper, XenaRestWrapper]) -> None:
         """ Start XenaManager-2G equivalent application.
 
         This seems somewhat redundant but we keep it for compatibility with all other TG packages.
 
-        :param api_wrapper: cli/rest API pbject.
         :param logger: python logger
         :param owner: owner of the scripting session
+        :param api_wrapper: cli/rest API pbject.
         """
-
+        super().__init__(logger, api_wrapper)
         self.session = XenaSession(logger, owner, api_wrapper)
 
 

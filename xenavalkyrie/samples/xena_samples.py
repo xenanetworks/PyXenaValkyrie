@@ -72,8 +72,9 @@ def inventory():
             print(json.dumps(module.get_attributes(), indent=2))
             for p_name, port in module.ports.items():
                 print('\t\tport ' + str(p_name))
-                for s_name, _ in port.streams.items():
+                for s_name, stream in port.streams.items():
                     print('\t\t\tstream ' + str(s_name))
+                    print(f'Attr {json.dumps(stream.get_attributes(), indent=2)}')
     print('+++')
 
 
@@ -218,8 +219,8 @@ def traffic():
 def run_all():
     connect()
     inventory()
-    configuration()
-    traffic()
+    # configuration()
+    # traffic()
     disconnect()
 
 
