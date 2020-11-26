@@ -583,25 +583,5 @@ class XenaPort(XenaBasePort):
     def __init__(self, parent, index):
         super(XenaPort, self).__init__(parent=parent, index=index)
 
-    def get_stream_latency(self, tpld_id):
-        """ Retrieve TPLD ID latency values from Valkyrie port.
-        """
-
-        latency_str = self.get_attribute('pr_tpldlatency[%d]' % (tpld_id))
-
-        m = re.match(".*]\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)", latency_str)
-
-        if m == None:
-            print("Latency string= {}" . format(latency_str))
-            _latency_text_from_Valkyrie_not_as_expected_
-        else:
-            all_min_latency = int(m.group(1))
-            all_avg_latency = int(m.group(2))
-            all_max_latency = int(m.group(3))
-            cur_min_latency = int(m.group(4))
-            cur_avg_latency = int(m.group(5))
-            cur_max_latency = int(m.group(6))
-        
-        return [all_min_latency, all_avg_latency, all_max_latency, cur_min_latency, cur_avg_latency, cur_max_latency]
         
     
