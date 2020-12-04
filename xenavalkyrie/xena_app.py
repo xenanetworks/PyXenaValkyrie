@@ -644,8 +644,8 @@ class XenaModuleCapabilities():
            "canlocaltimeadjust" : 0,
            "canmediaconfig"     : 0,
            "requiresmultiimage" : 0,
-           "ischimera"          : 0,
-           "maxppm"             : 0
+           "ischimera"          : 0
+           #"maxppm"             : 0
         }
 
 class XenaModule(XenaBaseModule):

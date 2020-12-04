@@ -576,7 +576,9 @@ class XenaPortCapabilities():
            "canmanipulatepreamble"      : 0,
            "cansetlinktrain"            : 0,
            "canlinkflap"                : 0,
-           "canautonegbaser"            : 0
+           "canautonegbaser"            : 0,
+           "canpmaerrorpulse"           : 0,
+           "ischimera"                  : 0
         }
 
 class XenaPort(XenaBasePort):
