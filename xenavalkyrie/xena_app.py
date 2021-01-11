@@ -247,12 +247,12 @@ class XenaSession(XenaObject):
     @property
     def modules(self):
         """
-        :return: dictionary {name: object} of all ports.
+        :return: dictionary {name: object} of all modules.
         """
 
         modules = {}
         for chassis in self.chassis_list.values():
-            modules.update({str(p): p for p in chassis.get_objects_by_type('module')})
+            modules.update({str(chassis) + '/' + str(p): p for p in chassis.get_objects_by_type('module')})
         return modules
 
     #
@@ -563,6 +563,18 @@ class XenaBaseModule(XenaObject):
 
     def get_name(self):
         return self.get_attribute('m_name')
+
+    def is_odin(self):
+        module_name = self.get_name()
+
+        is_odin_module = 1
+
+        m = re.match("Odin", module_name)
+
+        if m == None:
+            is_odin_module = 0
+
+        return is_odin_module
 
     def is_loki(self):
         module_name = self.get_name()
