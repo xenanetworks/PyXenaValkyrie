@@ -6,6 +6,7 @@ Classes and utilities that represents Xena XenaManager-2G port.
 
 import os
 import re
+import math
 
 from collections import OrderedDict
 from enum import Enum
@@ -585,5 +586,59 @@ class XenaPort(XenaBasePort):
     def __init__(self, parent, index):
         super(XenaPort, self).__init__(parent=parent, index=index)
 
-        
+    def read_fec_stats(self):
+        """
+        :return: list showing how many FEC blocks have been seen with [0, 1, 2, 3....N, > N] symbol errors
+        """
+
+        # Note we discard the "dummy" and "num_val" elements returned by pp_rxfecstats
+        return [int(val) for val in self.get_attribute('pp_rxfecstats').split()[2:]]
+
+
+    def read_rx_total_stats(self):
+        """
+        :return: 
+        """
+
+        captions  = ["rx_bits", "codewords", "corr_codewords", "uncorr_codewords", "corr_symbols", "pre_fec_ber", "post_fec_ber"]
+        raw_stats = self.get_attribute('pp_rxtotalstats').split()
+
+        return dict(zip(captions, raw_stats))
     
+    def set_tx_error_rate(self, rate):
+        """
+        """
+        self.set_attributes(pp_txerrorrate=rate)
+
+
+    def clear_rx_pcs_stats(self):
+        """
+        """
+        self.send_command('pp_rxclear')
+
+    def set_pma_err_pulse(self, duration, period, repetition, coeff, exp):
+        """
+        Sets the parameters for the PMA pulse error inject. 
+
+        Period must be bigger than duration, BER will be calculated as coeff * power(10, exp) 
+
+        :param duration  : 0 ms – 5 s; increments of 1 ms; 0 = constant BER
+        :param period    : 10 ms – 50 s; number of ms – must be multiple of 10 ms
+        :param repetition: 1 – 64K; 0 = continuous
+        :param coeff     : (0.01 < coeff < 9.99) * 100
+        :param exp       :  -3 < exp < -17
+        """
+        c = math.trunc(coeff * 100)
+        if c < 1 or c > 999:
+            raise ValueError("Coefficient value must be between 0.01 and 9.99 : {} ".format(coeff))
+
+        arg = "{} {} {} {} {}".format(duration, period, repetition, c, exp)
+        self.set_attributes(pp_pmaerrpul_params=arg)
+
+        return self.get_attribute('pp_pmaerrpul_params')
+
+
+    def enable_pma_err_pulse(self, enable=True):
+        """
+        """
+        self.set_attributes(pp_pmaerrpul_enable = 1 if enable else 0)        
