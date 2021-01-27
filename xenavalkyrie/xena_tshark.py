@@ -1,19 +1,21 @@
 
-import os
-import sys
 import copy
-
+import os
 import subprocess
+import sys
+from typing import Optional
 
 
 class Tshark:
 
-    def __init__(self, ws_path, temp_folder=None):
-        """
+    def __init__(self, ws_path: str, temp_folder: Optional[str] = None) -> None:
+        """ Test if wireshark is installed and make sure temporary folder exists.
+
         :param ws_path: full path to wireshark installation folder.
         :param temp_folder: folder to save temporary files. If None - use OS 'native' temp folder.
         """
-
+        if not os.path.exists(ws_path):
+            raise FileNotFoundError(f'Wireshark installation not found at {ws_path}')
         self.ws_path = ws_path
         if not temp_folder:
             temp_folder = 'c:/temp' if sys.platform == 'win32' else '/tmp'

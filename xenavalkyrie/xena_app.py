@@ -3,11 +3,10 @@ Classes and utilities that represents Xena XenaManager-2G application and chassi
 
 :author: yoram@ignissoft.com
 """
-
 from __future__ import annotations
-from logging import Logger
 import time
-from typing import Optional, Union
+from logging import Logger
+from typing import Optional, Union, List, Dict
 
 from trafficgenerator.tgn_app import TgnApp
 from trafficgenerator.tgn_utils import ApiType, TgnError
@@ -103,7 +102,8 @@ class XenaSession(XenaObject):
         for chassis in self.chassis_list.values():
             chassis.inventory(modules_inventory=True)
 
-    def reserve_ports(self, locations, force=False, reset=True):
+    def reserve_ports(self, locations: List[str], force: Optional[bool] = False,
+                      reset: Optional[bool] = True) -> Dict[str, XenaPort]:
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -112,13 +112,10 @@ class XenaSession(XenaObject):
         :param locations: list of ports locations in the form <ip/slot/port> to reserve
         :param force: True - take forcefully. False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
-        :return: ports dictionary (index: object)
         """
-
         for location in locations:
             ip, module, port = location.split('/')
-            self.chassis_list[ip].reserve_ports(['{}/{}'.format(module, port)], force, reset)
-
+            self.chassis_list[ip].reserve_ports([f'{module}/{port}'], force, reset)
         return self.ports
 
     def release_ports(self):
@@ -294,7 +291,8 @@ class XenaChassis(XenaObject):
                 if modules_inventory:
                     module.inventory()
 
-    def reserve_ports(self, locations, force=False, reset=True):
+    def reserve_ports(self, locations: List[str], force: Optional[bool] = False,
+                      reset: Optional[bool] = True) -> Dict[str, XenaPort]:
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -303,15 +301,12 @@ class XenaChassis(XenaObject):
         :param locations: list of ports locations in the form <module/port> to reserve
         :param force: True - take forcefully, False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
-        :return: ports dictionary (index: object)
         """
-
         for location in locations:
             port = XenaPort(parent=self, index=location)
             port.reserve(force)
             if reset:
                 port.reset()
-
         return self.ports
 
     def release_ports(self):
@@ -380,17 +375,12 @@ class XenaChassis(XenaObject):
         """
         :return: dictionary {index: object} of all modules.
         """
-
         if not self.get_objects_by_type('module'):
             self.inventory()
         return {int(c.index): c for c in self.get_objects_by_type('module')}
 
     @property
-    def ports(self):
-        """
-        :return: dictionary {name: object} of all ports.
-        """
-
+    def ports(self) -> Dict[str, XenaPort]:
         return {str(p): p for p in self.get_objects_by_type('port')}
 
     #

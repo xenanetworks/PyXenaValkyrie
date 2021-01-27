@@ -43,8 +43,6 @@ class XenaObject(TgnObject):
             data['name'] = data['index']
         super().__init__(parent, **data)
 
-        self.cli_prefix = None
-
     def _create(self):
         self.api.create(self)
 
@@ -55,7 +53,6 @@ class XenaObject(TgnObject):
 
         :param force: True - take forcefully, False - fail if port is reserved by other user
         """
-
         reservation = self.get_attribute(self.cli_prefix + '_reservation')
         if reservation == 'RESERVED_BY_YOU':
             return
