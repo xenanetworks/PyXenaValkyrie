@@ -22,6 +22,7 @@ venv*
 
 tests/configs/save_config.*
 tests/configs/customers/
+tests/temp
 
 xenavalkyrie/samples/*.txt
 xenavalkyrie/samples/*.csv
