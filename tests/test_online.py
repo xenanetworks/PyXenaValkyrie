@@ -6,119 +6,102 @@ Some tests require two back-to-back ports, like stream statistics tests.
 
 @author yoram@ignissoft.com
 """
-
-from os import path
-import json
 import binascii
-import time
+import json
+import logging
+from pathlib import Path
 
 from pypacker.layer12 import ethernet
 
+from xenavalkyrie.xena_app import XenaApp
 from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenavalkyrie.xena_port import XenaCaptureBufferType
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
-from .test_base import TestXenaBase
+
+WIRESHARK_PATH = 'C:/Program Files/Wireshark'
 
 
-class TestXenaOnline(TestXenaBase):
+def test_online(xm: XenaApp, locations: dict, logger: logging.Logger) -> None:
+    """ Reserve ports and wait for ports online. """
+    logger.info(test_online.__doc__.strip())
 
-    def test_online(self):
-        self.ports = self.xm.session.reserve_ports([self.port1, self.port2], True)
-        self.ports[self.port1].wait_for_up(16)
-        self.ports[self.port2].wait_for_up(16)
+    xm.session.reserve_ports(locations, force=False, reset=True)
+    for port in xm.session.ports.values():
+        port.wait_for_up(timeout=16)
+    for port in xm.session.ports.values():
+        assert port.is_online()
 
-    def test_traffic(self):
-        port = self.xm.session.reserve_ports([self.port1])[self.port1]
-        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_loopback.xpc'))
 
-        self.xm.session.clear_stats()
-        port_stats = port.read_port_stats()
-        print(json.dumps(port_stats, indent=1))
-        assert port_stats['pt_total']['packets'] == 0
-        self.xm.session.start_traffic()
-        time.sleep(1)
-        stream_stats = port.streams[0].read_stats()
-        print(json.dumps(stream_stats, indent=1))
-        assert abs(1000 - stream_stats['pps']) < 111
-        tpld_stats = port.tplds[1].read_stats()
-        print(json.dumps(tpld_stats, indent=1))
-        assert abs(1000 - tpld_stats['pr_tpldtraffic']['pps']) < 111
-        self.xm.session.stop_traffic()
+def test_gui_traffic(xm: XenaApp, locations: dict, logger: logging.Logger) -> None:
+    """ Run traffic and test ports/streams/TPLD statistics. """
+    logger.info(test_gui_traffic.__doc__.strip())
 
-        # todo: add assertions
+    xm.session.reserve_ports(locations, force=False, reset=True)
+    port1 = xm.session.ports[locations[0]]
+    port2 = xm.session.ports[locations[1]]
+    port1.load_config(Path(__file__).parent.joinpath('configs', 'test_config_1.xpc'))
+    port2.load_config(Path(__file__).parent.joinpath('configs', 'test_config_2.xpc'))
 
-        ports_stats = XenaPortsStats(self.xm.session)
-        ports_stats.read_stats()
-        print(ports_stats.statistics.dumps())
-        print(json.dumps(ports_stats.get_flat_stats(), indent=1))
+    xm.session.start_traffic(blocking=True)
 
-        streams_stats = XenaStreamsStats(self.xm.session)
-        streams_stats.read_stats()
-        print(streams_stats.statistics.dumps())
-        print(json.dumps(streams_stats.get_flat_stats(), indent=1))
+    ports_stats = XenaPortsStats()
+    ports_stats.read_stats()
+    print(ports_stats.statistics.dumps(indent=2))
+    assert ports_stats.statistics[port1]['pt_total']['packets'] == ports_stats.statistics[port2]['pr_total']['packets']
+    ports_flat_stats = ports_stats.flat_statistics
+    print(json.dumps(ports_flat_stats, indent=2))
+    assert ports_flat_stats[port2.name]['pt_total_packets'] == ports_flat_stats[port1.name]['pr_total_packets']
 
-        tplds_stats = XenaTpldsStats(self.xm.session)
-        tplds_stats.read_stats()
-        print(tplds_stats.statistics.dumps())
-        print(json.dumps(tplds_stats.get_flat_stats(), indent=1))
+    streams_stats = XenaStreamsStats()
+    streams_stats.read_stats()
+    print(streams_stats.statistics.dumps(indent=2))
+    stream_0_0 = port1.streams[0]
+    assert streams_stats.statistics[stream_0_0]['tx']['bytes'] == streams_stats.statistics[stream_0_0]['rx']['pr_tpldtraffic']['byt']
+    assert streams_stats.statistics[stream_0_0]['tx']['bytes'] == streams_stats.statistics[stream_0_0]['rx'][port2]['pr_tpldtraffic']['byt']
 
-    def test_stream_stats(self):
-        """ For this test we need back-to-back ports. """
-        ports = self.xm.session.reserve_ports([self.port1, self.port2])
-        ports[self.port1].load_config(path.join(path.dirname(__file__), 'configs', 'test_config_1.xpc'))
-        ports[self.port2].load_config(path.join(path.dirname(__file__), 'configs', 'test_config_2.xpc'))
+    tpld_stats = XenaTpldsStats()
+    tpld_stats.read_stats()
+    print(tpld_stats.statistics.dumps(indent=2))
+    tpld_0_0_0 = port2.tplds[0]
+    assert streams_stats.statistics[stream_0_0]['tx']['bytes'] == tpld_stats.statistics[tpld_0_0_0.name]['pr_tpldtraffic']['byt']
 
-        self.xm.session.start_traffic(blocking=True)
 
-        tpld_stats = XenaTpldsStats(self.xm.session)
-        print(tpld_stats.read_stats().dumps())
+def test_capture(xm: XenaApp, locations: dict, logger: logging.Logger) -> None:
+    """ Run traffic and test capture. """
+    logger.info(test_capture.__doc__.strip())
 
-        streams_stats = XenaStreamsStats(self.xm.session)
-        streams_stats.read_stats()
-        print(streams_stats.tx_statistics.dumps())
-        print(streams_stats.statistics.dumps())
-        # Access TX counter using stream name or stream object, from tx_statistics or statistics.
-        assert(streams_stats.tx_statistics['Stream 1-1']['packets'] == 8000)
-        assert(streams_stats.tx_statistics[ports[self.port1].streams[0]]['packets'] == 8000)
-        assert(streams_stats.statistics[ports[self.port1].streams[0]]['tx']['packets'] == 8000)
-        assert(streams_stats.statistics['Stream 1-1']['tx']['packets'] == 8000)
-        assert(streams_stats.statistics['/'.join(self.port1.split('/')[1:]) + '/0']['tx']['packets'] == 8000)
-        # Access RX counter with port name on RX side or directly.
-        assert(streams_stats.statistics['Stream 1-1']['rx']['pr_tpldtraffic']['pac'] == 8000)
-        assert(streams_stats.statistics['Stream 1-1']['rx'][ports[self.port2]]['pr_tpldtraffic']['pac'] == 8000)
-        assert(streams_stats.statistics['Stream 1-1']['rx'][self.port2]['pr_tpldtraffic']['pac'] == 8000)
+    xm.session.reserve_ports(locations, force=False, reset=True)
+    port1 = xm.session.ports[locations[0]]
+    port2 = xm.session.ports[locations[1]]
+    port1.load_config(Path(__file__).parent.joinpath('configs', 'test_config_1.xpc'))
 
-    def test_capture(self):
-        port = self.xm.session.reserve_ports([self.port1])[self.port1]
-        port.load_config(path.join(path.dirname(__file__), 'configs', 'test_config_loopback.xpc'))
+    port1.streams[0].set_attributes(ps_ratepps=10, ps_packetlimit=80)
+    port1.remove_stream(1)
 
-        port.streams[0].set_attributes(ps_ratepps=10, ps_packetlimit=80)
-        port.remove_stream(1)
+    port2.start_capture()
+    port1.start_traffic(blocking=True)
+    port2.stop_capture()
 
-        port.start_capture()
-        port.start_traffic(blocking=True)
-        port.stop_capture()
+    packets = port2.capture.get_packets(0, 1, cap_type=XenaCaptureBufferType.raw)
+    assert len(packets) == 1
+    port2.capture.packets[0].get_attributes()
+    packet = ethernet.Ethernet(binascii.unhexlify(packets[0]))
+    assert packet.upper_layer.dst_s == '2.2.2.1'
 
-        packets = port.capture.get_packets(0, 1, cap_type=XenaCaptureBufferType.raw)
-        assert(len(packets) == 1)
-        port.capture.packets[0].get_attributes()
-        packet = ethernet.Ethernet(binascii.unhexlify(packets[0]))
-        assert(packet.upper_layer.dst_s == '1.1.0.0')
+    packets = port2.capture.get_packets(10, 20, cap_type=XenaCaptureBufferType.raw)
+    print(packets[0])
+    assert len(packets) == 10
 
-        packets = port.capture.get_packets(10, 20, cap_type=XenaCaptureBufferType.raw)
-        print(packets[0])
-        assert(len(packets) == 10)
+    packets = port2.capture.get_packets(file_name=Path(__file__).parent.joinpath('temp', 'xena_cap.txt').as_posix())
+    print(packets[0])
+    assert len(packets) == 80
 
-        packets = port.capture.get_packets(file_name=path.join(self.temp_dir, 'xena_cap.txt'))
-        print(packets[0])
-        assert(len(packets) == 80)
-
-        tshark = Tshark(self.config.get('General', 'wireshark_dir'))
-        packets = port.capture.get_packets(cap_type=XenaCaptureBufferType.pcap,
-                                           file_name=path.join(self.temp_dir, 'xena_cap.pcap'), tshark=tshark)
-        analyser = TsharkAnalyzer()
-        analyser.add_field('ip.src')
-        analyser.add_field('ip.dst')
-        fields = tshark.analyze(path.join(self.temp_dir, 'xena_cap.pcap'), analyser)
-        print(fields)
-        assert(len(fields) == 80)
+    tshark = Tshark(WIRESHARK_PATH)
+    pcap_file = Path(__file__).parent.joinpath('temp', 'xena_cap.pcap')
+    port2.capture.get_packets(cap_type=XenaCaptureBufferType.pcap, file_name=pcap_file.as_posix(), tshark=tshark)
+    analyser = TsharkAnalyzer()
+    analyser.add_field('ip.src')
+    analyser.add_field('ip.dst')
+    fields = tshark.analyze(pcap_file.as_posix(), analyser)
+    print(fields)
+    assert len(fields) == 80

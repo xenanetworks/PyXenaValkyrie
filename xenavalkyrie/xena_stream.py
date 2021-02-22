@@ -3,15 +3,16 @@ Classes and utilities that represents Xena XenaManager-2G stream.
 
 :author: yoram@ignissoft.com
 """
-
-import re
+from __future__ import annotations
 import binascii
-from enum import Enum
+import re
 from collections import OrderedDict
-from copy import deepcopy
+from enum import Enum
+from typing import Dict, Optional
 
 from pypacker.layer12.ethernet import Ethernet
 
+import xenavalkyrie.xena_port
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.api.xena_cli import XenaCliWrapper
 
@@ -41,14 +42,13 @@ class XenaStream(XenaObject21):
 
     next_tpld_id = 0
 
-    def __init__(self, parent, index, name=''):
+    def __init__(self, parent: xenavalkyrie.xena_port.XenaPort, index: str, name: Optional[str]='') -> None:
         """
         :param parent: parent port object.
         :param index: stream index in format module/port/stream.
         :param name: stream description.
         """
-
-        super(self.__class__, self).__init__(objType='stream', index=index, parent=parent, name=name)
+        super().__init__(parent=parent, objType='stream', index=index, name=name)
 
     def del_object_from_parent(self):
         self.send_command('ps_delete')
@@ -171,7 +171,7 @@ class XenaStream(XenaObject21):
     #
 
     @property
-    def modifiers(self):
+    def modifiers(self) -> Dict[int, XenaModifier]:
         """
         :return: dictionary {index: object} of standard modifiers.
         """

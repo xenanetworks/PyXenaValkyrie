@@ -7,20 +7,21 @@ Two Xena ports connected back to back.
 @author yoram@ignissoft.com
 """
 
-from os import path
-import sys
-import logging
-import json
 import binascii
+import json
+import logging
+import sys
+from os import path
+from typing import Optional
 
 from pypacker.layer12.ethernet import Ethernet, Dot1Q
 from pypacker.layer3.ip6 import IP6
 from pypacker.layer4.tcp import TCP
 
 from trafficgenerator.tgn_utils import ApiType
-from xenavalkyrie.xena_app import init_xena
+from xenavalkyrie.xena_app import init_xena, XenaApp
+from xenavalkyrie.xena_port import XenaCaptureBufferType, XenaStreamState
 from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
-from xenavalkyrie.xena_port import XenaCaptureBufferType
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
 wireshark_path = 'C:/Program Files/Wireshark'
@@ -36,18 +37,18 @@ pcap_file = path.join(path.dirname(__file__), 'xena_cap.pcap')
 ports = {}
 
 #: :type xm: xenavalkyrie.xena_app.XenaApp
-xm = None
+xm: XenaApp = Optional[None]
+
+# Xena manager requires standard logger. To log all low level CLI commands set DEBUG level.
+logger = logging.getLogger('log')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def connect():
     """ Create Xena manager object and connect to chassis. """
 
     global xm
-
-    # Xena manager requires standard logger. To log all low level CLI commands set DEBUG level.
-    logger = logging.getLogger('log')
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
 
     # Create XenaApp object and connect to chassis.
     xm = init_xena(api, logger, owner, chassis)

@@ -3,15 +3,16 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 
 :author: yoram@ignissoft.com
 """
-
 from __future__ import annotations
 import re
 import time
 from collections import OrderedDict
-from typing import Type, List, Optional
+from typing import Type, List, Optional, Dict
 
 from trafficgenerator.tgn_utils import TgnError
 from trafficgenerator.tgn_object import TgnObject, TgnObjectsDict
+
+import xenavalkyrie.xena_app
 
 
 class XenaAttributeError(TgnError):
@@ -33,9 +34,10 @@ class XenaObjectsDict(TgnObjectsDict):
 class XenaObject(TgnObject):
     """ Base class for all Xena objects. """
 
-    def __init__(self, parent: Optional[XenaObject], **data: str):
+    session: Optional[xenavalkyrie.xena_app.XenaSession] = None
+
+    def __init__(self, parent: Optional[XenaObject], **data: str) -> None:
         if parent:
-            self.session = parent.session
             self.chassis = parent.chassis
         if 'objRef' not in data:
             data['objRef'] = f'{parent.ref}/{data["objType"]}/{data["index"].split("/")[-1]}'
@@ -122,12 +124,8 @@ class XenaObject(TgnObject):
             else:
                 raise e
 
-    def get_attributes(self):
-        """ Returns all object's attributes.
-
-        :returns: dictionary of <name, value> of all attributes.
-        :rtype: dict of (str, str)
-        """
+    def get_attributes(self) -> Dict[str, str]:
+        """ Returns all object's attributes. """
         return self.api.get_attributes(self)
 
     def wait_for_states(self, attribute, timeout=40, *states):
