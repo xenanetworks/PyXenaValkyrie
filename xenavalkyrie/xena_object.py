@@ -3,16 +3,16 @@ Base classes and utilities for all Xena Manager (Xena) objects.
 
 :author: yoram@ignissoft.com
 """
-
-import time
+from __future__ import annotations
 import re
-import logging
+import time
 from collections import OrderedDict
+from typing import Type, List, Optional, Dict
 
 from trafficgenerator.tgn_utils import TgnError
 from trafficgenerator.tgn_object import TgnObject, TgnObjectsDict
 
-logger = logging.getLogger(__name__)
+import xenavalkyrie.xena_app
 
 
 class XenaAttributeError(TgnError):
@@ -34,41 +34,27 @@ class XenaObjectsDict(TgnObjectsDict):
 class XenaObject(TgnObject):
     """ Base class for all Xena objects. """
 
-    def __init__(self, **data):
-        if data['parent']:
-            self.session = data['parent'].session
-            self.chassis = data['parent'].chassis
+    session: Optional[xenavalkyrie.xena_app.XenaSession] = None
+
+    def __init__(self, parent: Optional[XenaObject], **data: str) -> None:
+        if parent:
+            self.chassis = parent.chassis
         if 'objRef' not in data:
-            data['objRef'] = '{}/{}/{}'.format(data['parent'].ref, data['objType'], data['index'].split('/')[-1])
+            data['objRef'] = f'{parent.ref}/{data["objType"]}/{data["index"].split("/")[-1]}'
         if 'name' not in data:
             data['name'] = data['index']
-        super(XenaObject, self).__init__(**data)
-
-    def obj_index(self):
-        """
-        :return: object index.
-        """
-        return str(self._data['index'])
-    index = property(obj_index)
-
-    def obj_id(self):
-        """
-        :return: object ID.
-        """
-        return int(self.index.split('/')[-1]) if self.index else None
-    id = property(obj_id)
+        super().__init__(parent, **data)
 
     def _create(self):
         self.api.create(self)
 
-    def reserve(self, force=False):
+    def reserve(self, force: Optional[bool] = False) -> None:
         """ Reserve object.
 
         XenaManager-2G -> [Relinquish]/Reserve Chassis/Module/Port.
 
         :param force: True - take forcefully, False - fail if port is reserved by other user
         """
-
         reservation = self.get_attribute(self.cli_prefix + '_reservation')
         if reservation == 'RESERVED_BY_YOU':
             return
@@ -138,12 +124,8 @@ class XenaObject(TgnObject):
             else:
                 raise e
 
-    def get_attributes(self):
-        """ Returns all object's attributes.
-
-        :returns: dictionary of <name, value> of all attributes.
-        :rtype: dict of (str, str)
-        """
+    def get_attributes(self) -> Dict[str, str]:
+        """ Returns all object's attributes. """
         return self.api.get_attributes(self)
 
     def wait_for_states(self, attribute, timeout=40, *states):
@@ -154,8 +136,24 @@ class XenaObject(TgnObject):
         raise TgnError('{} failed to reach state {}, state is {} after {} seconds'.
                        format(attribute, states, self.get_attribute(attribute), timeout))
 
+    #
+    # Implement unsupported abstract methods.
+    #
+
     def read_stat(self, captions, stat_name):
         return dict(zip(captions, self.api.get_stats(self, stat_name)))
+
+    def get_name(self) -> str:
+        pass
+
+    def get_children(self, *types: str) -> List[TgnObject]:
+        pass
+
+    def get_objects_from_attribute(self, attribute: str) -> List[TgnObject]:
+        pass
+
+    def get_obj_class(self, obj_type: str) -> Type[TgnObject]:
+        pass
 
     #
     # Private methods.
@@ -187,7 +185,7 @@ class XenaObject21(XenaObject):
 
     def _extract_return(self, command, index_command_value):
         module, port, sid = self.index.split('/')
-        return re.sub('{}/{}\s*{}\s*\[{}\]\s*'.format(module, port, command.upper(), sid), '', index_command_value)
+        return re.sub(rf'{module}/{port}\s*{command.upper()}\s*\[{sid}\]\s*', '', index_command_value)
 
     def _get_index_len(self):
         return 2

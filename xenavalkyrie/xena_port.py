@@ -3,18 +3,19 @@ Classes and utilities that represents Xena XenaManager-2G port.
 
 :author: yoram@ignissoft.com
 """
-
+from __future__ import annotations
 import os
 import re
 import math
 
 from collections import OrderedDict
 from enum import Enum
+from typing import Optional, Dict
 
 from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
 from xenavalkyrie.xena_stream import XenaStream, XenaStreamState
-from xenavalkyrie.xena_filter import XenaFilterState, XenaFilter, XenaMatch, XenaLength
+from xenavalkyrie.xena_filter import XenaFilter, XenaMatch, XenaLength
 
 
 class XenaCaptureBufferType(Enum):
@@ -61,15 +62,18 @@ class XenaBasePort(XenaObject):
     def inventory(self):
         self.p_info = self.get_attributes()
 
-    def reset(self):
-        """ Reset port-level parameters to standard values, and delete all streams, filters, capture,
-            and dataset definitions.
-        """
+    def reset(self) -> None:
+        """ Reset port-level parameters to standard values, and delete streams/filters/capture/dataset/etc. """
         self.objects = OrderedDict()
         return self.send_command('p_reset')
 
-    def wait_for_up(self, timeout=40):
+    def wait_for_up(self, timeout: Optional[int] = 40) -> None:
+        """ wait for port to come up (p_receivesync == 'IN_SYNC'). """
         self.wait_for_states('p_receivesync', timeout, 'IN_SYNC')
+
+    def is_online(self) -> bool:
+        """ Returns True if port state is up, else returns False. """
+        return self.get_attribute('p_receivesync') == 'IN_SYNC'
 
     #
     # Configurations.
@@ -104,54 +108,48 @@ class XenaBasePort(XenaObject):
             for line in self.send_command_return_multilines('p_fullconfig', '?'):
                 f.write(line.split(' ', 1)[1].lstrip())
 
-    def add_stream(self, name=None, tpld_id=None, state=XenaStreamState.enabled):
+    def add_stream(self, name: str = None, tpld_id: Optional[int] = None,
+                   state: Optional[XenaStreamState] = XenaStreamState.enabled) -> XenaStream:
         """ Add stream.
 
         :param name: stream description.
         :param tpld_id: TPLD ID. If None the a unique value will be set.
         :param state: new stream state.
-        :type state: xenavalkyrie.xena_stream.XenaStreamState
         :return: newly created stream.
-        :rtype: xenavalkyrie.xena_stream.XenaStream
         """
-
-        stream = XenaStream(parent=self, index='{}/{}'.format(self.index, len(self.streams)), name=name)
+        stream = XenaStream(parent=self, index=f'{self.index}/{len(self.streams)}', name=name)
         stream._create()
-        tpld_id = tpld_id if tpld_id != None else XenaStream.next_tpld_id
-        stream.set_attributes(ps_comment='"{}"'.format(stream.name), ps_tpldid=tpld_id)
+        tpld_id = tpld_id if tpld_id else XenaStream.next_tpld_id
+        stream.set_attributes(ps_comment=f'"{stream.name}"', ps_tpldid=tpld_id)
         XenaStream.next_tpld_id = max(XenaStream.next_tpld_id + 1, tpld_id + 1)
         stream.set_state(state)
         return stream
 
-    def remove_stream(self, index):
+    def remove_stream(self, index: int) -> None:
         """ Remove stream.
 
         :param index: index of stream to remove.
         """
-
         self.streams[index].del_object_from_parent()
 
-    def add_filter(self, comment=None):
+    def add_filter(self, comment: Optional[str] = None) -> XenaFilter:
         """ Add filter.
 
         We cannot set state before we set condition so it is the test responsibility.
 
         :param comment: filter description.
         :return: newly created filter.
-        :rtype: xenavalkyrie.xena_filter.XenaFilter
         """
-
-        filter = XenaFilter(parent=self, index='{}/{}'.format(self.index, len(self.filters)), name=comment)
+        filter = XenaFilter(parent=self, index=f'{self.index}/{len(self.filters)}', name=comment)
         filter._create()
-        filter.set_attributes(pf_comment='"{}"'.format(filter.name))
+        filter.set_attributes(pf_comment=f'"{filter.name}"')
         return filter
 
-    def remove_filter(self, index):
+    def remove_filter(self, index: int) -> None:
         """ Remove filter.
 
         :param index: index of filter to remove.
         """
-
         self.filters[index].del_object_from_parent()
 
     def add_match(self):
@@ -160,7 +158,6 @@ class XenaBasePort(XenaObject):
         :return: newly created match.
         :rtype: xenavalkyrie.xena_filter.XenaMatch
         """
-
         match = XenaMatch(parent=self, index='{}/{}'.format(self.index, len(self.matches)))
         match._create()
         return match
@@ -275,12 +272,10 @@ class XenaBasePort(XenaObject):
     #
 
     @property
-    def streams(self):
+    def streams(self) -> Dict[int, XenaStream]:
         """
         :return: dictionary {id: object} of all streams.
-        :rtype: dict of (int, xenavalkyrie.xena_stream.XenaStream)
         """
-
         if not self.get_objects_by_type('stream'):
             tpld_ids = []
             for index in self.get_attribute('ps_indices').split():
@@ -294,36 +289,32 @@ class XenaBasePort(XenaObject):
         return {s.id: s for s in self.get_objects_by_type('stream')}
 
     @property
-    def tplds(self):
+    def tplds(self) -> Dict[int, XenaTpld]:
         """
-        :return: dictionary {id: object} of all current tplds.
-        :rtype: dict of (int, xenavalkyrie.xena_port.XenaTpld)
-        """
+        :TODO: Since we read TPLDs dynamically, we can't access tpld statistics with tpld object. Fix.
 
+        :return: dictionary {id: object} of all current tplds.
+        """
         # As TPLDs are dynamic we must re-read them each time from the port.
         self.parent.del_objects_by_type('tpld')
         for tpld in self.get_attribute('pr_tplds').split():
-            XenaTpld(parent=self, index='{}/{}'.format(self.index, tpld))
+            XenaTpld(parent=self, index=f'{self.index}/{tpld}')
         return {t.id: t for t in self.get_objects_by_type('tpld')}
 
     @property
-    def capture(self):
+    def capture(self) -> XenaCapture:
         """
         :return: capture object.
-        :rtype: XenaCapture
         """
-
         if not self.get_object_by_type('capture'):
             XenaCapture(parent=self)
         return self.get_object_by_type('capture')
 
     @property
-    def filters(self):
+    def filters(self) -> Dict[int, XenaFilter]:
         """
         :return: dictionary {id: object} of all filters.
-        :rtype: dict of (int, xenavalkyrie.xena_filter.XenaFilter)
         """
-
         if not self.get_objects_by_type('filter'):
             for index in self.get_attribute('pf_indices').split():
                 filter = XenaFilter(parent=self, index='{}/{}'.format(self.index, index), name=None)

@@ -3,12 +3,14 @@ Classes and utilities that represents Xena XenaManager-2G application and chassi
 
 :author: yoram@ignissoft.com
 """
-
+from __future__ import annotations
 import time
 import re
+from logging import Logger
+from typing import Optional, Union, List, Dict
 
 from trafficgenerator.tgn_app import TgnApp
-from trafficgenerator.tgn_utils import ApiType
+from trafficgenerator.tgn_utils import ApiType, TgnError
 from xenavalkyrie.api.xena_rest import XenaRestWrapper
 from xenavalkyrie.api.xena_cli import XenaCliWrapper
 from xenavalkyrie.xena_object import XenaObject, XenaObjectsDict
@@ -16,7 +18,8 @@ from xenavalkyrie.xena_port import XenaPort
 from xenavalkyrie.xena_chimera_port import XenaChimeraPort
 
 
-def init_xena(api, logger, owner, ip=None, port=57911):
+def init_xena(api: ApiType, logger: Logger, owner: str,
+              ip: Optional[str] = None, port: Optional[int] = 57911) -> XenaApp:
     """ Create XenaApp object.
 
     :param api: cli/rest
@@ -24,30 +27,28 @@ def init_xena(api, logger, owner, ip=None, port=57911):
     :param owner: owner of the scripting session
     :param ip: rest server IP
     :param port: rest server TCP port
-    :return: Xena object
-    :rtype: XenaApp
     """
-
     if api == ApiType.socket:
         api_wrapper = XenaCliWrapper(logger)
     elif api == ApiType.rest:
         api_wrapper = XenaRestWrapper(logger, ip, port)
+    else:
+        raise TgnError(f'{api} API not supported, only {ApiType.socket} and {ApiType.rest}')
     return XenaApp(logger, owner, api_wrapper)
 
 
 class XenaApp(TgnApp):
     """ XenaApp object, equivalent to XenaManager-2G application. """
 
-    def __init__(self, logger, owner, api_wrapper):
+    def __init__(self, logger: Logger, owner: str, api_wrapper: Union[XenaCliWrapper, XenaRestWrapper]) -> None:
         """ Start XenaManager-2G equivalent application.
 
         This seems somewhat redundant but we keep it for compatibility with all other TG packages.
 
-        :param api_wrapper: cli/rest API pbject.
         :param logger: python logger
         :param owner: owner of the scripting session
         """
-
+        super().__init__(logger, api_wrapper)
         self.session = XenaSession(logger, owner, api_wrapper)
 
 
@@ -58,19 +59,18 @@ class XenaSession(XenaObject):
         """
         :param logger: python logger
         :param owner: owner of the scripting session
-        :param api: cli/rest API pbject.
+        :param api: cli/rest API object.
         """
-
         self.logger = logger
         self.api = api
         self.owner = owner
 
-        super(self.__class__, self).__init__(objType='session', index='', parent=None, objRef=owner)
-        self.session = self
+        super().__init__(parent=None, objType='session', index='', objRef=owner)
+        XenaObject.session = self
         self.chassis = None
         self.api.connect(owner)
 
-    def add_chassis(self, chassis, port=22611, password='xena'):
+    def add_chassis(self, chassis: str, port: Optional[int] = 22611, password: Optional[str] = 'xena') -> XenaChassis:
         """ Add chassis.
 
         XenaManager-2G -> Add Chassis.
@@ -79,9 +79,7 @@ class XenaSession(XenaObject):
         :param port: chassis port number
         :param password: chassis password
         :return: newly created chassis
-        :rtype: xenavalkyrie.xena_app.XenaChassis
         """
-
         if chassis not in self.chassis_list:
             try:
                 XenaChassis(self, chassis, port, password)
@@ -90,21 +88,22 @@ class XenaSession(XenaObject):
                 raise error
         return self.chassis_list[chassis]
 
-    def disconnect(self, release=True):
-        """ Release ports and disconnect from all chassis. """
+    def disconnect(self) -> None:
+        """ Release ports and disconnect from all chassis.
 
-        if release:
-            self.release_ports()
-            
+        XenaManager-2G -> Release Ports.
+        XenaManager-2G -> Disconnect from Chassis.
+        """
+        self.release_ports()
         self.api.disconnect()
 
-    def inventory(self):
+    def inventory(self) -> None:
         """ Get inventory for all chassis. """
-
         for chassis in self.chassis_list.values():
             chassis.inventory(modules_inventory=True)
 
-    def reserve_ports(self, locations, force=False, reset=True):
+    def reserve_ports(self, locations: List[str], force: Optional[bool] = False,
+                      reset: Optional[bool] = True) -> Dict[str, XenaPort]:
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -113,26 +112,21 @@ class XenaSession(XenaObject):
         :param locations: list of ports locations in the form <ip/slot/port> to reserve
         :param force: True - take forcefully. False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
-        :return: ports dictionary (index: object)
         """
-
         for location in locations:
             ip, module, port = location.split('/')
-            self.chassis_list[ip].reserve_ports(['{}/{}'.format(module, port)], force, reset)
-
+            self.chassis_list[ip].reserve_ports([f'{module}/{port}'], force, reset)
         return self.ports
 
-    def release_ports(self):
+    def release_ports(self) -> None:
         """ Release all ports that were reserved during the session.
 
         XenaManager-2G -> Release Ports.
         """
-
         for chassis in self._per_chassis_ports(*self._get_operation_ports()):
             chassis.release_ports()
 
-
-    def reserve_modules(self, locations, force=False):
+    def reserve_modules(self, locations: List[str], force: Optional[bool] = False):
         """ Reserve modules.
 
         XenaManager-2G -> Reserve/Relinquish Module.
@@ -145,7 +139,7 @@ class XenaSession(XenaObject):
 
         for location in locations:
             ip, module = location.split('/')
-            self.chassis_list[ip].reserve_modules(['{}'.format(module)], force)
+            self.chassis_list[ip].reserve_modules([f'{module}'], force)
 
         return self.modules
 
@@ -159,39 +153,39 @@ class XenaSession(XenaObject):
         for chassis in self._per_chassis_modules(*self._get_operation_modules()):
             chassis.release_modules()
 
-
-    def start_traffic(self, blocking=False, *ports):
+    def start_traffic(self, blocking=False, *ports: XenaPort) -> None:
         """ Start traffic on list of ports.
+
+        XenaManager-2G -> Start Traffic.
 
         :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
         :param ports: list of ports to start traffic on. Default - all session ports.
         """
-
         for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
             chassis.start_traffic(False, *chassis_ports)
         if blocking:
             for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
                 chassis.wait_traffic(*chassis_ports)
 
-    def stop_traffic(self, *ports):
+    def stop_traffic(self, *ports: XenaPort) -> None:
         """ Stop traffic on list of ports.
+
+        XenaManager-2G -> Stop Traffic.
 
         :param ports: list of ports to stop traffic on. Default - all session ports.
         """
-
         for chassis, chassis_ports in self._per_chassis_ports(*self._get_operation_ports(*ports)).items():
             chassis.stop_traffic(*chassis_ports)
 
-    def clear_stats(self, *ports):
+    def clear_stats(self, *ports: XenaPort) -> None:
         """ Clear stats (TX and RX) for list of ports.
 
         :param ports: list of ports to clear stats on. Default - all session ports.
         """
-
         for port in self._get_operation_ports(*ports):
             port.clear_stats()
 
-    def read_stats(self, *ports):
+    def read_stats(self, *ports: XenaPort) -> XenaObjectsDict :
         """ Read statistics on list of ports.
 
         :param ports: list of ports to read statistics. Default - all session ports.
@@ -203,21 +197,19 @@ class XenaSession(XenaObject):
 
         return statistics
 
-    def start_capture(self, *ports):
+    def start_capture(self, *ports: XenaPort) -> None:
         """ Start capture on list of ports.
 
         :param ports: list of ports to start capture on. Default - all session ports.
         """
-
         for port in self._get_operation_ports(*ports):
             port.start_capture()
 
-    def stop_capture(self, *ports):
+    def stop_capture(self, *ports: XenaPort) -> None:
         """ Stop capture on list of ports.
 
         :param ports: list of ports to stop capture on. Default - all session ports.
         """
-
         for port in self._get_operation_ports(*ports):
             port.stop_capture()
 
@@ -226,26 +218,20 @@ class XenaSession(XenaObject):
     #
 
     @property
-    def chassis_list(self):
-        """
-        :return: dictionary {name: object} of all chassis.
-        """
-
+    def chassis_list(self) -> Dict[str, XenaChassis]:
+        """ Returns all chassis. """
         return {str(c): c for c in self.get_objects_by_type('chassis')}
 
     @property
-    def ports(self):
-        """
-        :return: dictionary {name: object} of all ports.
-        """
-
+    def ports(self) -> Dict[str, XenaPort]:
+        """ Returns all ports on all chassis. """
         ports = {}
         for chassis in self.chassis_list.values():
             ports.update({str(p): p for p in chassis.get_objects_by_type('port')})
         return ports
 
     @property
-    def modules(self):
+    def modules(self) -> Dict[str, XenaModule]:
         """
         :return: dictionary {name: object} of all modules.
         """
@@ -293,17 +279,15 @@ class XenaChassis(XenaObject):
     _info_config_commands = ['c_info', 'c_config']
     stats_captions = ['ses', 'typ', 'adr', 'own', 'ops', 'req', 'rsp']
 
-    def __init__(self, parent, ip, port=22611, password='xena'):
+    def __init__(self, parent: XenaSession, ip: str, port: Optional[int] = 22611,
+                 password: Optional[str] = 'xena') -> None:
         """
         :param parent: parent session object
-        :param owner: owner of the scripting session
         :param ip: chassis IP address
         :param port: chassis port number
         :param password: chassis password
         """
-
-        super(self.__class__, self).__init__(objType='chassis', index='', parent=parent, name=ip,
-                                             objRef='{}/chassis/{}'.format(parent.ref, ip))
+        super().__init__(objType='chassis', index='', parent=parent, name=ip, objRef=f'{parent.ref}/chassis/{ip}')
         self.chassis = self
         self.owner = parent.owner
         self.ip = ip
@@ -313,19 +297,19 @@ class XenaChassis(XenaObject):
 
         self.c_info = None
 
-    def shutdown(self, restart=False, wait=False):
+    def shutdown(self, restart=False, wait=False) -> None:
         """ Shutdown chassis.
 
         Limitations: shutdown to single chassis will disconnect all chassis so in multiple chassis environment the test
         should reconnect by calling api.add_chassis(chassis).
 
+        :TODO: fix limitation.
+
         :param restart: True - restart, False - poweroff
         :param wait: True - wait for chassis to come up after restart, False - return immediately
-        :todo: fix limitation.
         """
-
-        whattodo = 'restart' if restart else 'shutdown'
-        self.send_command('c_down', '-1480937026', whattodo)
+        what_to_do = 'restart' if restart else 'shutdown'
+        self.send_command('c_down', '-1480937026', what_to_do)
         self.api.disconnect()
         if wait:
             while True:
@@ -334,7 +318,7 @@ class XenaChassis(XenaObject):
                     self.api.connect(self.owner)
                     self.api.add_chassis(self)
                     break
-                except Exception as e:
+                except Exception as _:
                     pass
 
     def get_session_id(self):
@@ -344,11 +328,12 @@ class XenaChassis(XenaObject):
 
         :return: chassis ID.
         """
-
         raise NotImplementedError('Underlying CLI command c_stats returns internal error.')
 
     def inventory(self, modules_inventory=False):
         """ Get chassis inventory.
+
+         :TODO: Check if we are creating a Chimera module
 
         :param modules_inventory: True - read modules inventory, false - don't read.
         """
@@ -356,13 +341,12 @@ class XenaChassis(XenaObject):
         self.c_info = self.get_attributes()
         for m_index, m_portcounts in enumerate(self.c_info['c_portcounts'].split()):
             if int(m_portcounts):
-                # TODO: Check if we are creating a Chimera module
                 module = XenaModule(parent=self, index=m_index)
                 if modules_inventory:
                     module.inventory()
 
 
-    def reserve_modules(self, locations, force=False):
+    def reserve_modules(self, locations: List[str], force: Optional[bool] = False):
         """ Reserve modules.
 
         XenaManager-2G -> Reserve/Relinquish module.
@@ -385,8 +369,8 @@ class XenaChassis(XenaObject):
 
         return self.modules
 
-
-    def reserve_ports(self, locations, force=False, reset=True):
+    def reserve_ports(self, locations: List[str], force: Optional[bool] = False,
+                      reset: Optional[bool] = True) -> Dict[str, XenaPort]:
         """ Reserve ports and reset factory defaults.
 
         XenaManager-2G -> Reserve/Relinquish Port.
@@ -395,9 +379,7 @@ class XenaChassis(XenaObject):
         :param locations: list of ports locations in the form <module/port> to reserve
         :param force: True - take forcefully, False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
-        :return: ports dictionary (index: object)
         """
-
         for location in locations:
 
             if self.modules[int(location.split('/')[0])].capabilities.values['ischimera']:
@@ -408,19 +390,17 @@ class XenaChassis(XenaObject):
             port.reserve(force)
             if reset:
                 port.reset()
-
         return self.ports
 
-    def release_ports(self):
+    def release_ports(self) -> None:
         """ Release all ports that were reserved during the session.
 
         XenaManager-2G -> Release Ports.
         """
-
         for port in self.ports.values():
             port.release()
 
-    def release_modules(self):
+    def release_modules(self) -> None:
         """ Release all ports that were reserved during the session.
 
         XenaManager-2G -> Release Ports.
@@ -429,7 +409,7 @@ class XenaChassis(XenaObject):
         for module in self.modules.values():
             module.release()
 
-    def start_traffic(self, blocking=False, *ports):
+    def start_traffic(self, blocking: Optional[bool] = False, *ports):
         """ Start traffic on list of ports.
 
         :param blocking: True - start traffic and wait until traffic ends, False - start traffic and return.
@@ -486,17 +466,12 @@ class XenaChassis(XenaObject):
         """
         :return: dictionary {index: object} of all modules.
         """
-
         if not self.get_objects_by_type('module'):
             self.inventory()
         return {int(c.index): c for c in self.get_objects_by_type('module')}
 
     @property
-    def ports(self):
-        """
-        :return: dictionary {name: object} of all ports.
-        """
-
+    def ports(self) -> Dict[str, XenaPort]:
         return {str(p): p for p in self.get_objects_by_type('port')}
 
     #

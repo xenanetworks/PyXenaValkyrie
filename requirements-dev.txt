@@ -1,0 +1,12 @@
+-r requirements.txt
+
+# Testing
+pytest
+pytest-cov
+tox
+
+# Packaging
+setuptools
+setuptools-scm
+wheel
+twine

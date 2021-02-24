@@ -6,28 +6,27 @@ There are three different views - ports, streams and TPLD.
 
 :author: yoram@ignissoft.com
 """
-
 from collections import OrderedDict
+from typing import Optional
 
 from trafficgenerator.tgn_object import TgnSubStatsDict
-from xenavalkyrie.xena_object import XenaObjectsDict
+from xenavalkyrie.xena_object import XenaObjectsDict, XenaObject
+from xenavalkyrie.xena_app import XenaSession
 
 
-class XenaStats(object):
+class XenaStats:
     """ Base class for all statistics views. """
 
-    def __init__(self, session):
+    def __init__(self, session: Optional[XenaSession] = XenaObject.session) -> None:
         """
-        :param session: current session
-        :type session: xenavalkyrie.xena_app.XenaSession
+        :param session: Deprecated.
         """
-
-        self.session = session
         self.statistics = None
 
-    def get_flat_stats(self):
-        """
-        :return: statistics as flat table {port/strea,/tpld name {group_stat name: value}}
+    def get_flat_stats(self) -> OrderedDict:
+        """ Returns statistics as flat table {port/stream/tpld name {group_stat name: value}}.
+
+        :TODO: Works only for port statistics. Fix.
         """
         flat_stats = OrderedDict()
         for obj, port_stats in self.statistics.items():
@@ -38,6 +37,7 @@ class XenaStats(object):
                     flat_obj_stats[full_stat_name] = stat_value
             flat_stats[obj.name] = flat_obj_stats
         return flat_stats
+    flat_statistics = property(get_flat_stats)
 
 
 class XenaPortsStats(XenaStats):
@@ -56,14 +56,13 @@ class XenaPortsStats(XenaStats):
     +----------------+-------+-------+-----+-------+-------+-----+-----+
     """
 
-    def read_stats(self):
+    def read_stats(self) -> XenaObjectsDict:
         """ Read current ports statistics from chassis.
 
         :return: dictionary {port name {group name, {stat name: stat value}}}
         """
-
         self.statistics = XenaObjectsDict()
-        for port in self.session.ports.values():
+        for port in XenaSession.session.ports.values():
             self.statistics[port] = port.read_port_stats()
         return self.statistics
 
@@ -95,11 +94,11 @@ class XenaStreamsStats(XenaStats):
         """
 
         self.tx_statistics = XenaObjectsDict()
-        for port in self.session.ports.values():
+        for port in XenaObject.session.ports.values():
             for stream in port.streams.values():
                 self.tx_statistics[stream] = stream.read_stats()
 
-        tpld_statistics = XenaTpldsStats(self.session).read_stats()
+        tpld_statistics = XenaTpldsStats().read_stats()
 
         self.statistics = XenaObjectsDict()
         for stream, stream_stats in self.tx_statistics.items():
@@ -133,14 +132,13 @@ class XenaTpldsStats(XenaStats):
     +-------------------+-------+-------+-----+-------+-------+-----+-----+
     """
 
-    def read_stats(self):
+    def read_stats(self) -> XenaObjectsDict:
         """ Read current statistics from chassis.
 
         :return: dictionary {tpld full index {group name {stat name: stat value}}}
         """
-
         self.statistics = XenaObjectsDict()
-        for port in self.session.ports.values():
+        for port in XenaObject.session.ports.values():
             for tpld in port.tplds.values():
                 self.statistics[tpld] = tpld.read_stats()
         return self.statistics
