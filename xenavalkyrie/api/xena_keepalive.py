@@ -5,7 +5,7 @@ import time
 
 class KeepAliveThread(threading.Thread):
 
-    def __init__(self, logger, api, interval=10):
+    def __init__(self, logger, api, interval=60):
         threading.Thread.__init__(self)
         self.nr_sent = 0
         self.logger = logger

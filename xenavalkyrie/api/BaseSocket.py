@@ -61,25 +61,25 @@ class BaseSocket:
             self.disconnect()
             raise socket.error("Fail to send command: {}, error: {}", cmd, error)
 
-    def readReply(self):
-        if not self.connected:
-            raise socket.error("readReply() on a disconnected socket")
-
-        try:
-            reply = self.sock.recv(4096)
-            while not reply.endswith(b'\x0a'):
-                reply += self.sock.recv(4096)
-            if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
-                # read next line for actual message
-                reply = self.sock.recv(4096)
-        except Exception as error:
-            self.disconnect()
-            raise IOError('Fail to read response, error: {}'.format(error))
-
-        str_reply = reply.decode("utf-8")
-        logger.debug('Reply message({})'.format(str_reply))
-        return str_reply
-
+    # def readReply(self):
+    #     if not self.connected:
+    #         raise socket.error("readReply() on a disconnected socket")
+    #
+    #     try:
+    #         reply = self.sock.recv(4096)
+    #         while not reply.endswith(b'\x0a'):
+    #             reply += self.sock.recv(4096)
+    #         if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
+    #             # read next line for actual message
+    #             reply = self.sock.recv(4096)
+    #     except Exception as error:
+    #         self.disconnect()
+    #         raise IOError('Fail to read response, error: {}'.format(error))
+    #
+    #     str_reply = reply.decode("utf-8")
+    #     logger.debug('Reply message({})'.format(str_reply))
+    #     return str_reply
+    #
     def sendQuery(self, query):
         logger.debug('sendQuery({})'.format(query))
         self.sendCommand(query)
@@ -89,3 +89,25 @@ class BaseSocket:
     def set_keepalives(self):
         logger.debug("Setting socket keepalive")
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+
+
+    def readReply(self):
+        if not self.connected:
+            raise socket.error("readReply() on a disconnected socket")
+        retries = 5
+        for i in range(1, retries):
+            try:
+                reply = self.sock.recv(1024)
+                if reply.find(b'---^') != -1 or reply.find(b'^---') != -1:
+                    # read next line for actual message
+                    reply = self.sock.recv(1024)
+                break
+            except Exception as error:
+                if i == retries-1:
+                    self.disconnect()
+                    raise IOError("Fail to read response, error: {}", error)
+
+        str_reply = reply.decode("utf-8")
+        logger.debug('Reply message({})'.format(str_reply))
+        return str_reply
+

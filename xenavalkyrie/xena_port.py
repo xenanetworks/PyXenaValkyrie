@@ -148,6 +148,10 @@ class XenaPort(XenaObject):
         """
         self.filters[index].del_object_from_parent()
 
+    def clear_filters(self):
+        for f in self.filters:
+            self.filters[f].del_object_from_parent()
+
     def add_match(self):
         """ Add match.
 
@@ -262,6 +266,13 @@ class XenaPort(XenaObject):
         for tpld in self.tplds.values():
             payloads_stats[tpld] = tpld.read_stats()
         return payloads_stats
+
+    def read_filter_stats(self):
+        filter_stats = OrderedDict()
+        for flt in self.filters.values():
+            filter_stats[flt] = flt.read_stats()
+        return filter_stats
+
 
     #
     # Properties.
