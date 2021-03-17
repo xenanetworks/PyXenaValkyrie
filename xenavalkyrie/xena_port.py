@@ -267,6 +267,17 @@ class XenaBasePort(XenaObject):
             payloads_stats[tpld] = tpld.read_stats()
         return payloads_stats
 
+    def read_filter_stats(self):
+        """
+        :return: dictionary {filter_index {group_name {stat_name: value}}}.
+            Sea XenaFilter.stats_captions.
+        """
+        filter_stats = OrderedDict()
+        for filter_obj in self.filters.values():
+            filter_stats[filter_obj] = filter_obj.read_stats()
+        return filter_stats
+
+
     #
     # Properties.
     #

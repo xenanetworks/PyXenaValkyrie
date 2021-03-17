@@ -78,7 +78,7 @@ class XenaStream(XenaObject21):
         bin_headers = self.get_attribute('ps_packetheader')
         return Ethernet(binascii.unhexlify(bin_headers[2:]))
 
-    def set_packet_headers(self, headers, l4_checksum=False):
+    def set_packet_headers(self, headers, l4_checksum=False, raw_header=False):
         """ Set packet header.
 
         The method will try to set ps_headerprotocol to inform the Xena GUI and tester how to interpret the packet
@@ -87,36 +87,55 @@ class XenaStream(XenaObject21):
         protocol segments are specified.
         If the method fails to set some segment it will log a warning and skip setup.
 
-        :param headers: current packet headers
+        :param headers: current packet headers. Set this parameter to None if you want to add extended payload at offset 0
         :type headers: pypacker.layer12.ethernet.Ethernet
         :param l4_checksum: True - set tcp/udp checksum flag, False - do not set
         """
 
-        body_handler = headers
-        ps_headerprotocol = []
-        while body_handler:
-            segment = pypacker_2_xena.get(str(body_handler).split('\n')[0].split('.')[-1].lower(), None)
-            if not segment:
-                self.logger.warning(f'pypacker header {segment} not in conversion list')
-                break
-            ps_headerprotocol.append(segment)
-            if type(body_handler) is Ethernet and body_handler.vlan:
-                for _ in range(len(body_handler.vlan)):
-                    ps_headerprotocol.append('vlan')
-            body_handler = body_handler.upper_layer
-        if l4_checksum:
-            l4 = headers.upper_layer.upper_layer
-            l4.sum_au_active = False
-            l4.sum = 0
-            if 'udp' in ps_headerprotocol:
-                ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
-            if 'tcp' in ps_headerprotocol:
-                ps_headerprotocol[ps_headerprotocol.index('tcp')] = 'tcpcheck'
-        self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
+        if headers:
+            body_handler = headers
+            ps_headerprotocol = []
+            while body_handler:
+                segment = pypacker_2_xena.get(str(body_handler).split('\n')[0].split('.')[-1].lower(), None)
+                if not segment:
+                    self.logger.warning(f'pypacker header {segment} not in conversion list')
+                    break
+                ps_headerprotocol.append(segment)
+                if type(body_handler) is Ethernet and body_handler.vlan:
+                    for _ in range(len(body_handler.vlan)):
+                        ps_headerprotocol.append('vlan')
+                body_handler = body_handler.upper_layer
+            if l4_checksum:
+                l4 = headers.upper_layer.upper_layer
+                l4.sum_au_active = False
+                l4.sum = 0
+                if 'udp' in ps_headerprotocol:
+                    ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
+                if 'tcp' in ps_headerprotocol:
+                    ps_headerprotocol[ps_headerprotocol.index('tcp')] = 'tcpcheck'
+            self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
 
-        headers_str = binascii.hexlify(headers.bin())
-        bin_headers = '0x' + headers_str.decode('utf-8')
-        self.set_attributes(ps_packetheader=bin_headers)
+            headers_str = binascii.hexlify(headers.bin())
+            bin_headers = '0x' + headers_str.decode('utf-8')
+
+            if raw_header:
+                self.set_attributes(ps_headerprotocol = -1*int((len(bin_headers)-2)/2))
+
+            self.set_attributes(ps_packetheader=bin_headers)
+
+        else:
+
+            if raw_header:
+                self.set_attributes(ps_headerprotocol = "")
+
+
+    def set_extended_payload(self, extended_payload):
+        """ Set the extended payload for the stream.
+
+        :param extended_payload: A hexadecimal string representing the extended payload.
+
+        """
+        self.set_attributes(ps_extpayload = '0x' + extended_payload.decode('utf-8'))
 
     #
     # Modifiers.

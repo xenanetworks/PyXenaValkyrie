@@ -4,6 +4,7 @@ Classes and utilities that represents Xena XenaManager-2G FILTER TERMS and FILTE
 :author: yoram@ignissoft.com
 """
 
+from collections import OrderedDict
 from enum import Enum
 
 from xenavalkyrie.xena_object import XenaObject21
@@ -19,6 +20,8 @@ class XenaFilter(XenaObject21):
     create_command = 'pf_create'
     _info_config_commands = ['pf_config', 'pf_condition']
 
+    stats_captions = {'pr_filter': ['bps', 'pps', 'byt', 'pac']}
+
     def __init__(self, parent, index, name=''):
         """
         :param parent: parent port object.
@@ -27,6 +30,9 @@ class XenaFilter(XenaObject21):
         """
 
         super(self.__class__, self).__init__(objType='filter', index=index, parent=parent, name=name)
+
+    def __str__(self) -> str:
+        return self.index
 
     def del_object_from_parent(self):
         self.set_state(XenaFilterState.off)
@@ -39,8 +45,19 @@ class XenaFilter(XenaObject21):
         :param state: new filter state.
         :type stae: xenavalkyrie.xena_filter.XenaFilterState
         """
+
         self.set_attributes(pf_enable=state.value)
 
+    def read_stats(self):
+        """
+        :return: dictionary {group_name {stat_name: value}}.
+            Sea XenaFilter.stats_captions.
+        """
+
+        stats_with_captions = OrderedDict()
+        for stat_name in self.stats_captions.keys():
+            stats_with_captions[stat_name] = self.read_stat(self.stats_captions[stat_name], stat_name)
+        return stats_with_captions
 
 class XenaMatch(XenaObject21):
 
