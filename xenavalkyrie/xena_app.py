@@ -621,6 +621,27 @@ class XenaBaseModule(XenaObject):
                 self._capabilities.values[k] = int(capabilities_lst[ptr])
                 ptr += 1
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #for k,v in self._capabilities.values.items():
         #    if hasattr(v, "__iter__") :
         #        self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
