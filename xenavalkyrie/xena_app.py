@@ -514,7 +514,8 @@ class XenaBaseModule(XenaObject):
             a = self.get_attribute('m_portcount')
             m_portcount = int(a)
         else:
-            m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
+            #m_portcount = int(self.get_attribute('m_cfpconfig').split()[0])
+            m_portcount = int(self.get_attribute('m_portcount'))
         for p_index in range(m_portcount):
             XenaPort(parent=self, index='{}/{}'.format(self.index, p_index)).inventory()
 
@@ -608,16 +609,29 @@ class XenaBaseModule(XenaObject):
             self._capabilities = XenaModuleCapabilities()
 
         ptr = 0
-        capabilities_lst = self.get_attribute('m_capabilities').split() 
+        capabilities_lst = self.get_attribute('m_capabilities').split()
 
-        for k,v in self._capabilities.values.items():
+        capabilities_iter = iter(self._capabilities.values.items())
+        while ptr < len(capabilities_lst):
+            k,v = next(capabilities_iter)
             if hasattr(v, "__iter__") :
                 self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
-                ptr += len(v)
+                ptr += len(v)            
             else:
                 self._capabilities.values[k] = int(capabilities_lst[ptr])
                 ptr += 1
 
+        #for k,v in self._capabilities.values.items():
+        #    if hasattr(v, "__iter__") :
+        #        self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
+        #        ptr += len(v)
+        #    else:
+        #        self._capabilities.values[k] = int(capabilities_lst[ptr])
+        #        ptr += 1
+        #
+        #    if ptr > (len(capabilities_lst)-1):
+        #        break
+        #
         return self._capabilities
 
 class XenaModuleCapabilities():
@@ -631,8 +645,8 @@ class XenaModuleCapabilities():
            "canlocaltimeadjust" : 0,
            "canmediaconfig"     : 0,
            "requiresmultiimage" : 0,
-           "ischimera"          : 0
-           #"maxppm"             : 0
+           "ischimera"          : 0,
+           "maxppm"             : 0
         }
 
 class XenaModule(XenaBaseModule):

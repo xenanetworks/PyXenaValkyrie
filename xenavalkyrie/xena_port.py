@@ -364,17 +364,29 @@ class XenaBasePort(XenaObject):
         if self._capabilities == None:
             self._capabilities = XenaPortCapabilities()
 
-
         ptr = 0
-        capabilities_lst = self.get_attribute('p_capabilities').split() 
+        capabilities_lst = self.get_attribute('p_capabilities').split()
 
-        for k,v in self._capabilities.values.items():
+        capabilities_iter = iter(self._capabilities.values.items())
+        while ptr < len(capabilities_lst):
+            k,v = next(capabilities_iter)
             if hasattr(v, "__iter__") :
                 self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
-                ptr += len(v)
+                ptr += len(v)            
             else:
                 self._capabilities.values[k] = int(capabilities_lst[ptr])
                 ptr += 1
+
+
+
+
+        #for k,v in self._capabilities.values.items():
+        #    if hasattr(v, "__iter__") :
+        #        self._capabilities.values[k] = [int(x) for x in capabilities_lst[ptr:ptr+len(v)]]
+        #        ptr += len(v)
+        #    else:
+        #        self._capabilities.values[k] = int(capabilities_lst[ptr])
+        #        ptr += 1
 
         return self._capabilities
     
