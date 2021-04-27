@@ -103,6 +103,8 @@ class XenaStream(XenaObject21):
         ps_headerprotocol = []
         while body_handler:
             segment = pypacker_2_xena.get(str(body_handler).split('\n')[0].split('.')[-1].lower(), None)
+            if segment == 'ethernet' and not body_handler.type:
+                segment = '244'
             if not segment:
                 self.logger.warning(f'pypacker header {segment} not in conversion list')
                 break
