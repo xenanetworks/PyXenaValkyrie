@@ -28,3 +28,5 @@ xenavalkyrie/samples/*.txt
 xenavalkyrie/samples/*.csv
 xenavalkyrie/samples/*.pcap
 xenavalkyrie/samples/save_config.*
+
+customers

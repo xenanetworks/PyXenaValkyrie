@@ -225,5 +225,18 @@ def run_all():
     disconnect()
 
 
+def run_sequencer():
+
+    # Create XenaApp object and connect to chassis.
+    xm = init_xena(api, logger, owner, chassis)
+    xm.session.add_chassis(chassis)
+    xm.session.connect_ports([port0, port1], True)
+    ports_stats = XenaPortsStats(xm.session)
+    while True:
+        ports_stats.read_stats()
+        print(ports_stats.statistics.dumps())
+        # Customer code
+
+
 if __name__ == '__main__':
     run_all()

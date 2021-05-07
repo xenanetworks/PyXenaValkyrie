@@ -320,7 +320,7 @@ class XenaPort(XenaObject):
         return {f.id: f for f in self.get_objects_by_type('filter')}
 
     @property
-    def matches(self):
+    def matches(self) -> Dict[int, XenaMatch]:
         """
         :return: dictionary {id: object} of all matches.
         :rtype: dict of (int, xenavalkyrie.xena_filter.XenaMatch)
