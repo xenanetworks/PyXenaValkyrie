@@ -18,5 +18,5 @@ server_properties = {'live_demo_socket': {'server': live_demo_socket,
                                           'locations': [f'{dev_chassis}/0/0', f'{dev_chassis}/0/1']}}
 
 # Default for options.
-api = ['rest']
-server = ['live_demo_rest']
+api = ['socket']
+server = ['dev_chassis_socket']

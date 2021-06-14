@@ -1,9 +1,10 @@
+# -*- coding: future_annotations -*-
+
 """
 Classes and utilities that represents Xena XenaManager-2G stream.
 
 :author: yoram@ignissoft.com
 """
-from __future__ import annotations
 import binascii
 import re
 from collections import OrderedDict

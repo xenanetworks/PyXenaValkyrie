@@ -1,9 +1,10 @@
+# -*- coding: future_annotations -*-
+
 """
 Classes and utilities that represents Xena XenaManager-2G port.
 
 :author: yoram@ignissoft.com
 """
-from __future__ import annotations
 import os
 from collections import OrderedDict
 from enum import Enum

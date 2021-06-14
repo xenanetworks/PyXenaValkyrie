@@ -1,9 +1,10 @@
+# -*- coding: future_annotations -*-
+
 """
 Base classes and utilities for all Xena Manager (Xena) objects.
 
 :author: yoram@ignissoft.com
 """
-from __future__ import annotations
 import re
 import time
 from collections import OrderedDict
@@ -59,8 +60,8 @@ class XenaObject(TgnObject):
         if reservation == 'RESERVED_BY_YOU':
             return
         elif reservation == 'RESERVED_BY_OTHER' and not force:
-            reservedby = self.get_attribute(self.cli_prefix + '_reservedby')
-            raise TgnError('Resource {} reserved by {}'.format(self, reservedby))
+            reserved_by = self.get_attribute(self.cli_prefix + '_reservedby')
+            raise TgnError(f'Resource {self} reserved by {reserved_by}')
         self.relinquish()
         self.send_command(self.cli_prefix + '_reservation', 'reserve')
 

@@ -1,9 +1,10 @@
+# -*- coding: future_annotations -*-
+
 """
 Classes and utilities that represents Xena XenaManager-2G application and chassis.
 
 :author: yoram@ignissoft.com
 """
-from __future__ import annotations
 import time
 from logging import Logger
 from typing import Optional, Union, List, Dict

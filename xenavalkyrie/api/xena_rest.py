@@ -189,12 +189,12 @@ class XenaRestWrapper(object):
                              json={'return_type': return_type.value, 'command': command})
 
     def _request(self, method, url, **kwargs):
-        self.logger.debug('method: {}, url: {}, kwargs={}'.format(method.value, url, kwargs))
+        self.logger.debug(f'method: {method.value}, url: {url}, kwargs={kwargs}')
         ignore = kwargs.pop('ignore', False)
         res = requests.request(method.value, url, **kwargs)
-        self.logger.debug('status_code: {}'.format(res.status_code))
+        self.logger.debug(f'status_code: {res.status_code}')
         if not ignore and res.status_code >= 400:
-            raise XenaCommandError('status_code: {}, content: {}'.format(res.status_code, res.content))
+            raise XenaCommandError(f'status_code: {res.status_code}, content: {res.content}')
         if res.content:
-            self.logger.debug('json: {}'.format(res.json()))
+            self.logger.debug(f'json: {res.json()}')
         return res
