@@ -51,7 +51,7 @@ class XenaPort(XenaObject):
             objRef = '{}/port/{}'.format(parent.ref, index.split('/')[-1])
         else:
             objRef = '{}/module/{}/port/{}'.format(parent.ref, *index.split('/'))
-        super().__init__(objType='port', index=index, parent=parent, objRef=objRef)
+        super().__init__(parent=parent, objType='port', index=index, objRef=objRef)
         self._data['name'] = '{}/{}'.format(parent.name, index)
         self.p_info = None
 
@@ -465,5 +465,38 @@ class XenaCapturePacket(XenaObject21):
     _info_config_commands = ['pc_info']
 
     def __init__(self, parent, index):
-        obj_ref = '{}/{}'.format(parent.ref, index.split('/')[-1])
-        super(self.__class__, self).__init__(objType='cappacket', parent=parent, index=index, objRef=obj_ref)
+        obj_ref = f"{parent.ref}/{index.split('/')[-1]}"
+        super().__init__(objType='cappacket', parent=parent, index=index, objRef=obj_ref)
+
+
+class XenaHighSpeedPort(XenaObject):
+    """ Represents Xena High Speed port. """
+
+    cli_prefix = 'pp'
+
+    _info_config_commands = ['pp_config']
+
+    def __init__(self, parent: XenaPort):
+        """ Create port object.
+
+        :param parent: parent port.
+        """
+        super().__init__(parent=parent, objType='high_speed_port', index=parent.index)
+
+    @property
+    def lanes(self) -> Dict[int, XenaMatch]:
+        """Returns all lanes."""
+        if not self.get_objects_by_type('lane'):
+            attributes = self.get_attributes()
+        return {m.id: m for m in self.get_objects_by_type('lane')}
+
+
+class XenaLane(XenaObject21):
+    """ Represents lane configuration. """
+
+    def __init__(self, parent: XenaHighSpeedPort, index: str) -> None:
+        """ Create lane object.
+
+        :param parent: parent high speed port.
+        """
+        super().__init__(parent=parent, objType='prbs', index=index)

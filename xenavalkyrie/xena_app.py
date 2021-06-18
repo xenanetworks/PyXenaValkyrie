@@ -108,13 +108,23 @@ class XenaSession(XenaObject):
         XenaManager-2G -> Reserve/Relinquish Port.
         XenaManager-2G -> Reserve Port.
 
-        :param locations: list of ports locations in the form <ip/slot/port> to reserve
+        :param locations: list of ports locations in the form <ip/module/port> to reserve
         :param force: True - take forcefully. False - fail if port is reserved by other user
         :param reset: True - reset port, False - leave port configuration
         """
         for location in locations:
             ip, module, port = location.split('/')
             self.chassis_list[ip].reserve_ports([f'{module}/{port}'], force, reset)
+        return self.ports
+
+    def connect_ports(self, locations: List[str]) -> Dict[str, XenaPort]:
+        """ Connect to ports without taking ownership.
+
+        :param locations: list of ports locations in the form <ip/module/port> to connect to
+        """
+        for location in locations:
+            ip, module, port = location.split('/')
+            self.chassis_list[ip].connect_ports([f'{module}/{port}'])
         return self.ports
 
     def release_ports(self) -> None:
@@ -295,6 +305,15 @@ class XenaChassis(XenaObject):
             port.reserve(force)
             if reset:
                 port.reset()
+        return self.ports
+
+    def connect_ports(self, locations: List[str]) -> Dict[str, XenaPort]:
+        """ Connect to ports without taking ownership.
+
+        :param locations: list of ports locations in the form <module/port> to connect to
+        """
+        for location in locations:
+            XenaPort(parent=self, index=location)
         return self.ports
 
     def release_ports(self) -> None:

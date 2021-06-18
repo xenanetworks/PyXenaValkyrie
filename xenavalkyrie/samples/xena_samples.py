@@ -6,7 +6,6 @@ Two Xena ports connected back to back.
 
 @author yoram@ignissoft.com
 """
-
 import binascii
 import json
 import logging
@@ -20,39 +19,39 @@ from pypacker.layer4.tcp import TCP
 
 from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.xena_app import init_xena, XenaApp
-from xenavalkyrie.xena_port import XenaCaptureBufferType, XenaStreamState
+from xenavalkyrie.xena_port import XenaCaptureBufferType, XenaHighSpeedPort
 from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
-wireshark_path = 'C:/Program Files/Wireshark'
+wireshark_path = "C:/Program Files/Wireshark"
 
 api = ApiType.socket
-chassis = '176.22.65.117'
-port0 = chassis + '/' + '0/0'
-port1 = chassis + '/' + '0/1'
-owner = 'pyxenavalkyrie-sample'
-config0 = path.join(path.dirname(__file__), 'test_config_1.xpc')
-save_config = path.join(path.dirname(__file__), 'save_config.xpc')
-pcap_file = path.join(path.dirname(__file__), 'xena_cap.pcap')
+chassis = "176.22.65.114"
+port0 = chassis + "/" + "0/0"
+port1 = chassis + "/" + "0/1"
+owner = "pyxenavalkyrie-sample"
+config0 = path.join(path.dirname(__file__), "test_config_1.xpc")
+save_config = path.join(path.dirname(__file__), "save_config.xpc")
+pcap_file = path.join(path.dirname(__file__), "xena_cap.pcap")
 ports = {}
 
 #: :type xm: xenavalkyrie.xena_app.XenaApp
 xm: XenaApp = Optional[None]
 
 # Xena manager requires standard logger. To log all low level CLI commands set DEBUG level.
-logger = logging.getLogger('log')
+logger = logging.getLogger("log")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def connect():
+def connect(chassis_ip: str):
     """ Create Xena manager object and connect to chassis. """
 
     global xm
 
     # Create XenaApp object and connect to chassis.
-    xm = init_xena(api, logger, owner, chassis)
-    xm.session.add_chassis(chassis)
+    xm = init_xena(api, logger, owner, chassis_ip)
+    xm.session.add_chassis(chassis_ip)
 
 
 def disconnect():
@@ -65,25 +64,25 @@ def inventory():
     """ Get inventory of all chassis. """
 
     xm.session.inventory()
-    print('+++')
+    print("+++")
     for c_name, chassis in xm.session.chassis_list.items():
-        print('chassis ' + c_name)
+        print("chassis " + c_name)
         for m_name, module in chassis.modules.items():
-            print('\tmodule ' + str(m_name))
+            print("\tmodule " + str(m_name))
             print(json.dumps(module.get_attributes(), indent=2))
             for p_name, port in module.ports.items():
-                print('\t\tport ' + str(p_name))
+                print("\t\tport " + str(p_name))
                 for s_name, stream in port.streams.items():
-                    print('\t\t\tstream ' + str(s_name))
-                    print(f'Attr {json.dumps(stream.get_attributes(), indent=2)}')
-    print('+++')
+                    print("\t\t\tstream " + str(s_name))
+                    print(f"Attr {json.dumps(stream.get_attributes(), indent=2)}")
+    print("+++")
 
 
 def configuration():
-    """ Reserve ports.
-        Wait for ports up.
-        Load configuration on one port.
-        Build configuration on the second port.
+    """Reserve ports.
+    Wait for ports up.
+    Load configuration on one port.
+    Build configuration on the second port.
     """
 
     global ports
@@ -105,38 +104,38 @@ def configuration():
 
     # Get Multi-parameter query with get_attributes which returns all attributes values as dict.
     ps_config = p0_s0.get_attributes()
-    print('{} info:\n{}'.format(p0_s0.name, json.dumps(ps_config, indent=1)))
+    print("{} info:\n{}".format(p0_s0.name, json.dumps(ps_config, indent=1)))
 
     # Get packet headers.
     headers = p0_s0.get_packet_headers()
-    print('{} headers:\n{}'.format(p0_s0.name, headers))
+    print("{} headers:\n{}".format(p0_s0.name, headers))
     # Access any header and field by name with nice string representation.
-    print('{} MAC SRC: {}'.format(p0_s0.name, headers.src_s))
-    print('{} VLAN ID: {}'.format(p0_s0.name, headers.vlan[0].vid))
-    print('{} IP DST: {}'.format(p0_s0.name, headers.upper_layer.dst_s))
+    print("{} MAC SRC: {}".format(p0_s0.name, headers.src_s))
+    print("{} VLAN ID: {}".format(p0_s0.name, headers.vlan[0].vid))
+    print("{} IP DST: {}".format(p0_s0.name, headers.upper_layer.dst_s))
 
     # Add stream on port-1
-    p1_s0 = ports[port1].add_stream('new stream')
+    p1_s0 = ports[port1].add_stream("new stream")
 
     # Set ps_packetlimit and ps_ratepps with set_attributes which sets list of attributes.
     p1_s0.set_attributes(ps_packetlimit=800, ps_ratepps=100)
 
     # Get single parameter query with get_attribute which returns the attribute value as str.
-    ps_packetlimit = p1_s0.get_attribute('ps_packetlimit')
-    ps_ratepps = p1_s0.get_attribute('ps_ratepps')
-    print('{} info:\nps_packetlimit: {}\nps_ratepps: {}'.format(p1_s0.name, ps_packetlimit, ps_ratepps))
+    ps_packetlimit = p1_s0.get_attribute("ps_packetlimit")
+    ps_ratepps = p1_s0.get_attribute("ps_ratepps")
+    print("{} info:\nps_packetlimit: {}\nps_ratepps: {}".format(p1_s0.name, ps_packetlimit, ps_ratepps))
 
     p1_s0.set_attributes(ps_packetlimit=80, ps_ratepps=10)
 
     # Set headers - all fields can be set with the constructor or by direct access after creation.
-    eth = Ethernet(src_s='22:22:22:22:22:22')
-    eth.dst_s = '11:11:11:11:11:11'
+    eth = Ethernet(src_s="22:22:22:22:22:22")
+    eth.dst_s = "11:11:11:11:11:11"
     vlan = Dot1Q(vid=17, prio=3)
     eth.vlan.append(vlan)
     # In order to add header simply concatenate it.
     ip6 = IP6()
-    ip6.src_s = '128::01'
-    ip6.dst_s = '128::02'
+    ip6.src_s = "128::01"
+    ip6.dst_s = "128::02"
     tcp = TCP()
     tcp.sport = 200
     tcp.dport = 300
@@ -153,9 +152,9 @@ def configuration():
 
 
 def traffic():
-    """ Run traffic.
-        Get statistics.
-        Get capture.
+    """Run traffic.
+    Get statistics.
+    Get capture.
     """
 
     # Run traffic with capture on all ports.
@@ -205,20 +204,19 @@ def traffic():
 
     # Analyze capture buffer with tshark.
     tshark = Tshark(wireshark_path)
-    packets = ports[port0].capture.get_packets(cap_type=XenaCaptureBufferType.pcap,
-                                               file_name=pcap_file, tshark=tshark)
+    ports[port0].capture.get_packets(cap_type=XenaCaptureBufferType.pcap, file_name=pcap_file, tshark=tshark)
     analyser = TsharkAnalyzer()
-    analyser.add_field('ip.src')
-    analyser.add_field('ip.dst')
+    analyser.add_field("ip.src")
+    analyser.add_field("ip.dst")
     fields = tshark.analyze(pcap_file, analyser)
     print(len(fields))
-    analyser.set_read_filter('eth.dst == 11:11:11:11:00:11')
+    analyser.set_read_filter("eth.dst == 11:11:11:11:00:11")
     fields = tshark.analyze(pcap_file, analyser)
     print(len(fields))
 
 
 def run_all():
-    connect()
+    connect(chassis)
     inventory()
     configuration()
     traffic()
@@ -228,9 +226,9 @@ def run_all():
 def run_sequencer():
 
     # Create XenaApp object and connect to chassis.
-    xm = init_xena(api, logger, owner, chassis)
+    connect(chassis)
     xm.session.add_chassis(chassis)
-    xm.session.connect_ports([port0, port1], True)
+    xm.session.connect_ports([port0, port1])
     ports_stats = XenaPortsStats(xm.session)
     while True:
         ports_stats.read_stats()
@@ -238,5 +236,17 @@ def run_sequencer():
         # Customer code
 
 
-if __name__ == '__main__':
-    run_all()
+def high_speed():
+    chassis_with_high_speed_ports = "176.22.65.114"
+    high_speed_port_location = chassis_with_high_speed_ports + "/4/0"
+    connect(chassis_with_high_speed_ports)
+    xm.session.add_chassis(chassis_with_high_speed_ports)
+    port = list(xm.session.connect_ports([high_speed_port_location]).values())[0]
+    high_speed_port = XenaHighSpeedPort(port)
+    print(json.dumps(high_speed_port.get_attributes(), indent=2))
+    print(high_speed_port.lanes)
+    disconnect()
+
+
+if __name__ == "__main__":
+    high_speed()
