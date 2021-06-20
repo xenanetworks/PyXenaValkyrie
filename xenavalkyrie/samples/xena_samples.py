@@ -19,7 +19,7 @@ from pypacker.layer4.tcp import TCP
 
 from trafficgenerator.tgn_utils import ApiType
 from xenavalkyrie.xena_app import init_xena, XenaApp
-from xenavalkyrie.xena_port import XenaCaptureBufferType, XenaHighSpeedPort
+from xenavalkyrie.xena_port import XenaCaptureBufferType, XenaHighSpeedPort, XenaLane, XenaPhy
 from xenavalkyrie.xena_statistics_view import XenaPortsStats, XenaStreamsStats, XenaTpldsStats
 from xenavalkyrie.xena_tshark import Tshark, TsharkAnalyzer
 
@@ -244,7 +244,11 @@ def high_speed():
     port = list(xm.session.connect_ports([high_speed_port_location]).values())[0]
     high_speed_port = XenaHighSpeedPort(port)
     print(json.dumps(high_speed_port.get_attributes(), indent=2))
-    print(high_speed_port.lanes)
+    print(high_speed_port.get_attribute("PP_PRBSTYPE"))
+    lane = XenaLane(high_speed_port, '1')
+    print(lane.get_attribute("PP_TXPRBSCONFIG"))
+    phy = XenaPhy(high_speed_port, '1')
+    print(phy.get_attribute("PP_EYEMEASURE"))
     disconnect()
 
 

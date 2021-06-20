@@ -486,9 +486,12 @@ class XenaHighSpeedPort(XenaObject):
     @property
     def lanes(self) -> Dict[int, XenaMatch]:
         """Returns all lanes."""
-        if not self.get_objects_by_type('lane'):
-            attributes = self.get_attributes()
-        return {m.id: m for m in self.get_objects_by_type('lane')}
+        raise NotImplementedError
+
+    @property
+    def phys(self) -> Dict[int, XenaMatch]:
+        """Returns all phys."""
+        raise NotImplementedError
 
 
 class XenaLane(XenaObject21):
@@ -499,4 +502,15 @@ class XenaLane(XenaObject21):
 
         :param parent: parent high speed port.
         """
-        super().__init__(parent=parent, objType='prbs', index=index)
+        super().__init__(parent=parent, objType='prbs', index=f"{parent.index}/{index}")
+
+
+class XenaPhy(XenaObject21):
+    """ Represents phy configuration. """
+
+    def __init__(self, parent: XenaHighSpeedPort, index: str) -> None:
+        """ Create lane object.
+
+        :param parent: parent high speed port.
+        """
+        super().__init__(parent=parent, objType='phy', index=f"{parent.index}/{index}")
