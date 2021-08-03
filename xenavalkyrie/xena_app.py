@@ -510,7 +510,7 @@ class XenaBaseModule(XenaObject):
         """ Get module inventory. """
 
         self.m_info = self.get_attributes()
-        if 'NOTCFP' in self.m_info['m_cfptype']:
+        if ('NOTCFP' in self.m_info['m_cfptype']) or ('NOTPRESENT' in self.m_info['m_cfptype']):
             a = self.get_attribute('m_portcount')
             m_portcount = int(a)
         else:
