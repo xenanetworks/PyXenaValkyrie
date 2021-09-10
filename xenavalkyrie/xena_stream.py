@@ -58,7 +58,7 @@ class XenaStream(XenaObject21):
         """ Set stream state.
 
         :param state: new stream state.
-        :type stae: xenavalkyrie.xena_stream.XenaStreamState
+        :type state: xenavalkyrie.xena_stream.XenaStreamState
         """
         self.set_attributes(ps_enable=state.value)
 
@@ -97,6 +97,11 @@ class XenaStream(XenaObject21):
             ps_headerprotocol = []
             while body_handler:
                 segment = pypacker_2_xena.get(str(body_handler).split('\n')[0].split('.')[-1].lower(), None)
+                if segment == 'flowcontrol':
+                    # Skip this iteration and check if what follows is Pause or PFC
+                    body_handler = body_handler.upper_layer
+                    continue
+
                 if not segment:
                     self.logger.warning(f'pypacker header {segment} not in conversion list')
                     break
@@ -113,6 +118,7 @@ class XenaStream(XenaObject21):
                     ps_headerprotocol[ps_headerprotocol.index('udp')] = 'udpcheck'
                 if 'tcp' in ps_headerprotocol:
                     ps_headerprotocol[ps_headerprotocol.index('tcp')] = 'tcpcheck'
+            
             self.set_attributes(ps_headerprotocol=' '.join(ps_headerprotocol))
 
             headers_str = binascii.hexlify(headers.bin())
@@ -304,12 +310,16 @@ class XenaXModifier(_XenaModifierBase):
         super(self.__class__, self).__init__(objType='xmodifier', index=index, parent=parent)
 
 
-pypacker_2_xena = {'ethernet': 'ethernet',
-                   'arp': 'arp',
-                   'ip': 'ip',
-                   'ip6': 'ipv6',
-                   'udp': 'udp',
-                   'tcp': 'tcp',
-                   'icmp': 'icmp',
-                   'dhcp': '39'
+pypacker_2_xena = {'ethernet'    : 'ethernet',
+                   'dot1q'       : 'vlan',
+                   'arp'         : 'arp',
+                   'ip'          : 'ip',
+                   'ip6'         : 'ipv6',
+                   'udp'         : 'udp',
+                   'tcp'         : 'tcp',
+                   'icmp'        : 'icmp',
+                   'dhcp'        : '39',
+                   'flowcontrol' : 'flowcontrol',
+                   'pause'       : 'macctrl',
+                   'pfc'         : 'macctrlpfc'
                    }

@@ -7,10 +7,21 @@ from __future__ import annotations
 import os
 import re
 import math
+import binascii
+
+import pandas as pd
+import numpy as np
 
 from collections import OrderedDict
 from enum import Enum
 from typing import Optional, Dict
+#from pypacker.layer12.ethernet import Ethernet
+#from pypacker.layer3.ip import IP
+#from pypacker.layer4.tcp import TCP
+#from pypacker.layer4.udp import UDP
+
+from scapy.all import *
+from scapy.contrib.mac_control import *
 
 from xenavalkyrie.api.xena_socket import XenaCommandError
 from xenavalkyrie.xena_object import XenaObject, XenaObject21
@@ -467,6 +478,149 @@ class XenaCapture(XenaObject):
         tshark.text_to_pcap(temp_file_name, file_name)
         os.remove(temp_file_name)
 
+    def get_packets_df(self, from_index=0, to_index=None, validate_l4_sum=False):
+        """ Get captured packets from chassis as a Pandas dataframe object.
+
+        :param from_index: index of first packet to read.
+        :param to_index: index of last packet to read. If None - read all packets.
+
+        :return: Pandas DataFrame of requested packets
+        """
+
+        to_index = to_index if to_index else len(self.packets)
+
+        df_cols = ['abs_time', 'latency', 'ifg', 'length', 
+                   'vlan', 'pcp', 'ether_type', 'mac_ctrl_op',
+                   'cos_enabled', 'c0_pause_time', 'c1_pause_time', 'c2_pause_time','c3_pause_time', 'c4_pause_time', 'c5_pause_time', 'c6_pause_time','c7_pause_time', 
+                   'l4_proto', 'recv_ip_sum', 'calc_ip_sum', 'recv_tcp_sum', 'calc_tcp_sum', 'recv_udp_sum', 'calc_udp_sum']
+        df_data = []
+
+        for index in range(from_index, to_index):
+
+            vlan          = False
+            pcp           = 0
+            mac_ctrl_op   = 0
+            cos_enabled   = 0
+            c0_pause_time = 0
+            c1_pause_time = 0
+            c2_pause_time = 0
+            c3_pause_time = 0
+            c4_pause_time = 0
+            c5_pause_time = 0
+            c6_pause_time = 0
+            c7_pause_time = 0
+            l4_proto      = 0
+            recv_ip_sum   = 0
+            calc_ip_sum   = 0
+            recv_tcp_sum  = 0
+            calc_tcp_sum  = 0
+            recv_udp_sum  = 0
+            calc_udp_sum  = 0
+
+#### with pypacker
+####            packet = Ethernet(binascii.unhexlify(self.packets[index].get_attribute('pc_packet').split('0x')[1]))
+####            if len(packet.vlan) > 0 :
+####                vlan = True
+####                pcp  = packet.vlan[0].prio
+####
+####            ether_type = packet.type
+####
+####            if ether_type == 0x0800 :
+####                recv_ip_sum = packet[IP].sum
+####                packet[IP]._update_fields()
+####                calc_ip_sum = packet[IP].sum
+####                ip_sum      = 1 if recv_ip_sum == calc_ip_sum else 0
+####
+####                if packet[IP].p == 0x6 :
+####                    l4_proto     = 0x6
+####                    recv_tcp_sum = packet[TCP].sum
+####                    self.logger.info(f"sport : {packet[TCP].sport}")
+####                    self.logger.info(f"recv_tcp_sum : {recv_tcp_sum}")
+####                    packet[TCP]._calc_sum()
+####                    calc_tcp_sum = packet[TCP].sum
+####                    self.logger.info(f"calc_tcp_sum : {calc_tcp_sum}")
+####                    tcp_sum      = 1 if recv_tcp_sum == calc_tcp_sum else 0
+####
+####                if packet[IP].p == 0x11 :
+####                    l4_proto     = 0x11
+####                    recv_udp_sum = packet[UDP].sum
+####                    packet[UDP]._calc_sum()
+####                    calc_udp_sum = packet[UDP].sum
+####                    udp_sum      = 1 if recv_udp_sum == calc_udp_sum else 0
+####
+
+            data   = binascii.unhexlify(self.packets[index].get_attribute('pc_packet').split('0x')[1])
+            packet = Ether(data)
+
+            try:
+                if packet[Dot1Q]:
+                    vlan = True
+            except Exception as e:
+                pass
+
+            if vlan:
+                pcp        = packet[Dot1Q].prio
+                ether_type = packet[Dot1Q].type
+            else:
+                ether_type = packet.type
+            
+            if ether_type == 0x8808:
+                mac_ctrl_op = packet[MACControl]._op_code
+
+                if packet[MACControl]._op_code == 0x0101:
+                    cos_enabled   = (packet[MACControl].c7_enabled << 7) | (packet[MACControl].c6_enabled << 6) | (packet[MACControl].c5_enabled << 5) | (packet[MACControl].c4_enabled << 4) | \
+                                    (packet[MACControl].c3_enabled << 3) | (packet[MACControl].c2_enabled << 2) | (packet[MACControl].c1_enabled << 1) | (packet[MACControl].c0_enabled << 0) 
+                    c0_pause_time = packet[MACControl].c0_pause_time
+                    c1_pause_time = packet[MACControl].c1_pause_time
+                    c2_pause_time = packet[MACControl].c2_pause_time
+                    c3_pause_time = packet[MACControl].c3_pause_time
+                    c4_pause_time = packet[MACControl].c4_pause_time
+                    c5_pause_time = packet[MACControl].c5_pause_time
+                    c6_pause_time = packet[MACControl].c6_pause_time
+                    c7_pause_time = packet[MACControl].c7_pause_time
+
+            if ether_type == 0x0800:
+                recv_ip_sum = packet[IP].chksum
+                del packet[IP].chksum
+
+                if packet[IP].proto == 0x6:
+                    l4_proto     = 0x6
+                    recv_tcp_sum = packet[TCP].chksum
+                    del packet[TCP].chksum
+                    packet = packet.__class__(bytes(packet))
+
+                    calc_ip_sum  = packet[IP].chksum
+                    calc_tcp_sum = packet[TCP].chksum
+
+                elif packet[IP].proto == 0x11:
+                    l4_proto     = 0x11
+                    recv_udp_sum = packet[UDP].chksum
+                    del packet[UDP].chksum
+                    packet = packet.__class__(bytes(packet))
+
+                    calc_ip_sum  = packet[IP].chksum
+                    calc_udp_sum = packet[UDP].chksum
+
+                else:
+                    packet = packet.__class__(bytes(packet))
+                    calc_ip_sum  = packet[IP].chksum
+
+                                            
+            df_data.append([int(i) for i in self.packets[index].get_attribute('pc_extra').split(" ")] + 
+                           [vlan, pcp, "{0:#0{1}x}".format(ether_type,6), "{0:#0{1}x}".format(mac_ctrl_op,6)] + 
+                           [cos_enabled, c0_pause_time, c1_pause_time, c2_pause_time, c3_pause_time, c4_pause_time, c5_pause_time, c6_pause_time, c7_pause_time] +
+                           [l4_proto, recv_ip_sum, calc_ip_sum, recv_tcp_sum, calc_tcp_sum, recv_udp_sum, calc_udp_sum])
+
+
+        df = pd.DataFrame(df_data, columns=df_cols)
+        df["pcp"].round().astype(int)
+        df.insert(1,'delta',df['abs_time'].diff())
+        df.insert(1,'rel_time', df.loc[1:, 'abs_time'] - df.at[0, 'abs_time'])
+        df[['rel_time','delta']] = df[['rel_time','delta']].fillna(value=0)
+
+        return df
+
+#pkt[TCP]._calc_sum()
     #
     # Properties.
     #
@@ -643,4 +797,22 @@ class XenaPort(XenaBasePort):
     def enable_pma_err_pulse(self, enable=True):
         """
         """
-        self.set_attributes(pp_pmaerrpul_enable = 1 if enable else 0)        
+        self.set_attributes(pp_pmaerrpul_enable = 1 if enable else 0)
+
+    def react_to_pause_frames(self, enable=True):
+        """
+        Control whether the port should react to received PAUSE frames.
+
+        :param enable : If true, the port will react to received pause frames 
+        """
+        self.set_attributes(p_pause = 1 if enable else 0)
+
+
+    def react_to_pfc_frames(self, cos=0xFF, enable=True):
+        """
+        Control whether the port should react to received PFC frames.
+
+        :param cos    : Class of Service (CoS) vector the port will react to. Set to one the bit for the CoS you want to turn on.
+        :param enable : If true, the port will react to received PFC frames.
+        """
+        self.set_attributes(p_pfcenable = " ".join([str(((cos & 0xFF) >> i) & 0x1) for i in range(0,8)]) )
