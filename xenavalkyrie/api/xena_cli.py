@@ -54,6 +54,14 @@ class XenaCliWrapper(object):
         index_command = obj._build_index_command(command, *arguments)
         self.sockets_list[obj.chassis].sendQueryVerify(index_command)
 
+    def send_multi_command_return(self, obj, commands):
+        """ Send a list of commands and wait for multiple return values
+
+        :param obj      : Requested object.
+        :param commands : List of command to send. Each individual lcommand must be separated by a CR character. 
+        """
+        return self.sockets_list[obj.chassis].sendMultiQuery(commands)
+
     def send_command_return(self, obj, command, *arguments):
         """ Send command and wait for single line output. """
         index_command = obj._build_index_command(command, *arguments)

@@ -61,6 +61,17 @@ class BaseSocket:
             self.disconnect()
             raise socket.error("Fail to send command: {}, error: {}", cmd, error)
 
+    def sendMultiCommand(self, cmd):
+        logger.debug("sendMultiCommand(%s)", cmd)
+        if not self.connected:
+            raise socket.error("sendMultiCommand() on a disconnected socket")
+
+        try:
+            self.sock.sendall(bytearray(cmd + '\n', 'utf-8'))
+        except socket.error as error:
+            self.disconnect()
+            raise socket.error("Fail to send command: {}, error: {}", cmd, error)
+
     def readReply(self):
         if not self.connected:
             raise socket.error("readReply() on a disconnected socket")
@@ -85,6 +96,13 @@ class BaseSocket:
         self.sendCommand(query)
         reply = self.readReply()
         return reply
+
+    def sendMuiltiQuery(self, query):
+        logger.debug('sendMuiltiQuery({})'.format(query))
+        self.sendMultiCommand(query)
+        reply = self.readReply()
+        return reply
+
 
     def set_keepalives(self):
         logger.debug("Setting socket keepalive")

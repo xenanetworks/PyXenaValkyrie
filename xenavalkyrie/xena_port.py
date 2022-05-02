@@ -450,9 +450,10 @@ class XenaCapture(XenaObject):
 
         to_index = to_index if to_index else len(self.packets)
 
-        raw_packets = []
-        for index in range(from_index, to_index):
-            raw_packets.append(self.packets[index].get_attribute('pc_packet').split('0x')[1])
+        (module, port), command = self.index.split('/'), 'pc_packet'
+        cmd = " ".join([f'{module}/{port} {command} [{index}] ?\n' for index in range(from_index, to_index)])
+
+        raw_packets = [p.split('0x')[-1] for p in self.send_multi_command_return(cmd)]
 
         if cap_type == XenaCaptureBufferType.raw:
             self._save_captue(file_name, raw_packets)
@@ -478,149 +479,21 @@ class XenaCapture(XenaObject):
         tshark.text_to_pcap(temp_file_name, file_name)
         os.remove(temp_file_name)
 
-    def get_packets_df(self, from_index=0, to_index=None, validate_l4_sum=False):
-        """ Get captured packets from chassis as a Pandas dataframe object.
+    def get_packets_extra(self, from_index=0, to_index=None):
+        """ Get captured packet metadata.
 
-        :param from_index: index of first packet to read.
-        :param to_index: index of last packet to read. If None - read all packets.
-
-        :return: Pandas DataFrame of requested packets
+        :param from_index : index of first packet to read.
+        :param to_index   : index of last packet to read. If None - read all packets.
+        :return           : list of requested packet metadata.
         """
 
         to_index = to_index if to_index else len(self.packets)
 
-        df_cols = ['abs_time', 'latency', 'ifg', 'length', 
-                   'vlan', 'pcp', 'ether_type', 'mac_ctrl_op',
-                   'cos_enabled', 'c0_pause_time', 'c1_pause_time', 'c2_pause_time','c3_pause_time', 'c4_pause_time', 'c5_pause_time', 'c6_pause_time','c7_pause_time', 
-                   'l4_proto', 'recv_ip_sum', 'calc_ip_sum', 'recv_tcp_sum', 'calc_tcp_sum', 'recv_udp_sum', 'calc_udp_sum']
-        df_data = []
+        (module, port), command = self.index.split('/'), 'pc_extra'
+        cmd = " ".join([f'{module}/{port} {command} [{index}] ?\n' for index in range(from_index, to_index)])
 
-        for index in range(from_index, to_index):
+        return self.send_multi_command_return(cmd)
 
-            vlan          = False
-            pcp           = 0
-            mac_ctrl_op   = 0
-            cos_enabled   = 0
-            c0_pause_time = 0
-            c1_pause_time = 0
-            c2_pause_time = 0
-            c3_pause_time = 0
-            c4_pause_time = 0
-            c5_pause_time = 0
-            c6_pause_time = 0
-            c7_pause_time = 0
-            l4_proto      = 0
-            recv_ip_sum   = 0
-            calc_ip_sum   = 0
-            recv_tcp_sum  = 0
-            calc_tcp_sum  = 0
-            recv_udp_sum  = 0
-            calc_udp_sum  = 0
-
-#### with pypacker
-####            packet = Ethernet(binascii.unhexlify(self.packets[index].get_attribute('pc_packet').split('0x')[1]))
-####            if len(packet.vlan) > 0 :
-####                vlan = True
-####                pcp  = packet.vlan[0].prio
-####
-####            ether_type = packet.type
-####
-####            if ether_type == 0x0800 :
-####                recv_ip_sum = packet[IP].sum
-####                packet[IP]._update_fields()
-####                calc_ip_sum = packet[IP].sum
-####                ip_sum      = 1 if recv_ip_sum == calc_ip_sum else 0
-####
-####                if packet[IP].p == 0x6 :
-####                    l4_proto     = 0x6
-####                    recv_tcp_sum = packet[TCP].sum
-####                    self.logger.info(f"sport : {packet[TCP].sport}")
-####                    self.logger.info(f"recv_tcp_sum : {recv_tcp_sum}")
-####                    packet[TCP]._calc_sum()
-####                    calc_tcp_sum = packet[TCP].sum
-####                    self.logger.info(f"calc_tcp_sum : {calc_tcp_sum}")
-####                    tcp_sum      = 1 if recv_tcp_sum == calc_tcp_sum else 0
-####
-####                if packet[IP].p == 0x11 :
-####                    l4_proto     = 0x11
-####                    recv_udp_sum = packet[UDP].sum
-####                    packet[UDP]._calc_sum()
-####                    calc_udp_sum = packet[UDP].sum
-####                    udp_sum      = 1 if recv_udp_sum == calc_udp_sum else 0
-####
-
-            data   = binascii.unhexlify(self.packets[index].get_attribute('pc_packet').split('0x')[1])
-            packet = Ether(data)
-
-            try:
-                if packet[Dot1Q]:
-                    vlan = True
-            except Exception as e:
-                pass
-
-            if vlan:
-                pcp        = packet[Dot1Q].prio
-                ether_type = packet[Dot1Q].type
-            else:
-                ether_type = packet.type
-            
-            if ether_type == 0x8808:
-                mac_ctrl_op = packet[MACControl]._op_code
-
-                if packet[MACControl]._op_code == 0x0101:
-                    cos_enabled   = (packet[MACControl].c7_enabled << 7) | (packet[MACControl].c6_enabled << 6) | (packet[MACControl].c5_enabled << 5) | (packet[MACControl].c4_enabled << 4) | \
-                                    (packet[MACControl].c3_enabled << 3) | (packet[MACControl].c2_enabled << 2) | (packet[MACControl].c1_enabled << 1) | (packet[MACControl].c0_enabled << 0) 
-                    c0_pause_time = packet[MACControl].c0_pause_time
-                    c1_pause_time = packet[MACControl].c1_pause_time
-                    c2_pause_time = packet[MACControl].c2_pause_time
-                    c3_pause_time = packet[MACControl].c3_pause_time
-                    c4_pause_time = packet[MACControl].c4_pause_time
-                    c5_pause_time = packet[MACControl].c5_pause_time
-                    c6_pause_time = packet[MACControl].c6_pause_time
-                    c7_pause_time = packet[MACControl].c7_pause_time
-
-            if ether_type == 0x0800:
-                recv_ip_sum = packet[IP].chksum
-                del packet[IP].chksum
-
-                if packet[IP].proto == 0x6:
-                    l4_proto     = 0x6
-                    recv_tcp_sum = packet[TCP].chksum
-                    del packet[TCP].chksum
-                    packet = packet.__class__(bytes(packet))
-
-                    calc_ip_sum  = packet[IP].chksum
-                    calc_tcp_sum = packet[TCP].chksum
-
-                elif packet[IP].proto == 0x11:
-                    l4_proto     = 0x11
-                    recv_udp_sum = packet[UDP].chksum
-                    del packet[UDP].chksum
-                    packet = packet.__class__(bytes(packet))
-
-                    calc_ip_sum  = packet[IP].chksum
-                    calc_udp_sum = packet[UDP].chksum
-
-                else:
-                    packet = packet.__class__(bytes(packet))
-                    calc_ip_sum  = packet[IP].chksum
-
-                                            
-            df_data.append([int(i) for i in self.packets[index].get_attribute('pc_extra').split(" ")] + 
-                           [vlan, pcp, "{0:#0{1}x}".format(ether_type,6), "{0:#0{1}x}".format(mac_ctrl_op,6)] + 
-                           [cos_enabled, c0_pause_time, c1_pause_time, c2_pause_time, c3_pause_time, c4_pause_time, c5_pause_time, c6_pause_time, c7_pause_time] +
-                           [l4_proto, recv_ip_sum, calc_ip_sum, recv_tcp_sum, calc_tcp_sum, recv_udp_sum, calc_udp_sum])
-
-
-        df = pd.DataFrame(df_data, columns=df_cols)
-        df["pcp"].round().astype(int)
-        df.insert(1,'delta',df['abs_time'].diff())
-        df.insert(1,'rel_time', df.loc[1:, 'abs_time'] - df.at[0, 'abs_time'])
-        df[['rel_time','delta']] = df[['rel_time','delta']].fillna(value=0)
-
-        return df
-
-#pkt[TCP]._calc_sum()
     #
     # Properties.
     #
@@ -816,3 +689,61 @@ class XenaPort(XenaBasePort):
         :param enable : If true, the port will react to received PFC frames.
         """
         self.set_attributes(p_pfcenable = " ".join([str(((cos & 0xFF) >> i) & 0x1) for i in range(0,8)]) )
+
+    def set_prbs_params(self, prbs_type=None, poly=None, invert=None, statsmode=None):
+        """
+        Sets the PRBS parameters
+
+        :param prbs_type : Specifies where the PRBS is inserted.
+        :param poly      : Specifies the generator polynomial for the PRBS.
+        :param invert    : If True, then the PRBS is inverted
+        :param statsmode : Statistics mode – accumulated or for last second.
+        """
+
+        params = self.get_attribute('pp_prbstype').split()
+
+        params[0] = prbs_type if prbs_type      else params[0]
+        params[1] = poly      if poly           else params[1]
+        params[2] = invert    if invert != None else params[2]
+        params[3] = statsmode if statsmode      else params[3]
+        
+        self.set_attributes(pp_prbstype = " ".join([str(param) for param in params]))
+
+    def prbs_config(self, lanes, enable=None, errors=False):
+        """
+        The PRBS configuration for a particular lane.
+
+        :param lanes  : List of lane indexes.
+        :param enable : If True, then the lane(s) will transmit PRBS data
+        :param errors : If True, then bit-level errors are injected to the selected lane(s)
+        """
+
+        dummy = " 0 "
+
+        for lane in lanes:
+            self.set_attributes(pp_txprbsconfig = "["+str(lane)+"]" + dummy + " ".join([str(param) for param in [int(enable), int(errors)]]))
+
+    def px_rw_read(self, page, addr):
+        """
+        Perform a low level regiter read
+
+        :param page : The page to read from.
+        :param addr : Register address to read from. 
+        """
+
+        response = []
+        for port, page, reg in zip([self], [page], [addr]):
+            response.append(port.get_attribute('px_rw [%d,%d] ' % (page, reg)))
+
+        return [int(re.split( r' +', res )[3],16) for res in response]
+
+    def px_rw_write(self, page, addr, data):
+        """
+        Perform a low level regiter write
+
+        :param page : The page to write to.
+        :param addr : Register address to write to. 
+        """
+
+        for port, page, reg, datum in zip([self], [page], [addr], [data]):
+            port.set_attributes(px_rw="[%d,%d] 0x%08x" % (page, reg, datum) )

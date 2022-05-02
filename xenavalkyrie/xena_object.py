@@ -88,6 +88,13 @@ class XenaObject(TgnObject):
         """
         self.api.send_command(self, command, *arguments)
 
+    def send_multi_command_return(self, commands):
+        """ Send a stream of multiple commands.
+
+        :param command: command to send.
+        """
+        return self.api.send_multi_command_return(self, commands)
+
     def send_command_return(self, command, *arguments):
         """ Send command and wait for single line output. """
         return self.api.send_command_return(self, command, *arguments)

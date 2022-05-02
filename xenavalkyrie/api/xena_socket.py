@@ -2,6 +2,7 @@
 import threading
 import socket
 import time
+import re
 
 from xenavalkyrie.api.BaseSocket import BaseSocket
 from xenavalkyrie.api.xena_keepalive import KeepAliveThread
@@ -98,6 +99,38 @@ class XenaSocket(object):
                 msgnew = self.bsocket.readReply()
                 msg = msgleft + msgnew
 
+    def __sendMultiQueryReplies(self, cmd):
+        # Send the list of commands followed by cmd SYNC to find out
+        # when the last reply arrives.
+        self.access_semaphor.acquire()
+        self.last_command_timestamp = time.time()
+        self.bsocket.sendMultiCommand(cmd.strip('\n'))
+        self.bsocket.sendCommand('SYNC')
+
+        replies = []
+        msg = self.bsocket.readReply()
+
+        while True:
+            if '\n' in msg:
+                (reply, msgleft) = msg.split('\n', 1)
+                # check for syntax problems
+                if reply.rfind('Syntax') != -1:
+                    self.access_semaphor.release()
+                    raise XenaCommandError("Multiline: syntax error - {}".format(reply))
+
+                if reply.rfind('<SYNC>') == 0:
+                    self.logger.debug("Multiline EOL SYNC message")
+                    self.access_semaphor.release()
+                    return replies
+
+                self.logger.debug("Multiline reply: %s", reply)
+                replies.append(reply)
+                msg = msgleft
+            else:
+                # more bytes to come
+                msgnew = self.bsocket.readReply()
+                msg = msgleft + msgnew
+
     def __sendQueryReply(self, cmd):
         self.access_semaphor.acquire()
         self.last_command_timestamp = time.time()
@@ -130,7 +163,14 @@ class XenaSocket(object):
             reply = self.__sendQueryReply(cmd)
             if reply.startswith(XenaSocket.reply_errors):
                 raise XenaCommandError('sendQuery({}) reply({})'.format(cmd, reply))
-            self.logger.debug('reply({})'.format(reply))
+
+            regex_search = re.search(r'^.*?\[\d+,(\d+)].*?', reply )
+            if regex_search:
+                dec_val = regex_search.group(1)
+                self.logger.debug('reply({})'.format(reply.replace(dec_val,hex(int(dec_val)))))
+            else:
+                self.logger.debug('reply({})'.format(reply))
+                
             return reply
 
     def sendQueryVerify(self, cmd):
@@ -147,6 +187,26 @@ class XenaSocket(object):
         if resp != self.reply_ok:
             raise XenaCommandError('Command {} Fail Expected {} Actual {}'.format(cmd, self.reply_ok, resp))
         self.logger.debug("SendQueryVerify(%s) Succeed", cmd)
+
+
+    def sendMultiQuery(self, cmd):
+        """ Send commands, wait for multi response, test for errors and return the responses as a list.
+
+        :param cmd : commands to send
+        :return    : command return value.
+        """
+        self.logger.debug("sendMultiQuery(%s)", cmd)
+        if not self.is_connected():
+            raise socket.error("sendMultiQuery on a disconnected socket")
+
+        replies = self.__sendMultiQueryReplies(cmd)
+
+        self.logger.debug("sendMultiQuery(%s) Succeed", cmd)
+        for l in replies:
+            self.logger.debug("%s", l.strip())
+
+        return replies
+
 
     def keep_alive(self):
         """ Send keep alive message. """
