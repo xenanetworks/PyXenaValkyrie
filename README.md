@@ -1,5 +1,5 @@
 
-🔴 **IMPORTANT** 🔴 **PyXenaValkyrie is now End-of-Life. It will be reborn under Xena OpenAutomation.**
+# 🔴 **IMPORTANT** 🔴 **PyXenaValkyrie is now End-of-Life. It is replaced by [Xena OpenAutomation Python API](https://github.com/xenanetworks/open-automation-python-api).**
 
 
 ## Python OO API for Xena Valkyrie traffic generator.
