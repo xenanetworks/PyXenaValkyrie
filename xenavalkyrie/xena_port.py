@@ -747,3 +747,13 @@ class XenaPort(XenaBasePort):
 
         for port, page, reg, datum in zip([self], [page], [addr], [data]):
             port.set_attributes(px_rw="[%d,%d] 0x%08x" % (page, reg, datum) )
+
+    def get_aneg(self):
+        """
+        Get the autonegotiation status
+        """
+
+        keys   = ["mode", "fec", "an_state", "tec_ability", "fec_cap", "fec_req", "pause_mode"]
+        values = self.get_attribute('pp_autonegstatus').split()
+
+        return dict(zip(keys, values))

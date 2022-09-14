@@ -587,6 +587,17 @@ class XenaBaseModule(XenaObject):
 
         return is_chimera_module
     
+    def is_freya(self):
+        module_name = self.get_name()
+        
+        is_freya_module = 1
+
+        m = re.match("Freya", module_name)
+
+        if m == None:
+            is_freya_module = 0
+
+        return is_freya_module
     #
     # Properties.
     #
