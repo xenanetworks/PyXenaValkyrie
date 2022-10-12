@@ -536,6 +536,9 @@ class XenaBaseModule(XenaObject):
     def set_timing_source_local(self):
         self.send_command('m_timesync', 'module')
 
+    def get_temperature(self):
+        return float(self.get_attribute('m_status'))
+
     def get_name(self):
         return self.get_attribute('m_name')
 
