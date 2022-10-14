@@ -35,6 +35,7 @@ def get_packets_df(capture, from_index, to_index, validate_l4_sum=False):
 
   for index, data in enumerate(packets):
 
+      ether_type    = -1
       vlan          = False
       pcp           = 0
       mac_ctrl_op   = 0
@@ -67,7 +68,10 @@ def get_packets_df(capture, from_index, to_index, validate_l4_sum=False):
         pcp        = packet[Dot1Q].prio
         ether_type = packet[Dot1Q].type
       else:
-        ether_type = packet.type
+        try:
+          ether_type = packet.type
+        except Exception as e:
+          pass
       
       if ether_type == 0x8808:
         mac_ctrl_op = packet[MACControl]._op_code
@@ -110,9 +114,13 @@ def get_packets_df(capture, from_index, to_index, validate_l4_sum=False):
           packet = packet.__class__(bytes(packet))
           calc_ip_sum  = packet[IP].chksum
 
+      if ether_type == -1 : 
+        ether_type_df = '-1'
+      else:
+        ether_type_df = "{0:#0{1}x}".format(ether_type,6)
                                       
       df_data.append([int(i) for i in packets_extra[index].split(" ")] + 
-                     [vlan, pcp, "{0:#0{1}x}".format(ether_type,6), "{0:#0{1}x}".format(mac_ctrl_op,6)] + 
+                     [vlan, pcp, ether_type_df, "{0:#0{1}x}".format(mac_ctrl_op,6)] + 
                      [cos_enabled, c0_pause_time, c1_pause_time, c2_pause_time, c3_pause_time, c4_pause_time, c5_pause_time, c6_pause_time, c7_pause_time] +
                      [l4_proto, recv_ip_sum, calc_ip_sum, recv_tcp_sum, calc_tcp_sum, recv_udp_sum, calc_udp_sum])
 
@@ -123,5 +131,4 @@ def get_packets_df(capture, from_index, to_index, validate_l4_sum=False):
   df.insert(1,'rel_time', df.loc[1:, 'abs_time'] - df.at[0, 'abs_time'])
   df[['rel_time','delta']] = df[['rel_time','delta']].fillna(value=0)
 
-  #logger.info(df[['abs_time', 'latency', 'length', 'vlan', 'pcp', 'ether_type', 'l4_proto', 'recv_ip_sum', 'calc_ip_sum', 'recv_tcp_sum', 'calc_tcp_sum', 'recv_udp_sum', 'calc_udp_sum']])
   return df
