@@ -119,7 +119,12 @@ def get_packets_df(capture, from_index, to_index, validate_l4_sum=False):
       else:
         ether_type_df = "{0:#0{1}x}".format(ether_type,6)
                                       
-      df_data.append([int(i) for i in packets_extra[index].split(" ")] + 
+      try:
+        packets_extra_info = [int(i) for i in packets_extra[index].split(" ")]
+      except:
+        packets_extra_info = [0, 0, 0, 0]
+
+      df_data.append(packets_extra_info + 
                      [vlan, pcp, ether_type_df, "{0:#0{1}x}".format(mac_ctrl_op,6)] + 
                      [cos_enabled, c0_pause_time, c1_pause_time, c2_pause_time, c3_pause_time, c4_pause_time, c5_pause_time, c6_pause_time, c7_pause_time] +
                      [l4_proto, recv_ip_sum, calc_ip_sum, recv_tcp_sum, calc_tcp_sum, recv_udp_sum, calc_udp_sum])
