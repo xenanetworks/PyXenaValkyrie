@@ -723,6 +723,21 @@ class XenaPort(XenaBasePort):
         for lane in lanes:
             self.set_attributes(pp_txprbsconfig = "["+str(lane)+"]" + dummy + " ".join([str(param) for param in [int(enable), int(errors)]]))
 
+    def prbs_status(self, lanes):
+        """
+        The PRBS configuration for a particular lane.
+
+        :param lanes  : List of lane indexes.
+        """
+
+        keys   = ["num_bytes", "num_errors", "lock"]
+        status = []
+        for lane in lanes:
+            values = self.get_attribute(f'pp_rxprbsstatus [{lane}]').split()[-3:]
+            status.append(dict(zip(keys, values)))
+
+        return status
+
     def px_rw_read(self, page, addr):
         """
         Perform a low level regiter read
@@ -748,6 +763,14 @@ class XenaPort(XenaBasePort):
         for port, page, reg, datum in zip([self], [page], [addr], [data]):
             port.set_attributes(px_rw="[%d,%d] 0x%08x" % (page, reg, datum) )
 
+    def px_rw_multi(self, command_list):
+
+        module, port = self.index.split('/')
+
+        cmd = " ".join([f'{module}/{port} {command} \n' for command in command_list])
+
+        return self.send_multi_command_return(cmd)
+
     def get_aneg(self):
         """
         Get the autonegotiation status
@@ -757,3 +780,31 @@ class XenaPort(XenaBasePort):
         values = self.get_attribute('pp_autonegstatus').split()
 
         return dict(zip(keys, values))
+
+    def phy_tx_eq(self, lanes, eq_values=None, op_code='get'):
+
+        result = {}
+        keys   = ["pre1", "main", "post1", "pre2", "post2", "post3"]
+        
+        if op_code == 'get':
+            for lane in lanes:
+                values = self.get_attribute(f'pp_phytxeq [{lane}]').split()[-7:-1]
+                result[lane] = dict(zip(keys, values))
+
+            return result
+
+        if op_code == 'set':
+            if len(lanes) != len(eq_values):
+                raise ValueError("Not enough sets of EQ parametrs for the number of lanes")
+
+            for lane,eq_val in zip(lanes,eq_values):
+                if len(eq_val) != 6:
+                    raise ValueError(f"Not enough EQ parameters for lane {lane}. Expected 6, got {len(eq_val)}")
+
+                self.set_attributes(pp_phytxeq = "["+str(lane)+"]" + " ".join([str(val) for val in eq_val]) + " 4")
+
+
+    def clear_rx_pcs_pma_stats(self):
+        self.set_attributes(pp_rxclear="")
+
+        
