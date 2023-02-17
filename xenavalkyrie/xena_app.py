@@ -601,6 +601,13 @@ class XenaBaseModule(XenaObject):
             is_freya_module = 0
 
         return is_freya_module
+
+    def is_freya_osfp(self):
+        if 'osfp' in self.get_name().lower():
+            return 1
+        else:
+            return 0
+
     #
     # Properties.
     #
