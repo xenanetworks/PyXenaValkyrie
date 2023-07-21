@@ -479,7 +479,7 @@ class XenaChassis(XenaObject):
     #
 
     def _traffic_command(self, command, *ports):
-        ports = self._get_operation_ports(*ports)
+        ports_s = self._get_operation_ports(*ports)
         ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
         #    self.send_command('c_traffic', command, ports_str)
         for module in self.modules.values():
@@ -502,11 +502,11 @@ class XenaChassis(XenaObject):
         #self.send_command('7/3', 'p_traffic', command)
         
 
-        for port in ports:
+        for port in ports_s:
             port.wait_for_states('p_traffic', 40, command)
 
     def _get_operation_ports(self, *ports):
-        return ports if ports else self.ports.values()
+        return ports if ports else self.ports_s.values()
 
 
 class XenaBaseModule(XenaObject):
