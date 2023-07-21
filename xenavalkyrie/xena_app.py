@@ -487,7 +487,8 @@ class XenaChassis(XenaObject):
         #for port in ports:
         #self.start_traffic(*ports)
         #    self.send_command(ports[port], 'p_traffic', command)
-        logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!,' ports)
+        #logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!,' ports)
+        print('Please wait while the program is loading...', ports)
 
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
