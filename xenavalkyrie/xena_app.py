@@ -481,22 +481,21 @@ class XenaChassis(XenaObject):
     def _traffic_command(self, command, *ports):
         ports = self._get_operation_ports(*ports)
         ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
-        #try:
         #    self.send_command('c_traffic', command, ports_str)
-        #except:
-        #for port in ports:
-        #self.start_traffic(*ports)
-        self.send_command('3/0', 'p_traffic', command)
-        self.send_command('3/1', 'p_traffic', command)
-        self.send_command('3/2', 'p_traffic', command)
-        self.send_command('3/3', 'p_traffic', command)
+        for module in self.modules.values():
+            for port in self.ports.values():
+                self.send_command(module, '/', port ,'p_traffic', command)
+        
+        #self.send_command('3/0', 'p_traffic', command)
+        #self.send_command('3/1', 'p_traffic', command)
+        #self.send_command('3/2', 'p_traffic', command)
+        #self.send_command('3/3', 'p_traffic', command)
 
-        self.send_command('7/0', 'p_traffic', command)
-        self.send_command('7/1', 'p_traffic', command)
-        self.send_command('7/2', 'p_traffic', command)
-        self.send_command('7/3', 'p_traffic', command)
-        #logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!,' ports)
-        print('Please wait while the program is loading...', ports)
+        #self.send_command('7/0', 'p_traffic', command)
+        #self.send_command('7/1', 'p_traffic', command)
+        #self.send_command('7/2', 'p_traffic', command)
+        #self.send_command('7/3', 'p_traffic', command)
+        
 
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
