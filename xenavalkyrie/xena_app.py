@@ -489,8 +489,8 @@ class XenaChassis(XenaObject):
         #for location in locations:
         #    ip, module, port = location.split('/')
                 #self.send_command([f'{module}/{port}'], 'p_traffic', command)
-                #self.send_command(f'{module}/{port}', 'p_traffic', command, ports_s)
-                self.send_command(f'{port+1}', 'p_traffic', command, ports_s)
+                #self.send_command(f'{module}/{port}', 'p_traffic', command)
+                self.send_command(port+1, 'p_traffic', command)
         
         #self.send_command('3/0', 'p_traffic', command)
         #self.send_command('3/1', 'p_traffic', command)
