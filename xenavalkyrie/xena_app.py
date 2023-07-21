@@ -484,10 +484,10 @@ class XenaChassis(XenaObject):
         #try:
         #    self.send_command('c_traffic', command, ports_str)
         #except:
-        for port in ports:
+        #for port in ports:
         #self.start_traffic(*ports)
-            self.send_command(ports[port], 'p_traffic', command)
-        logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!')
+        #    self.send_command(ports[port], 'p_traffic', command)
+        logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!, ports')
 
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
