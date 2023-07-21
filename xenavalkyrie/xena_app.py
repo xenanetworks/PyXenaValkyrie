@@ -486,7 +486,15 @@ class XenaChassis(XenaObject):
         #except:
         #for port in ports:
         #self.start_traffic(*ports)
-        #    self.send_command(ports[port], 'p_traffic', command)
+        self.send_command('1/0', 'p_traffic', command)
+        self.send_command('1/1', 'p_traffic', command)
+        self.send_command('1/2', 'p_traffic', command)
+        self.send_command('1/3', 'p_traffic', command)
+
+        self.send_command('7/0', 'p_traffic', command)
+        self.send_command('7/1', 'p_traffic', command)
+        self.send_command('7/2', 'p_traffic', command)
+        self.send_command('7/3', 'p_traffic', command)
         #logger.info('!!!!!!>>>>>>>>>>> Valid traffic <<<<<<<<<<<!!!!!!!,' ports)
         print('Please wait while the program is loading...', ports)
 
