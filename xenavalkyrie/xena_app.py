@@ -482,17 +482,28 @@ class XenaChassis(XenaObject):
         ports = self._get_operation_ports(*ports)
         ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
         #    self.send_command('c_traffic', command, ports_str)
-        for module in self.modules.values():
+        #for module in self.modules.values():
         #    for port in ports_str:
-            self.send_command(f'{module}','/0', 'p_traffic', command)
-            self.send_command(f'{module}','/1', 'p_traffic', command)
-            self.send_command(f'{module}','/2', 'p_traffic', command)
-            self.send_command(f'{module}','/3', 'p_traffic', command)
+        #    self.send_command(module,'/0', 'p_traffic', command)
+        #    self.send_command(module,'/1', 'p_traffic', command)
+        #    self.send_command(module,'/2', 'p_traffic', command)
+        #    self.send_command(module,'/3', 'p_traffic', command)
         #for location in locations:
         #    ip, module, port = location.split('/')
                 #self.send_command([f'{module}/{port}'], 'p_traffic', command)
                 #self.send_command(f'{module}/{port}', 'p_traffic', command)                
-        #        self.send_command(ports_str[port:3], 'p_traffic', command)            
+        #        self.send_command(ports_str[port:3], 'p_traffic', command)
+        
+        self.send_command('3/0', 'p_traffic', command)
+        self.send_command('3/1', 'p_traffic', command)
+        self.send_command('3/2', 'p_traffic', command)
+        self.send_command('3/3', 'p_traffic', command)
+
+        self.send_command('7/0', 'p_traffic', command)
+        self.send_command('7/1', 'p_traffic', command)
+        self.send_command('7/2', 'p_traffic', command)
+        self.send_command('7/3', 'p_traffic', command)
+        
 
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
