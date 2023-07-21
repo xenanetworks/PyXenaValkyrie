@@ -484,7 +484,7 @@ class XenaChassis(XenaObject):
         #    self.send_command('c_traffic', command, ports_str)
         for module in self.modules.values():
             for port in self.ports.values():
-                self.send_command(module, '/', port ,'p_traffic', command)
+                self.send_command(port ,'p_traffic', command)
         
         #self.send_command('3/0', 'p_traffic', command)
         #self.send_command('3/1', 'p_traffic', command)
