@@ -483,7 +483,7 @@ class XenaChassis(XenaObject):
         ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
         #    self.send_command('c_traffic', command, ports_str)
         for module in self.modules.values():
-            for port in self.ports_str.values():
+            for port in ports_str.values():
         #        self.send_command(module,'/0', 'p_traffic', command)
         #        self.send_command(module,'/1', 'p_traffic', command)
         #for location in locations:
