@@ -480,30 +480,14 @@ class XenaChassis(XenaObject):
 
     def _traffic_command(self, command, *ports):
         ports = self._get_operation_ports(*ports)
-        ports_str = ' '.join([p.index.replace('/', ' ') for p in ports])
-        #    self.send_command('c_traffic', command, ports_str)
-        #for module in self.modules.values():
-        #    for port in ports_str:
-        #    self.send_command(module,'/0', 'p_traffic', command)
-        #    self.send_command(module,'/1', 'p_traffic', command)
-        #    self.send_command(module,'/2', 'p_traffic', command)
-        #    self.send_command(module,'/3', 'p_traffic', command)
-        #for location in locations:
-        #    ip, module, port = location.split('/')
-                #self.send_command([f'{module}/{port}'], 'p_traffic', command)
-                #self.send_command(f'{module}/{port}', 'p_traffic', command)                
-        #        self.send_command(ports_str[port:3], 'p_traffic', command)
-        
-        self.send_command('3/0', 'p_traffic', command)
-        self.send_command('3/1', 'p_traffic', command)
-        self.send_command('3/2', 'p_traffic', command)
-        self.send_command('3/3', 'p_traffic', command)
-
-        self.send_command('7/0', 'p_traffic', command)
-        self.send_command('7/1', 'p_traffic', command)
-        self.send_command('7/2', 'p_traffic', command)
-        self.send_command('7/3', 'p_traffic', command)
-        
+        ports_str = ' '.join([p.index.replace(' ', ' ') for p in ports])
+        ports_str=ports_str.split(" ")
+        # Create the logger object
+        #logger = logging.getLogger('log')
+        for index in range(len(ports_str)):
+            #logger.info(f'Staring traffic on {ports_str[index]}')
+            self.send_command(ports_str[index], 'p_traffic', command)
+        #    self.send_command('c_traffic', command, ports_str)        
 
         for port in ports:
             port.wait_for_states('p_traffic', 40, command)
