@@ -608,7 +608,13 @@ class XenaPortCapabilities():
            "canlinkflap"                : 0,
            "canautonegbaser"            : 0,
            "canpmaerrorpulse"           : 0,
-           "ischimera"                  : 0
+           "ischimera"                  : 0,
+           "hasp2plooppartner"          : 0,
+           "p2plooppartner"             : 0,
+           "traffic_engine"             : 0,
+           "reconc_sublayer"            : 0,
+           "max_match_term_pos"         : 0,
+           "stream_misc"                : 0
         }
 
 class XenaPort(XenaBasePort):
