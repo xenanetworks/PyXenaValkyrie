@@ -220,12 +220,13 @@ class XenaBasePort(XenaObject):
         """
         self.session.stop_traffic(self)
 
-    def start_capture(self):
+    def start_capture(self, keep='all 0 -1'):
         """ Start capture on port.
 
         Capture -> Start Capture
         """
         self.del_objects_by_type('capture')
+        self.send_command('pc_keep', keep)
         self.send_command('p_capture', 'on')
 
     def stop_capture(self):
