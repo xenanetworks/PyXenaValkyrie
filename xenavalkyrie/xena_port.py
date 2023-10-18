@@ -814,4 +814,11 @@ class XenaPort(XenaBasePort):
     def clear_rx_pcs_pma_stats(self):
         self.set_attributes(pp_rxclear="")
 
-        
+
+    def pma_graycoding(self, rx_state=1, rx_endianness=0, tx_state=1, tx_endianness=0):
+
+        numserdes = self.capabilities.values['numserdes']
+        values    = [rx_state, rx_endianness, tx_state, tx_endianness]
+
+        for serdes in range(numserdes):
+            self.set_attributes(pp_graycoding = "["+str(serdes)+"]" + " ".join([str(val) for val in values]))        
