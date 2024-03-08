@@ -788,6 +788,20 @@ class XenaPort(XenaBasePort):
 
         return dict(zip(keys, values))
 
+    def get_lt(self, lanes):
+        """
+        Get the linktraining status
+        """
+
+        keys   = ["mode", "status", "failure"]
+        status = []
+        for lane in lanes:
+            values = self.get_attribute(f'pp_linktrainstatus [{lane}]').split()[-3:]
+            status.append(dict(zip(keys, values)))
+
+        return status
+
+
     def phy_tx_eq(self, lanes, eq_values=None, op_code='get'):
 
         result = {}
