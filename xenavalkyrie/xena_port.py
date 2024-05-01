@@ -801,6 +801,75 @@ class XenaPort(XenaBasePort):
 
         return status
 
+    def get_lt_info(self, lanes):
+        """
+        Get the linktraining status
+        """
+
+        keys_0     = ["duration_us", "lock_lost_count"]
+        keys_1     = ["pre1", "main", "post1", "pre2", "pre3"]
+        keys_2     = ["prbs_total_bits_high", "prbs_total_bits_low", "prbs_total_error_bits_high", "prbs_total_error_bits_low"]
+        keys_3     = ["frame_lock", "remote_frame_lock", "num_frame_errors", "num_overruns", "num_last_ic_received", "num_last_ic_sent"]
+
+        keys_tap = ["current_level",
+                    "rx_increment_req_count",
+                    "rx_decrement_req_count",
+                    "rx_coeff_eq_limit_reached_count",
+                    "rx_eq_limit_reached_count",
+                    "rx_coeff_not_supported_count",
+                    "rx_coeff_at_limit_count",
+                    "tx_increment_req_count"
+                    "tx_decrement_req_count"
+                    "tx_coeff_eq_limit_reached_count"
+                    "tx_eq_limit_reached_count"
+                    "tx_coeff_not_supported_count"
+                    "tx_coeff_at_limit_count"
+                   ]
+        info  = []
+        for lane in lanes:
+            values = self.get_attribute(f'pl1_linktraininfo [{lane},0]').split()[-77:]
+
+            #self.logger.info(values)
+            
+            idx = 0
+            dict_taps = {}
+
+            # duration_us, lock_lost_count
+            info_dict = dict(zip(keys_0, values[idx:idx+2]))
+            idx += 2
+
+            # pre1
+            dict_taps["pre1"] = dict(zip(keys_tap, values[idx:idx+13]))
+            idx += 13
+
+            # main
+            dict_taps["main"] = dict(zip(keys_tap, values[idx:idx+13]))
+            idx += 13
+
+            # post1
+            dict_taps["post1"] = dict(zip(keys_tap, values[idx:idx+13]))
+            idx += 13
+
+            # pre2
+            dict_taps["pre2"] = dict(zip(keys_tap, values[idx:idx+13]))
+            idx += 13
+
+            # pre3
+            dict_taps["pre3"] = dict(zip(keys_tap, values[idx:idx+13]))
+            idx += 13
+
+            info_dict.update(dict_taps)
+
+            # prbs_total_bits_high, prbs_total_bits_low, prbs_total_error_bits_high, prbs_total_error_bits_low
+            info_dict.update(dict(zip(keys_2, values[idx:idx+4])))
+            idx += 4
+
+            # frame_lock, remote_frame_lock, num_frame_errors, num_overruns, num_last_ic_received, num_last_ic_sent
+            info_dict.update(dict(zip(keys_3, values[idx:idx+6])))
+
+            info.append(info_dict)
+            
+        return info
 
     def phy_tx_eq(self, lanes, eq_values=None, op_code='get'):
 
