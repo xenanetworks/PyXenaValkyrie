@@ -330,6 +330,9 @@ class XenaChassis(XenaObject):
         """
         raise NotImplementedError('Underlying CLI command c_stats returns internal error.')
 
+    def add_xenaserver_log_entry(self, msg):
+        self.send_command('c_log', '"{}"'.format(msg))
+
     def inventory(self, modules_inventory=False):
         """ Get chassis inventory.
 
