@@ -829,7 +829,8 @@ class XenaPort(XenaBasePort):
         for lane in lanes:
             values = self.get_attribute(f'pl1_linktraininfo [{lane},0]').split()[-77:]
 
-            #self.logger.info(values)
+            if values[0] == "<NOTVALID>":
+                values = ['N/A', 'N/A'] + [0 for _ in range(0, 75)]
             
             idx = 0
             dict_taps = {}
