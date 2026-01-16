@@ -879,7 +879,7 @@ class XenaPort(XenaBasePort):
         
         if op_code == 'get':
             for lane in lanes:
-                values = self.get_attribute(f'pp_phytxeq [{lane}]').split()[-7:-1]
+                values = self.get_attribute(f'pp_phytxeq [{lane}]').split()[3:9]
                 result[lane] = dict(zip(keys, values))
 
             return result
