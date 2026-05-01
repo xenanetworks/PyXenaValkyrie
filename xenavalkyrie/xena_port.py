@@ -535,87 +535,111 @@ class XenaCapturePacket(XenaObject21):
 class XenaPortCapabilities():
     """ Structure that provides the port capabilities """
 
-    _MAXTXEQTAPS = 10
+    _MAXTXEQTAPS    = 10
+    _MAXRXEQEXTCAPS = 45
 
     def __init__(self):
         super(self.__class__, self).__init__()
 
         self.values = {
-           "maxspeed"                   : 0,
-           "maxspeedreduction"          : 0,
-           "mininterframegap"           : 0,
-           "maxinterframegap"           : 0,
-           "maxpreamble"                : 0,
-           "maxstreams"                 : 0,
-           "maxpercent"                 : 0,
-           "maxpps"                     : 0,
-           "maxmbps"                    : 0,
-           "maxseed"                    : 0,
-           "maxlimit"                   : 0,
-           "maxburstsize"               : 0,
-           "minpacketlength"            : 0,
-           "maxpacketlength"            : 0,
-           "maxheaderlength"            : 0,
-           "maxprotocols"               : 0,
-           "maxpatternlength"           : 0,
-           "maxmodifiers"               : 0,
-           "maxmodifierbytes"           : 0,
-           "maxrepeat"                  : 0,
-           "maxtid"                     : 0,
-           "maxmanualpackets"           : 0,
-           "maxmatchterms"              : 0,
-           "maxlengthterms"             : 0,
-           "maxors"                     : 0,
-           "maxnots"                    : 0,
-           "maxfilters"                 : 0,
-           "maxcapturepackets"          : 0,
-           "maxtpldstats"               : 0,
-           "maxdatasets"                : 0,
-           "max32bitmodifiers"          : 0,
-           "cansetautoneg"              : 0,
-           "cantcpchecksum"             : 0,
-           "canudpchecksum"             : 0,
-           "caneee"                     : 0,
-           "canhwregaccess"             : 0,
-           "cantcvrmiiregaccess"        : 0,
-           "canadvphyman"               : 0,
-           "canmicrotpld"               : 0,
-           "canmdimdix"                 : 0,
-           "canpayloadmode"             : 0,
-           "cancustomdatafields"        : 0,
-           "canextpayload"              : 0,
-           "candyntrafficchange"        : 0,
-           "cansynctrafficstart"        : 0,
-           "canpfc"                     : 0,
-           "canpcspmaconfig"            : 0,
-           "canfec"                     : 0,
-           "canfecstats"                : 0,
-           "cantxeq"                    : 0,
-           "canrxretune"                : 0,
-           "prbstypessupported"         : 0,
-           "prbsinvertionsupported"     : 0,
-           "prbspolyssupported"         : [0 for _ in range(0,5)],
-           "numserdes"                  : 0,
-           "numlanes"                   : 0,
-           "numtxeqtaps"                : 0,
-           "txeqtapmaxval"              : [0 for _ in range(0, self._MAXTXEQTAPS)],
-           "txeqtapminval"              : [0 for _ in range(0, self._MAXTXEQTAPS)],
-           "maxfeccorrectablesymbols"   : 0,
-           "maxxmitonepacketlength"     : 0,
-           "txruntpacketminlength"      : 0,
-           "rxruntpacketminlength"      : 0,
-           "canmanipulatepreamble"      : 0,
-           "cansetlinktrain"            : 0,
-           "canlinkflap"                : 0,
-           "canautonegbaser"            : 0,
-           "canpmaerrorpulse"           : 0,
-           "ischimera"                  : 0,
-           "hasp2plooppartner"          : 0,
-           "p2plooppartner"             : 0,
-           "traffic_engine"             : 0,
-           "reconc_sublayer"            : 0,
-           "max_match_term_pos"         : 0,
-           "stream_misc"                : 0
+           "maxspeed"                         : 0,
+           "maxspeedreduction"                : 0,
+           "mininterframegap"                 : 0,
+           "maxinterframegap"                 : 0,
+           "maxpreamble"                      : 0,
+           "maxstreams"                       : 0,
+           "maxpercent"                       : 0,
+           "maxpps"                           : 0,
+           "maxmbps"                          : 0,
+           "maxseed"                          : 0,
+           "maxlimit"                         : 0,
+           "maxburstsize"                     : 0,
+           "minpacketlength"                  : 0,
+           "maxpacketlength"                  : 0,
+           "maxheaderlength"                  : 0,
+           "maxprotocols"                     : 0,
+           "maxpatternlength"                 : 0,
+           "maxmodifiers"                     : 0,
+           "maxmodifierbytes"                 : 0,
+           "maxrepeat"                        : 0,
+           "maxtid"                           : 0,
+           "maxmanualpackets"                 : 0,
+           "maxmatchterms"                    : 0,
+           "maxlengthterms"                   : 0,
+           "maxors"                           : 0,
+           "maxnots"                          : 0,
+           "maxfilters"                       : 0,
+           "maxcapturepackets"                : 0,
+           "maxtpldstats"                     : 0,
+           "maxdatasets"                      : 0,
+           "max32bitmodifiers"                : 0,
+           "cansetautoneg"                    : 0,
+           "cantcpchecksum"                   : 0,
+           "canudpchecksum"                   : 0,
+           "caneee"                           : 0,
+           "canhwregaccess"                   : 0,
+           "cantcvrmiiregaccess"              : 0,
+           "canadvphyman"                     : 0,
+           "canmicrotpld"                     : 0,
+           "canmdimdix"                       : 0,
+           "canpayloadmode"                   : 0,
+           "cancustomdatafields"              : 0,
+           "canextpayload"                    : 0,
+           "candyntrafficchange"              : 0,
+           "cansynctrafficstart"              : 0,
+           "canpfc"                           : 0,
+           "canpcspmaconfig"                  : 0,
+           "canfec"                           : 0,
+           "canfecstats"                      : 0,
+           "cantxeq"                          : 0,
+           "canrxretune"                      : 0,
+           "prbstypessupported"               : 0,
+           "prbsinvertionsupported"           : 0,
+           "prbspolyssupported"               : [0 for _ in range(0,5)],
+           "numserdes"                        : 0,
+           "numlanes"                         : 0,
+           "numtxeqtaps"                      : 0,
+           "txeqtapmaxval"                    : [0 for _ in range(0, self._MAXTXEQTAPS)],
+           "txeqtapminval"                    : [0 for _ in range(0, self._MAXTXEQTAPS)],
+           "maxfeccorrectablesymbols"         : 0,
+           "maxxmitonepacketlength"           : 0,
+           "txruntpacketminlength"            : 0,
+           "rxruntpacketminlength"            : 0,
+           "canmanipulatepreamble"            : 0,
+           "cansetlinktrain"                  : 0,
+           "canlinkflap"                      : 0,
+           "canautonegbaser"                  : 0,
+           "canpmaerrorpulse"                 : 0,
+           "ischimera"                        : 0,
+           "hasp2plooppartner"                : 0,
+           "p2plooppartner"                   : 0,
+           "traffic_engine"                   : 0,
+           "reconc_sublayer"                  : 0,
+           "max_match_term_pos"               : 0,
+           "stream_misc"                      : 0,
+           "rxeq_ext_cap_min"                 : [0 for _ in range(0, self._MAXRXEQEXTCAPS)],    # Minimum value for Rx Equalizer Extended Capability
+           "rxeq_ext_cap_max"                 : [0 for _ in range(0, self._MAXRXEQEXTCAPS)],    # Maximum value for Rx Equalizer Extended Capability
+           "hist_length_step_min"             : 0,                                              # Minimum supported step value for Histogram Length type
+           "hist_length_step_max"             : 0,                                              # Maximum supported step value for Histogram Length type
+           "hist_latency_step_min"            : 0,                                              # Minimum supported step value for Histogram Latency type
+           "hist_latency_step_max"            : 0,                                              # Maximum supported step value for Histogram Latency type
+           "tcvr_i2c_min_freq_khz"            : 0,                                              # Minimum configurable transceiver I2C frequency in kHz. Default is 100 kHz
+           "tcvr_i2c_max_freq_khz"            : 0,                                              # Maximum configurable transceiver I2C frequency in kHz. Default is 100 kHz; value is either based on module HW limits or transceiver capability limits
+           "can_eyescan"                      : 0,                                              # Bit 0 set: Sampled Eyescan supported
+           "layer1_misc"                      : 0,                                              # PCS variants, lane maps, lane skews
+           "layer2_misc"                      : 0,                                              # Layer 2 miscellaneous capabilities: macsec, lldp
+           "editable_mix_length_indices_mask" : 0,                                              # Bitmask of editable P_MIXLENGTH [x] entries
+           "modifier_little_endian_mask"      : 0,                                              # Bitmask: Can do little-endian (byte-reversed) modifiers. Bit 0 = regular modifiers can be reversed; bit 1 = extended modifiers can be reversed
+           "capture_mask"                     : 0,                                              # Bitmask, see capture_bitmask_t
+           "numtxeqpretaps"                   : 0,                                              # number of precursors. No. of postcursors = numtxeqtaps - numtxeqpretaps - 1. => Defines the format of PL1_PHYTXEQ* XMPs.
+           "txeqtapmaxval_seq"                : [0 for i in range(0, self._MAXTXEQTAPS)],       # max-value of individual TXEQ taps, SEQuential: <pre-n> <pre-(n-q)> ... <prr1> <main> <post1> <post2> ....
+           "txeqtapminval_seq"                : [0 for i in range(0, self._MAXTXEQTAPS)],       # min-value of individual TXEQ taps
+           "cdf_max_offset"                   : 0,                                              # Maximum offset into the packet (in bytes) for CDF data insertion
+           "cdf_max_size"                     : 0,                                              # Maximum length in bytes of the CDF data
+           "cdf_max_number"                   : 0,                                              # Maximum number of CDFs for a stream
+           "cdf_port_memory_size_bytes"       : 0,                                              # Max CDF memory size per port
+           "adv_anlt_mask"                    : 0,                                              # Bitmask of advanced ANLT abilities
+           "adv_layer1_mask"                  : 0,                                              # Bitmask of advanced L1 abilities
         }
 
 class XenaPort(XenaBasePort):
